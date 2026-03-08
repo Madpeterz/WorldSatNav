@@ -1,0 +1,22 @@
+{
+    message = "|cFFFFFFFF@name|r |cFF87CEFAhas found the mysterious crate at @coordinates on Auroria.|r",
+    iconKey = "",
+    sextants = {
+        deg_long = 1,
+        deg_lat = 0,
+        sec_long = 20,
+        min_lat = 14,
+        longitude = "W",
+        latitude = "N",
+        sec_lat = 38,
+        min_long = 16,
+    },
+    info = {
+        trgFactionName = "Repentant Shadows",
+        name = "Anriel",
+        factionName = "Repentant Shadows",
+        trgName = "Anriel",
+        trgMotherFactionName = "Haranya Alliance",
+        motherFactionName = "Haranya Alliance",
+    },
+}

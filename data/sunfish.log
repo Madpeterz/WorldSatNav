@@ -1,0 +1,22 @@
+{
+    message = "A swarm of Sunfish has appeared at @coordinates!",
+    iconKey = "",
+    sextants = {
+        deg_long = 6,
+        deg_lat = 20,
+        sec_long = 41,
+        min_lat = 33,
+        longitude = "W",
+        latitude = "S",
+        sec_lat = 23,
+        min_long = 58,
+    },
+    info = {
+        trgFactionName = "",
+        name = "Spluczka",
+        factionName = "West Ishvara",
+        trgName = "",
+        trgMotherFactionName = "",
+        motherFactionName = "Haranya Alliance",
+    },
+}

@@ -1,0 +1,22 @@
+{
+    message = "|cFFFFFFFF@name|r has been |cFFF5CB65destroyed|r at|cFFF5CB65 @coordinates|r.",
+    iconKey = "",
+    sextants = {
+        deg_long = 3,
+        deg_lat = 4,
+        sec_long = 54,
+        min_lat = 54,
+        longitude = "W",
+        latitude = "S",
+        sec_lat = 52,
+        min_long = 39,
+    },
+    info = {
+        trgFactionName = "Horror",
+        name = "Delphinad Ghost Ship",
+        factionName = "Horror",
+        trgName = "Delphinad Ghost Ship",
+        trgMotherFactionName = "Horror",
+        motherFactionName = "Horror",
+    },
+}

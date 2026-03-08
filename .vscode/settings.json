@@ -1,0 +1,7 @@
+{
+  "Lua.runtime.version": "Lua 5.1",
+  "Lua.diagnostics.ignoredFiles": "Enable",
+  "problems.exclude": [
+    "**/api.lua"
+  ],
+}
