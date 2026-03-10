@@ -78,6 +78,9 @@ local function applyLabelToMaps()
 	-- Track which slot+region combinations have treasure maps
 	local activeSlotsMap = {}
 
+	local backupRenderingSettings = coordinates.renderingSettings
+	coordinates.ResetRenderingSettings()
+
 	helpers.iterateTreasureMaps(function(slotIndex, btn, info)
 		local region = coordinates.getRegionFromSextant(
 			info.longitudeDir, info.latitudeDir,
@@ -94,6 +97,8 @@ local function applyLabelToMaps()
 		activeSlotsMap[regionname][slotIndex] = true
 		getOrCreateLabelFromPool(slotIndex, btn, regionname)
 	end)
+
+	coordinates.renderingSettings = backupRenderingSettings
 
 	-- Hide overlays for slots that no longer have treasure maps
 	hideNotInUseLabels(activeSlotsMap)
