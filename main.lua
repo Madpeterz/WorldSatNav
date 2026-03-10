@@ -17,7 +17,7 @@ local regions = require("WorldSatNav/regions")
 local WorldSatNav = {
 	name = "WorldSatNav",
 	author = "Madpeter",
-	version = "1.0.1",
+	version = "1.0.2",
 	desc = "Lets fucking go!"
 }
 
