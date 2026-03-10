@@ -22,20 +22,14 @@ local Regions = {}
 local regionBoundaries = {
 	-- currently shared map image with Haranya, so center point is the same, but boundaries are different
 	{name = "Castaway", rid=2, centerPointX = 360, centerPointY = -270},
-	{name = "Castaway", rid=2, centerPointX = 360, centerPointY = -270},
-	{name = "Castaway", rid=2, centerPointX = 360, centerPointY = -270},
+	{name = "Haranya", rid=7, centerPointX = 360, centerPointY = -270},
+
 	-- currently shared map image with Nuia, so center point is the same, but boundaries are different
-	{name = "Halcy Glf", rid=6, centerPointX = 501, centerPointY = 559.6}, 
-	{name = "Halcy Glf", rid=6, centerPointX = 501, centerPointY = 550.35},
-	{name = "Halcy Glf", rid=6, centerPointX = 501, centerPointY = 506.6},
-
-
+	{name = "Halcy Glf", rid=6, centerPointX = 658, centerPointY = -180},
 	{name = "Nuia", rid=3, centerPointX = 658, centerPointY = -180},
-	{name = "Nuia", rid=3, centerPointX = 658, centerPointY = -180},
-	{name = "Haranya", rid=7, centerPointX = 360, centerPointY = -270},
-	{name = "Haranya", rid=7, centerPointX = 360, centerPointY = -270},
+	
+	-- yay other places
 	{name = "Auroria", rid=1, centerPointX = 410, centerPointY = 51},
-	{name = "Arcadian", rid=4, centerPointX = 4140, centerPointY = -41},
 	{name = "Arcadian", rid=4, centerPointX = 410, centerPointY = -41},
 }
 
