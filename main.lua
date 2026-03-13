@@ -17,7 +17,7 @@ local regions = require("WorldSatNav/regions")
 local WorldSatNav = {
 	name = "WorldSatNav",
 	author = "Madpeter",
-	version = "1.0.2",
+	version = "1.0.3",
 	desc = "Lets fucking go!"
 }
 
@@ -269,6 +269,10 @@ function TOGGLE_MAIN_WINDOW()
 		bagOverlay.hide()
 		events.SetAutoUpdates(false)
 	else
+		-- reset map zoom when reopening and reset texture
+		coordinates.ResetRenderingSettings()
+		mapRenderer.ChangeMapTexture("*")
+		zoomedIn = false
 		ReRenderMap()
 		bagOverlay.show()
 	end
