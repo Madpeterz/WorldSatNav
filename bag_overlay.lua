@@ -78,7 +78,12 @@ local function applyLabelToMaps()
 	-- Track which slot+region combinations have treasure maps
 	local activeSlotsMap = {}
 
-	local backupRenderingSettings = coordinates.renderingSettings
+	-- Save individual field values (not the table reference — Lua tables are by reference,
+	-- so saving the table itself would not preserve its contents after ResetRenderingSettings modifies it)
+	local bkScaleHX   = coordinates.renderingSettings.scaleHX
+	local bkScaleHY   = coordinates.renderingSettings.scaleHY
+	local bkCenterX   = coordinates.renderingSettings.centerPointX
+	local bkCenterY   = coordinates.renderingSettings.centerPointY
 	coordinates.ResetRenderingSettings()
 
 	helpers.iterateTreasureMaps(function(slotIndex, btn, info)
@@ -98,7 +103,11 @@ local function applyLabelToMaps()
 		getOrCreateLabelFromPool(slotIndex, btn, regionname)
 	end)
 
-	coordinates.renderingSettings = backupRenderingSettings
+	-- Restore the prior rendering settings so the main map view is unaffected
+	coordinates.renderingSettings.scaleHX       = bkScaleHX
+	coordinates.renderingSettings.scaleHY       = bkScaleHY
+	coordinates.renderingSettings.centerPointX  = bkCenterX
+	coordinates.renderingSettings.centerPointY  = bkCenterY
 
 	-- Hide overlays for slots that no longer have treasure maps
 	hideNotInUseLabels(activeSlotsMap)
