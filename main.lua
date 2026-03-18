@@ -247,10 +247,10 @@ local function updateTrackingData()
 	TRACK_WINDOW.markNameLabel:SetText(gps.getTargetName())
 	local navDir, navDistance, navDistanceScale, bearing, relativeDir = gps.getNavigationText()
 
-	if useTeleport and settings.Get("UseTeleportHint") then
+	if useTeleport and settings.Get("UseTeleportHint") and navDistanceScale ~= "m" then
 		TRACK_WINDOW.distanceLabel:SetText("teleport to " .. regionNameTarget)
 		updateNavArrow("portal2")
-	else 
+	else
 		TRACK_WINDOW.distanceLabel:SetText(string.format("%.1f %s", navDistance, navDistanceScale))
 		if navDir == "here" then
 			updateNavArrow(navDir)
