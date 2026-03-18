@@ -40,6 +40,16 @@ local triggeredEvents = {
 local EnableAutoUpdatesToMap = false
 local InEventsMode = false
 
+-- Utility function to check if a table contains a value
+function table.contains(tbl, val)
+    for _, v in ipairs(tbl) do
+        if v == val then
+            return true
+        end
+    end
+    return false
+end
+
 function events.SetAutoUpdates(enabled)
     EnableAutoUpdatesToMap = enabled
 end
@@ -76,24 +86,34 @@ function events.DisplayEvents(Enable)
         if constants.DEV_MODE then
             if #storedEvents == 0 then
                 api.Log:Info("WorldSatNav: Displaying test events on map.")
-                local testEvents = {"sunfish","crate","ghost1","ghost2"}
-                for _, logFile in pairs(testEvents) do
-                    local readfile = "WorldSatNav/data/" .. logFile .. ".log"
-                    local ok, result = pcall(function()
-                        return api.File:Read(readfile)
-                    end)
-                    if not ok then
-                        api.Log:Info("WorldSatNav: Error reading test event log: " .. readfile .. " | " .. tostring(result))
-                    elseif result ~= nil then
-                        local ok2, err = pcall(function()
-                            events.WorldMessageProcessor("WORLD_MESSAGE", result.message, result.iconKey, result.sextants, result.info)
+                local testEvents = {
+                    ["sunfish"] = 4,
+                    ["crate"] = 2,
+                    ["ghost"] = 2,
+                    ["perdita"] = 1
+                }
+                for logFile, count in pairs(testEvents) do
+                    local loop = 1
+                    while loop <= count do
+                        local readfile = "WorldSatNav/data/examples/"..logFile.."/"..loop..".log"
+                        local ok, result = pcall(function()
+                            return api.File:Read(readfile)
                         end)
-                        if not ok2 then
-                            api.Log:Info("WorldSatNav: Error processing test event log: " .. readfile .. " | " .. tostring(err))
+                        if not ok then
+                            api.Log:Info("WorldSatNav: Error reading test event log: " .. readfile .. " | " .. tostring(result))
+                        elseif result ~= nil then
+                            local ok2, err = pcall(function()
+                                events.WorldMessageProcessor("WORLD_MESSAGE", result.message, result.iconKey, result.sextants, result.info)
+                            end)
+                            if not ok2 then
+                                api.Log:Info("WorldSatNav: Error processing test event log: " .. readfile .. " | " .. tostring(err))
+                            end
+                        else
+                            api.Log:Info("WorldSatNav: Failed to read test event log (nil result): " .. readfile)
                         end
-                    else
-                        api.Log:Info("WorldSatNav: Failed to read test event log (nil result): " .. readfile)
+                        loop = loop + 1
                     end
+
                 end
             end
         end
@@ -123,11 +143,49 @@ function events.FindCordsInMessage(message)
     return true
 end
 
-function events.WorldMessageProcessor(event, message, iconKey, sextants, info)
-    if constants.DEV_MODE then
-        api.Log:Info("WorldSatNav: Processing message: " .. message.. " writing to "..api.Time:GetLocalTime()..".message.log")
-        api.File:Write(""..api.Time:GetLocalTime()..".message.log", {message = message, iconKey = iconKey, sextants = sextants, info = info})
+function events.WorldMessageProcessorChat(event, channel, color, status, from, message, unsure1, unsure2, unsure3)
+    if(settings.Get("EnableWorldEvents") == false) then
+        if constants.DEV_MODE then
+            api.Log:Info("WorldSatNav: Chat events are disabled in settings, ignoring message")
+        end
+        return
     end
+    local skipChannels = {-4, -3, 6, 14, 7, 9, 5, 10, 4, 0, 1, 3, 2, -2, 11}
+    --  Ignored channels
+    --  -4= Whisper reply
+    --  -3= Whisper
+    --  6 = Nation
+    --  14 = Faction
+    --  7 = Guild
+    --  9 = Family
+    --  5 = Raid
+    --  10  = raid command
+    --  4 = Party
+    --  0 = local
+    -- 1 = shout
+    -- 3 = LFG
+    -- 2 = Trade
+    -- -2 = DAILY_MSG
+    -- 11 = Trial
+    if table.contains(skipChannels, channel) then
+        return -- Ignore specified channels
+    end
+    if constants.DEV_MODE then
+        api.Log:Info("WorldSatNav: Processing event: " .. event.."")
+        api.File:Write(""..event.."="..api.Time:GetLocalTime()..".message.log", {
+            channel = channel,
+            color = color,
+            status = status,
+            from = from,
+            message = message,
+            unsure1 = unsure1,
+            unsure2 = unsure2,
+            unsure3 = unsure3
+        })
+    end
+end
+
+function events.WorldMessageProcessor(event, message, iconKey, sextants, info)
     if(settings.Get("EnableWorldEvents") == false) then
         if constants.DEV_MODE then
             api.Log:Info("WorldSatNav: World events are disabled in settings, ignoring message")
@@ -137,6 +195,15 @@ function events.WorldMessageProcessor(event, message, iconKey, sextants, info)
     if event ~= "WORLD_MESSAGE" then
         api.Log:Info("WorldSatNav: Not a world message event, ignoring")
         return
+    end
+    if constants.DEV_MODE then
+        api.Log:Info("WorldSatNav: Processing event: " .. event.."")
+        api.File:Write(""..event.."="..api.Time:GetLocalTime()..".message.log", {
+            message = message,
+            iconKey = iconKey,
+            sextants = sextants,
+            info = info
+        })
     end
     events.ClearOldEvents()
     local cordsResult = events.FindCordsInMessage(message)

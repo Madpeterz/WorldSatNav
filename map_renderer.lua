@@ -75,9 +75,6 @@ end
 -- Place a marker at pixel coordinates if within map bounds
 local function placeMarker(xPos, yPos, totalatpoint, customIcon, itemData, customsizeWidth, customsizeHeight)
 	if xPos < 0 + 30 or xPos > constants.map.width - 30 or yPos < 0 + 20 or yPos > constants.map.height - 20 then
-		if constants.DEV_MODE then
-			api.Log:Info("Calculated coordinates are out of map bounds: ("..xPos..", "..yPos..")")
-		end
 		return
 	end
 	local marker = getOrCreateMarkerFromPool(totalatpoint, customIcon, customsizeWidth, customsizeHeight)

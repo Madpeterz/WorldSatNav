@@ -1,0 +1,22 @@
+{
+    message = "|cFFFFFFFF@name|r |cFF87CEFAhas found the mysterious crate at @coordinates on Auroria.|r",
+    iconKey = "",
+    sextants = {
+        deg_long = 3,
+        deg_lat = 1,
+        sec_long = 6,
+        min_lat = 32,
+        longitude = "W",
+        latitude = "S",
+        sec_lat = 44,
+        min_long = 52,
+    },
+    info = {
+        trgFactionName = "West Ishvara",
+        name = "Zhu",
+        factionName = "West Ishvara",
+        trgName = "Zhu",
+        trgMotherFactionName = "Haranya Alliance",
+        motherFactionName = "Haranya Alliance",
+    },
+}

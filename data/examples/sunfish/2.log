@@ -1,0 +1,22 @@
+{
+    message = "A swarm of Sunfish has appeared at @coordinates!",
+    iconKey = "",
+    sextants = {
+        deg_long = 3,
+        deg_lat = 2,
+        sec_long = 47,
+        min_lat = 33,
+        longitude = "W",
+        latitude = "S",
+        sec_lat = 10,
+        min_long = 31,
+    },
+    info = {
+        trgFactionName = "",
+        name = "Kinsyu",
+        factionName = "Crescent Throne",
+        trgName = "",
+        trgMotherFactionName = "",
+        motherFactionName = "Nuia Alliance",
+    },
+}

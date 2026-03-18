@@ -13,6 +13,7 @@ local settings = require("WorldSatNav/settings")
 local helpers = require("WorldSatNav/helpers")
 local events = require("WorldSatNav/events")
 local regions = require("WorldSatNav/regions")
+local shapes = require("WorldSatNav/shapes")
 
 local WorldSatNav = {
 	name = "WorldSatNav",
@@ -209,25 +210,33 @@ local function updateTrackingData()
 	end
 	
 	-- Check if teleport is needed (different regions)
-	local getRegionNamePlayer = coordinates.getRegionFromSextant(
-		curCoords.longitude, curCoords.latitude,
-		curCoords.deg_long, curCoords.min_long, curCoords.sec_long,
-		curCoords.deg_lat, curCoords.min_lat, curCoords.sec_lat
-	)
-	local getRegionNameTarget = coordinates.getRegionFromSextant(
-		targetSextant.longitude, targetSextant.latitude,
-		targetSextant.deg_long, targetSextant.min_long, targetSextant.sec_long,
-		targetSextant.deg_lat, targetSextant.min_lat, targetSextant.sec_lat
-	)
-	local regionNamePlayer = "?"
-	local regionNameTarget = "?"
-	if getRegionNamePlayer ~= nil then
-		regionNamePlayer = getRegionNamePlayer.name
-	end
-	if getRegionNameTarget ~= nil then
-		regionNameTarget = getRegionNameTarget.name
-	end
+	local bkScaleHX  = coordinates.renderingSettings.scaleHX
+	local bkScaleHY  = coordinates.renderingSettings.scaleHY
+	local bkCenterX  = coordinates.renderingSettings.centerPointX
+	local bkCenterY  = coordinates.renderingSettings.centerPointY
+	coordinates.ResetRenderingSettings()
 
+	local x,y = coordinates.getMapDrawPoint(
+		targetSextant.longitude, targetSextant.latitude,
+		targetSextant.deg_long or 0, targetSextant.min_long or 0, targetSextant.sec_long or 0,
+		targetSextant.deg_lat or 0, targetSextant.min_lat or 0, targetSextant.sec_lat or 0
+	)
+	local regionNameTarget = shapes.getShapeAt(x, y)
+	x,y = coordinates.getMapDrawPoint(
+			curCoords.longitude, curCoords.latitude,
+			curCoords.deg_long or 0, curCoords.min_long or 0, curCoords.sec_long or 0,
+			curCoords.deg_lat or 0, curCoords.min_lat or 0, curCoords.sec_lat or 0
+		)
+	local regionNamePlayer = shapes.getShapeAt(x, y)
+
+	coordinates.renderingSettings.scaleHX      = bkScaleHX
+	coordinates.renderingSettings.scaleHY      = bkScaleHY
+	coordinates.renderingSettings.centerPointX = bkCenterX
+	coordinates.renderingSettings.centerPointY = bkCenterY
+
+	regionNameTarget = regionNameTarget:match("/(.+)") or regionNameTarget
+	regionNamePlayer = regionNamePlayer:match("/(.+)") or regionNamePlayer
+	
 	local useTeleport = false
 	if regionNamePlayer ~= "?" and regionNameTarget ~= "?" then
 		if regionNamePlayer ~= regionNameTarget then
@@ -374,12 +383,17 @@ local function OnLoad()
 		TOGGLE_MAIN_WINDOW()
 	end
 	function satNavWindow:EventListener(event, ...)
-		events.WorldMessageProcessor(event,unpack(arg))
+		if(event == "WORLD_MESSAGE") then 
+			events.WorldMessageProcessor(event,unpack(arg))
+		elseif(event == "CHAT_MESSAGE") then 
+			events.WorldMessageProcessorChat(event,unpack(arg))
+		end
 	end
 	satNavWindow:SetHandler("OnClose", satNavWindow.OnClose)
 	satNavWindow:SetHandler("OnCloseByEsc", satNavWindow.OnClose)
 	satNavWindow:SetHandler("OnEvent", satNavWindow.EventListener)
     satNavWindow:RegisterEvent("WORLD_MESSAGE")
+	satNavWindow:RegisterEvent("CHAT_MESSAGE")
 	
 	-- Initialize modules
 	bagOverlay.initialize()

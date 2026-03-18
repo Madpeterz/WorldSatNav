@@ -1,0 +1,22 @@
+{
+    message = "A swarm of Sunfish has appeared at @coordinates!",
+    iconKey = "",
+    sextants = {
+        deg_long = 5,
+        deg_lat = 6,
+        sec_long = 33,
+        min_lat = 37,
+        longitude = "W",
+        latitude = "S",
+        sec_lat = 9,
+        min_long = 16,
+    },
+    info = {
+        trgFactionName = "",
+        name = "Holy",
+        factionName = "Pirate",
+        trgName = "",
+        trgMotherFactionName = "",
+        motherFactionName = "Pirate",
+    },
+}

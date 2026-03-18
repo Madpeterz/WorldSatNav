@@ -1,0 +1,22 @@
+{
+    message = "The Perdita Statue Torso has been found at @coordinates.",
+    iconKey = "",
+    sextants = {
+        deg_long = 2,
+        deg_lat = 7,
+        sec_long = 50,
+        min_lat = 41,
+        longitude = "W",
+        latitude = "S",
+        sec_lat = 53,
+        min_long = 45,
+    },
+    info = {
+        trgFactionName = "",
+        name = "Mortifer",
+        factionName = "Wandering Winds",
+        trgName = "",
+        trgMotherFactionName = "",
+        motherFactionName = "Haranya Alliance",
+    },
+}

@@ -36,7 +36,33 @@ local regionBoundaries = {
 -- Get region name from pixel coordinates
 -- If multiple regions overlap, returns the one whose center is closest
 function Regions.getRegionFromPixels(x, y)
-	local rid = shapes.get_shape(x, y)
+	local shapedat = shapes.getShapeAt(x, y)
+	if shapedat == "?" then
+		return nil
+	end
+	local rid = nil
+	if shapedat:sub(1,2) == "W/" then
+		rid = 3
+	elseif shapedat:sub(1,2) == "E/" then
+		rid = 7
+	elseif shapedat:sub(1,2) == "N/" then
+		rid = 1
+	elseif shapedat:sub(1,2) == "Se" then
+		if shapedat == "Sea/Arcadian Sea" then
+			rid = 4
+		elseif shapedat == "Sea/Halcy Sea" then
+			rid = 6
+		elseif shapedat == "Sea/Castaway Strait" then
+			rid = 2
+		elseif shapedat == "Sea/Halcyona Gulf" then
+			rid = 7
+		else
+			return nil
+		end
+	else
+		return nil
+	end
+
 	local matchedRegion = nil
 	for _, region in pairs(regionBoundaries) do
 		if region.rid == rid then
