@@ -12,8 +12,8 @@ local Constants = {
 		centerPointY = 30,
 		width = 793,
 		height = 679,
-		xpointScale = 25.3,
-		ypointScale = 26.8
+		xpointScale = 25.5,
+		ypointScale = 26.9
 	},
 
 	-- Window dimensions and positions
