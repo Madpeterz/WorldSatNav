@@ -282,6 +282,7 @@ function TOGGLE_MAIN_WINDOW()
 		coordinates.ResetRenderingSettings()
 		mapRenderer.ChangeMapTexture("*")
 		zoomedIn = false
+		toggleSettingsVisableZoom()
 		ReRenderMap()
 		bagOverlay.show()
 	end
