@@ -18,7 +18,7 @@ local shapes = require("WorldSatNav/shapes")
 local WorldSatNav = {
 	name = "WorldSatNav",
 	author = "Madpeter",
-	version = "1.0.3",
+	version = "1.0.4",
 	desc = "Lets fucking go!"
 }
 
