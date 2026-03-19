@@ -28,9 +28,9 @@ local function normalizeAngle(angle)
 	return angle
 end
 
--- Convert atan2(dy, dx) result to a normalised 0-360 degree bearing
-local function bearingDeg(dy, dx)
-	return normalizeAngle(math.atan2(dy, dx) * (180 / math.pi))
+-- Convert atan2(eastComp, northComp) result to a normalised 0-360 degree bearing
+local function bearingDeg(eastComp, northComp)
+	return normalizeAngle(math.atan2(eastComp, northComp) * (180 / math.pi))
 end
 
 -- Convert bearing degrees to a 1-8 compass octant index (1=N, 2=NE, ... 8=NW)
@@ -136,7 +136,17 @@ local function updateMovementDirection(newPos)
 	local movementThreshold = 0.00001
 	local absLonDiff = math.abs(lonDiff)
 	local absLatDiff = math.abs(latDiff)
-	
+
+	-- Detect teleportation: a jump this large cannot be normal movement.
+	-- Reset state instead of injecting a nonsense bearing into the smoothing buffer.
+	local teleportThreshold = 0.1  -- ~10 km in decimal degrees
+	if absLonDiff > teleportThreshold or absLatDiff > teleportThreshold then
+		prevPlayerPos = newPos
+		recentBearings = {}
+		playerMovementDirection = nil
+		return
+	end
+
 	if absLonDiff > movementThreshold or absLatDiff > movementThreshold then
 		-- Calculate bearing of movement
 		local bearing = bearingDeg(lonDiff, latDiff)
@@ -311,7 +321,11 @@ function GPS.updateMovementTracking()
 end
 
 --- Get formatted navigation text showing direction and distance to target
--- @return string navigation text (e.g., "N - 123.4 m") or empty string if no target
+-- @return string compassDir  compass direction ("n","ne","e","se","s","sw","w","nw","here")
+-- @return number distance     distance to target in distanceScale units
+-- @return string distanceScale unit label ("m", "km", or "Mm")
+-- @return number bearing      absolute bearing in degrees (0-360) to the target
+-- @return string relativeDir  direction relative to player movement (same octant names, or "noidea")
 function GPS.getNavigationText()
 	if gpsNavSextant == nil then
 		return ""
