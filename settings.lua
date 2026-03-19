@@ -14,9 +14,13 @@ local defaultSettings = {
     UseTeleportHint = true,
     EnableWorldEvents = true,
     WorldEventsKeptFor = 5, -- in minutes, how long to keep world events in the list
-    OpenRealMap = true
+    OpenRealMap = true,
+    trackingMode = "guide"
 }
 
+function  WorldSatNavSettings.Is(key, value)
+    return WorldSatNavSettings.Get(key) == value
+end
 
 function WorldSatNavSettings.Get(key)
     if(settings == nil) then

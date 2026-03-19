@@ -99,6 +99,8 @@ local function toggleSettingsVisableZoom()
 	for id, overlay in pairs(helpers.CheckBoxs) do
 		if overlay.radioGroup == "mapMode" then
 			helpers.ToggleCheckboxVisable(id, not newMode)
+		elseif overlay.radioGroup == "trackMode" then
+			helpers.ToggleCheckboxVisable(id, not newMode)
 		end
 	end
 	helpers.ToggleCheckboxVisable("UseTeleportHint", not newMode)
@@ -252,12 +254,15 @@ local function updateTrackingData()
 		updateNavArrow("portal2")
 	else
 		TRACK_WINDOW.distanceLabel:SetText(string.format("%.1f %s", navDistance, navDistanceScale))
-		if navDir == "here" then
+		if settings.Get("trackingMode") == "compass" then
 			updateNavArrow(navDir)
-		else			
-			updateNavArrow(relativeDir)
+		elseif settings.Get("trackingMode") == "guide" then	
+			if navDir == "here" then
+				updateNavArrow(navDir)
+			else			
+				updateNavArrow(relativeDir)
+			end
 		end
-		
 	end
 
 	TRACK_WINDOW.distanceLabel:SetMoveEffectType(1, "circle", 0, 0, 0.3, 0.2)
@@ -406,42 +411,61 @@ local function OnLoad()
 	mapRenderer.render()
 
 	-- settings
-	local mylabel = helpers.createLabel("SettingsTextLabel", satNavWindow, "Settings", 125, 100, 14)
+	local mylabel = helpers.createLabel("SettingsTextLabel", satNavWindow, "Settings", 125, 80, 14)
 	mylabel:SetExtent(200, 30)
 	mylabel.style:SetColor(0, 0, 0, 1)
 	mylabel:Show(true)
 	table.insert(settingsControls, mylabel)
 
-	helpers.CreateSkinnedCheckbox("UseTeleportHint", satNavWindow, "Use Teleport in tracker", 50, 130+(35*0), settings.Get("UseTeleportHint"), function(checked)
+	helpers.CreateSkinnedCheckbox("UseTeleportHint", satNavWindow, "Use Teleports", 30, 105, settings.Get("UseTeleportHint"), function(checked)
 		settings.Update("UseTeleportHint", checked)
 	end)
 
-	helpers.CreateSkinnedCheckbox("EnableWorldEvents", satNavWindow, "Enable World Events", 50, 130+(35*1), settings.Get("EnableWorldEvents"), function(checked)
+	helpers.CreateSkinnedCheckbox("EnableWorldEvents", satNavWindow, "World Events", 155, 105, settings.Get("EnableWorldEvents"), function(checked)
 		settings.Update("EnableWorldEvents", checked)
 	end)
-	helpers.CreateSkinnedCheckbox("OpenRealMap", satNavWindow, "Open Real Map", 50, 130+(35*2), settings.Get("OpenRealMap"), function(checked)
+	helpers.CreateSkinnedCheckbox("OpenRealMap", satNavWindow, "Open Real Map", 30, 140, settings.Get("OpenRealMap"), function(checked)
 		settings.Update("OpenRealMap", checked)
 	end)
 
+	local mylabel3 = helpers.createLabel("SettingsTextLabel3", satNavWindow, "Tracking", 30, 170, 14)
+	mylabel3:SetExtent(200, 30)
+	mylabel3.style:SetColor(0, 0, 0, 1)
+	mylabel3:Show(true)
+	table.insert(settingsControls, mylabel3)
 
-	local mylabel2 = helpers.createLabel("SettingsTextLabel2", satNavWindow, "Mode", 125, 120+(35*3), 14)
+	helpers.CreateSkinnedCheckbox("trackModeGuideCheckbox1", satNavWindow, "Guide", 30, 195, settings.Is("trackingMode","guide"), function(checked)
+		if checked then
+			settings.Update("trackingMode", "guide")
+		end
+	end, nil, nil, "trackMode")
+	
+	helpers.CreateSkinnedCheckbox("trackModeGuideCheckbox2", satNavWindow, "Compass", 30+75, 195, settings.Is("trackingMode","compass"), function(checked)
+		if checked then
+			settings.Update("trackingMode", "compass")
+		end
+	end, nil, nil, "trackMode")
+
+
+
+	local mylabel2 = helpers.createLabel("SettingsTextLabel2", satNavWindow, "Mode", 30, 225, 14)
 	mylabel2:SetExtent(200, 30)
 	mylabel2.style:SetColor(0, 0, 0, 1)
 	mylabel2:Show(true)
 	table.insert(settingsControls, mylabel2)
 
-	helpers.CreateSkinnedCheckbox("showMapsCheckbox", satNavWindow, "Maps", 30, 145+(35*3), true, function(checked)
+	helpers.CreateSkinnedCheckbox("showMapsCheckbox", satNavWindow, "Maps", 30, 250, true, function(checked)
 		ships.DisplayShips(false)
 		events.DisplayEvents(false)
 		mapRenderer.render()
 	end, nil, nil, "mapMode")
 
-	helpers.CreateSkinnedCheckbox("showShipCheckbox", satNavWindow, "Ships", 30+75, 145+(35*3), false, function(checked)
+	helpers.CreateSkinnedCheckbox("showShipCheckbox", satNavWindow, "Ships", 30+75, 250, false, function(checked)
 		ships.DisplayShips(true)
 		events.DisplayEvents(false)
 	end, nil, nil, "mapMode")
 
-	helpers.CreateSkinnedCheckbox("ShowEventsCheckbox", satNavWindow, "Events", 30+150, 145+(35*3), false, function(checked)
+	helpers.CreateSkinnedCheckbox("ShowEventsCheckbox", satNavWindow, "Events", 30+150, 250, false, function(checked)
 		ships.DisplayShips(false)
 		events.DisplayEvents(true)
 	end, nil, nil, "mapMode")

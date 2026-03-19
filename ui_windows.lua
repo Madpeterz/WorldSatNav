@@ -139,7 +139,7 @@ function UIWindows.createMainWindow(onMapClickCallback, onCloseCallback)
 	local overlay = window:CreateImageDrawable("yes", "overlay")
 	overlay:AddAnchor("TOPLEFT", window, 0, 0)
 	overlay:SetExtent(819, 776)
-	overlay:SetTexture(api.baseDir .. "/WorldSatNav/images/overlay2.png")
+	overlay:SetTexture(api.baseDir .. "/WorldSatNav/images/overlay4.png")
 	window.overlay = overlay
 
 	if constants.DEV_MODE then
