@@ -24,7 +24,7 @@ local Constants = {
 	
 	-- Update timing (in milliseconds)
 	timing = {
-		updateRate = 500,
+		updateRate = 325,
 	},
 	
 	-- Game-specific constants
