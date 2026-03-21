@@ -33,9 +33,9 @@ local function bearingDeg(eastComp, northComp)
 	return normalizeAngle(math.atan2(eastComp, northComp) * (180 / math.pi))
 end
 
--- Convert bearing degrees to a 1-8 compass octant index (1=N, 2=NE, ... 8=NW)
+-- Convert bearing degrees to a 1-12 compass index (1=N, 2=NNE, ... 12=NNW)
 local function bearingToIndex(bearing)
-	return math.floor((bearing + 22.5) / 45) % 8 + 1
+	return math.floor((bearing + 15) / 30) % 12 + 1
 end
 
 -- Extract decimal lon/lat from a sextant position struct
@@ -59,8 +59,8 @@ local function getRelativeDirection(targetBearing, movementBearing)
 	-- Each relative direction has a center angle.
 	-- Pick the one whose center is closest to diff: that is the direction
 	-- the player should turn toward to most efficiently close distance.
-	local relDirNames   = {"n",  "ne", "e",  "se", "s",   "sw",  "w",   "nw"}
-	local relDirCenters = {  0,   45,   90,   135,  180,  -135,  -90,   -45 }
+	local relDirNames   = {"n",  "nne", "ene", "e",  "ese", "sse", "s",   "ssw",  "wsw",  "w",   "wnw",  "nnw"}
+	local relDirCenters = {  0,   30,    60,    90,   120,   150,   180,   -150,   -120,   -90,   -60,    -30}
 
 	local function angleDelta(a, b)
 		local d = math.abs(a - b)
@@ -203,7 +203,7 @@ local function getGPSGuideText(playerCord, targetCord)
 	local bearing = bearingDeg(lonDiff, latDiff)
 
 	-- Convert bearing to compass direction
-	local directions = {"n", "ne", "e", "se", "s", "sw", "w", "nw"}
+	local directions = {"n", "nne", "ene", "e", "ese", "sse", "s", "ssw", "wsw", "w", "wnw", "nnw"}
 	local compassDir = directions[bearingToIndex(bearing)]
 	
 	-- Filter out directions that don't exceed threshold, or show only dominant direction
@@ -216,16 +216,7 @@ local function getGPSGuideText(playerCord, targetCord)
 		-- Only show N/S
 		compassDir = latDiff > 0 and "n" or "s"
 	else
-		-- Both directions exceed threshold, but check if one is dominant
-		-- If one direction is more than 3x the other, show only that direction
-		if absLon > absLat * 3 then
-			-- Longitude is dominant
-			compassDir = lonDiff > 0 and "e" or "w"
-		elseif absLat > absLon * 3 then
-			-- Latitude is dominant
-			compassDir = latDiff > 0 and "n" or "s"
-		end
-		-- Otherwise keep the diagonal direction from the compass calculation
+		-- Both directions exceed threshold; use the 16-direction compass bearing
 	end
 	
 	-- Calculate distance in game-world meters using the game's own coordinate coefficient.
@@ -348,7 +339,7 @@ function GPS.GetPlayerMovementDirectionString()
 	if playerMovementDirection == nil then
 		return nil
 	end
-	local directions = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}
+	local directions = {"N", "NNE", "ENE", "E", "ESE", "SSE", "S", "SSW", "WSW", "W", "WNW", "NNW"}
 	return directions[bearingToIndex(playerMovementDirection)]
 end
 

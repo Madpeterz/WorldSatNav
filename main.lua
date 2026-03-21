@@ -229,7 +229,7 @@ local function updateNavArrow(direction)
 		return
 	end
 	lastArrowDir = direction
-	local arrowPath = api.baseDir .. "/WorldSatNav/images/arrows/" .. direction .. ".png"
+	local arrowPath = api.baseDir .. "/WorldSatNav/images/arrows5/" .. direction .. ".png"
 	TRACK_WINDOW.arrow:SetTexture(arrowPath)
 end
 

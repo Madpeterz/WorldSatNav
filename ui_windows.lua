@@ -23,7 +23,7 @@ function UIWindows.createTRACK_WINDOW(onCloseCallback)
 	TRACK_WINDOW:Show(false)
 
 	TRACK_WINDOW.arrow = TRACK_WINDOW:CreateImageDrawable("trackarrow", "overlay")
-	TRACK_WINDOW.arrow:SetTexture(api.baseDir .. "/WorldSatNav/images/arrows/n.png")
+	TRACK_WINDOW.arrow:SetTexture(api.baseDir .. "/WorldSatNav/images/arrows5/n.png")
 	TRACK_WINDOW.arrow:AddAnchor("TOPLEFT", TRACK_WINDOW, -70, 30)
 	TRACK_WINDOW.arrow:SetExtent(64, 64)
 	TRACK_WINDOW.arrow:Show(true)
