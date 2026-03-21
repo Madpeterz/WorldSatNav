@@ -80,6 +80,8 @@ local function placeMarker(xPos, yPos, totalatpoint, customIcon, itemData, custo
 	local marker = getOrCreateMarkerFromPool(totalatpoint, customIcon, customsizeWidth, customsizeHeight)
 	if marker ~= nil then
 		marker.ItemData = itemData
+		marker.drawX = xPos
+		marker.drawY = yPos
 		marker:AddAnchor("TOPLEFT", mapDrawable, xPos - marker:GetWidth()/2, yPos - marker:GetHeight()/2)
 		marker:Show(true)
 	end

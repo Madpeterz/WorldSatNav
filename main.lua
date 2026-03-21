@@ -14,6 +14,7 @@ local helpers = require("WorldSatNav/helpers")
 local events = require("WorldSatNav/events")
 local regions = require("WorldSatNav/regions")
 local shapes = require("WorldSatNav/shapes")
+local maps = require("WorldSatNav/maps")
 
 local WorldSatNav = {
 	name = "WorldSatNav",
@@ -34,10 +35,13 @@ local function ReRenderMap()
 	if ships.IsInShipMode() then
 		ships.DisplayShips(true)
 		ships.RestoreNextShipButton()
+		maps.HideNextMapButton()
 	elseif events.InEventsMode() then
 		events.DisplayEvents(true)
+		maps.HideNextMapButton()
 	else
 		mapRenderer.render()
+		maps.RestoreNextMapButton()
 	end
 end
 
@@ -46,39 +50,53 @@ local function getNearestMarker(mapX, mapY)
 	local closestMarker = nil
 	local closestDistance = math.huge
 
-	local dataSource = {}
 	if ships.IsInShipMode() then
-		dataSource = ships.getShipData() or {}
-	elseif events.InEventsMode() then
-		dataSource = events.getEventData() or {}
-	else 
-		helpers.iterateTreasureMaps(function(_, _, info)
-			table.insert(dataSource, info)
-		end)
-	end
-
-	for _, info in pairs(dataSource) do
-		local xPos, yPos = coordinates.getMapDrawPoint(
-			info.longitudeDir, info.latitudeDir,
-			info.longitudeDeg or 0, info.longitudeMin or 0, info.longitudeSec or 0,
-			info.latitudeDeg or 0, info.latitudeMin or 0, info.latitudeSec or 0
-		)
-
-		local distance = math.sqrt((xPos - mapX)^2 + (yPos - mapY)^2)
-		if distance < closestDistance then
-			closestDistance = distance
-			closestMarker = info
+		local dataSource = ships.getShipData() or {}
+		for _, info in pairs(dataSource) do
+			local xPos, yPos = coordinates.getMapDrawPoint(
+				info.longitudeDir, info.latitudeDir,
+				info.longitudeDeg or 0, info.longitudeMin or 0, info.longitudeSec or 0,
+				info.latitudeDeg or 0, info.latitudeMin or 0, info.latitudeSec or 0
+			)
+			local distance = math.sqrt((xPos - mapX)^2 + (yPos - mapY)^2)
+			if distance < closestDistance then
+				closestDistance = distance
+				closestMarker = info
+			end
 		end
-	end
-	
-	-- If clicked within 30 pixels of a marker, start tracking		
-	if closestDistance < 30 and closestMarker then
-		if ships.IsInShipMode() then
+		if closestDistance < 30 and closestMarker then
 			ships.SelectedShipClicked(closestMarker)
-		elseif events.InEventsMode() then
+		end
+	elseif events.InEventsMode() then
+		local dataSource = events.getEventData() or {}
+		for _, info in pairs(dataSource) do
+			local xPos, yPos = coordinates.getMapDrawPoint(
+				info.longitudeDir, info.latitudeDir,
+				info.longitudeDeg or 0, info.longitudeMin or 0, info.longitudeSec or 0,
+				info.latitudeDeg or 0, info.latitudeMin or 0, info.latitudeSec or 0
+			)
+			local distance = math.sqrt((xPos - mapX)^2 + (yPos - mapY)^2)
+			if distance < closestDistance then
+				closestDistance = distance
+				closestMarker = info
+			end
+		end
+		if closestDistance < 30 and closestMarker then
 			START_MAP_TRACKING(closestMarker)
-		else
-			START_MAP_TRACKING(closestMarker)
+		end
+	else
+		-- Use rendered dot positions directly to ensure consistent coordinates
+		for _, marker in pairs(mapRenderer.getRenderedDots()) do
+			if marker:IsVisible() and marker.ItemData ~= nil and marker.drawX ~= nil then
+				local distance = math.sqrt((marker.drawX - mapX)^2 + (marker.drawY - mapY)^2)
+				if distance < closestDistance then
+					closestDistance = distance
+					closestMarker = marker.ItemData
+				end
+			end
+		end
+		if closestDistance < 30 and closestMarker then
+			maps.SelectedMapClicked(closestMarker)
 		end
 	end
 end
@@ -145,6 +163,23 @@ function START_MAP_TRACKING(itemData, ShowMapMarker)
 	local targetType = "?"
 	if(itemData.grade ~= nil) then
 		targetType = "Map " .. itemData.grade..""
+		local selectedx, selectedy = coordinates.getMapDrawPoint(
+			itemData.longitudeDir, itemData.latitudeDir,
+			itemData.longitudeDeg or 0, itemData.longitudeMin or 0, itemData.longitudeSec or 0,
+			itemData.latitudeDeg or 0, itemData.latitudeMin or 0, itemData.latitudeSec or 0
+		)
+		local counter = 0
+    	helpers.iterateTreasureMaps(function(_, _, info)
+			local x,y = coordinates.getMapDrawPoint(
+				info.longitudeDir, info.latitudeDir,
+				info.longitudeDeg or 0, info.longitudeMin or 0, info.longitudeSec or 0,
+				info.latitudeDeg  or 0, info.latitudeMin  or 0, info.latitudeSec  or 0
+			)
+			if x == selectedx and y == selectedy then
+				counter = counter + 1
+			end
+		end)
+		targetType = targetType .. " (" .. counter .. ")"
 	elseif(itemData.isship ~= nil) then
 		targetType = "Ship ".. itemData.index .." (group ".. itemData.group ..")"
 	elseif(itemData.isevent ~= nil) then
@@ -404,6 +439,7 @@ local function OnLoad()
 	-- Initialize modules
 	bagOverlay.initialize()
 	mapRenderer.initialize(satNavWindow, satNavWindow.mapDrawable)
+	maps.CreateNextMapButton()
 	
 	
 	-- Initial render
@@ -458,16 +494,19 @@ local function OnLoad()
 		ships.DisplayShips(false)
 		events.DisplayEvents(false)
 		mapRenderer.render()
+		maps.RestoreNextMapButton()
 	end, nil, nil, "mapMode")
 
 	helpers.CreateSkinnedCheckbox("showShipCheckbox", satNavWindow, "Ships", 30+75, 250, false, function(checked)
 		ships.DisplayShips(true)
 		events.DisplayEvents(false)
+		maps.HideNextMapButton()
 	end, nil, nil, "mapMode")
 
 	helpers.CreateSkinnedCheckbox("ShowEventsCheckbox", satNavWindow, "Events", 30+150, 250, false, function(checked)
 		ships.DisplayShips(false)
 		events.DisplayEvents(true)
+		maps.HideNextMapButton()
 	end, nil, nil, "mapMode")
 
 	-- Register update loop
@@ -483,6 +522,7 @@ local function OnUnload()
 	mapRenderer.cleanup()
 	gps.clearTarget()
 	ships.HideNextShipButton()
+	maps.HideNextMapButton()
 
 	-- Clean up windows
 	if satNavWindow ~= nil then 
