@@ -25,7 +25,9 @@ local defaultSettings = {
     OpenDemoAddButtonY = 300,
     DrawDemosInNextHour = true,
     OpenDemoWindowX = 500,
-    OpenDemoWindowY = 300
+    OpenDemoWindowY = 300,
+    OpenDemoAlertWindowX = 500,
+    OpenDemoAlertWindowY = 300,
 }
 
 function  WorldSatNavSettings.Is(key, value)

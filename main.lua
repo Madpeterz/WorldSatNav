@@ -31,6 +31,7 @@ local overlayWnd = nil
 local gotoWindow = nil
 local demoAddButton = nil
 local demoWindow = nil
+local demoWindowAlert = nil
 TRACK_WINDOW = nil
 local lastUpdate = 0
 
@@ -148,6 +149,9 @@ local function toggleSettingsVisableZoom()
 	helpers.ToggleCheckboxVisable("EnableWorldEvents", not newMode)
 	helpers.ToggleCheckboxVisable("OpenRealMap", not newMode)
 	helpers.ToggleCheckboxVisable("EnableLocationOutput", not newMode)
+	helpers.ToggleCheckboxVisable("EnableAlertDemo", not newMode)
+	helpers.ToggleCheckboxVisable("showDemoCreatePlus", not newMode)
+	helpers.ToggleCheckboxVisable("DrawDemosInNextHour", not newMode)
 end
 
 local function ZoomMapControls(mapX, mapY)
@@ -333,6 +337,91 @@ local function updateTrackingData()
 	TRACK_WINDOW.distanceLabel.style:SetFontSize(60)
 end
 
+local function DEMO_ALERT_TOGGLE(demoentry)
+	if demoWindowAlert == nil then 
+		helpers.DevLog("Demo alert window not initialized yet")
+		return
+	end
+	demoWindowAlert.targetInfo = demoentry
+	if demoWindowAlert:IsVisible() == false and demoWindowAlert.targetInfo ~= nil then
+		helpers.DevLog("Showing demo alert for demo starting at " .. tostring(demoentry.startat))
+		demoWindowAlert.remainingSeconds = math.max(0, (demoentry.startat or 0) - helpers.GetCurrentTimestamp())
+		demoWindowAlert.elapsedSinceStartSeconds = math.max(0, helpers.GetCurrentTimestamp() - (demoentry.startat or 0))
+		demoWindowAlert:Show(true)
+		local x, y = coordinates.getMapDrawPoint(
+			demoentry.longitudeDir, demoentry.latitudeDir,
+			demoentry.longitudeDeg or 0, demoentry.longitudeMin or 0, demoentry.longitudeSec or 0,
+			demoentry.latitudeDeg or 0, demoentry.latitudeMin or 0, demoentry.latitudeSec or 0
+		)
+		local regionname = shapes.getShapeAt(x, y) or "[?]"
+		regionname = regionname:match("/(.+)") or regionname
+		demoWindowAlert.regionLabel:SetText(regionname)
+		demoWindowAlert.ownerLabel:SetText(demoentry.ownername or "[?]")
+		demoWindowAlert.buildingLabel:SetText(demoentry.buildingname or "[?]")
+		demoWindowAlert.timetostart:SetText("[?]")
+	else
+		demoWindowAlert.remainingSeconds = nil
+		demoWindowAlert.elapsedSinceStartSeconds = nil
+		demoWindowAlert:Show(false)
+	end
+end
+
+local function DEMO_ALERT_TRIGGER_CHECK()
+	if demoWindowAlert == nil or settings.Get("EnableAlertDemo") == false or demoWindowAlert.targetInfo ~= nil then 
+		return
+	end
+	local targetInfo = demos.getNextAlert()
+	if targetInfo ~= nil then
+		helpers.DevLog("Triggering demo alert for demo starting at " .. tostring(targetInfo.startat))
+		DEMO_ALERT_TOGGLE(targetInfo)
+	end
+end
+
+local function DEMO_ALERT_UPDATE_TIME(dt)
+	if demoWindowAlert == nil or demoWindowAlert.targetInfo == nil then 
+		return
+	end
+	if not demoWindowAlert:IsVisible() then
+		return
+	end
+	local deltaSeconds = 0
+	if type(dt) == "number" and dt > 0 then
+		deltaSeconds = dt / 1000
+	end
+
+	if type(demoWindowAlert.remainingSeconds) ~= "number" then
+		demoWindowAlert.remainingSeconds = math.max(0, (demoWindowAlert.targetInfo.startat or 0) - helpers.GetCurrentTimestamp())
+	end
+	if type(demoWindowAlert.elapsedSinceStartSeconds) ~= "number" then
+		demoWindowAlert.elapsedSinceStartSeconds = math.max(0, helpers.GetCurrentTimestamp() - (demoWindowAlert.targetInfo.startat or 0))
+	end
+
+	if demoWindowAlert.remainingSeconds > 0 then
+		demoWindowAlert.remainingSeconds = math.max(0, demoWindowAlert.remainingSeconds - deltaSeconds)
+	else
+		demoWindowAlert.elapsedSinceStartSeconds = demoWindowAlert.elapsedSinceStartSeconds + deltaSeconds
+	end
+
+	local secsRemaining = demoWindowAlert.remainingSeconds
+	local setText = "[?]"
+	if secsRemaining <= 0 then
+		if demoWindowAlert.elapsedSinceStartSeconds >= (60 * 30) then
+			DEMO_ALERT_TOGGLE(nil)
+			api.Log:Info("Demo event ended, closing alert")
+			return
+		end
+		setText = "Now"
+	else
+		local displayRemaining = math.max(0, math.ceil(secsRemaining))
+		local mins = math.floor(displayRemaining / 60)
+		local secs = displayRemaining % 60
+		setText = string.format("%d:%02d", mins, secs)
+	end
+	if setText ~= demoWindowAlert.timetostart:GetText() then
+		demoWindowAlert.timetostart:SetText(setText)
+	end
+end
+
 function OPEN_GOTO_WINDOW()
 
 end
@@ -360,6 +449,8 @@ end
 
 -- Update loop
 local function onUpdate(dt)
+	helpers.AdvanceCurrentTimestamp(dt)
+
 	-- Update flash animation on every frame (needs to run at frame rate)
 	if settings.Get("EnableLocationOutput") then
 		shareddata.onUpdate(dt)
@@ -430,6 +521,8 @@ local function onUpdate(dt)
 		return
 	end
 	lastUpdate = 0
+	DEMO_ALERT_UPDATE_TIME(dt+constants.timing.updateRate)
+	DEMO_ALERT_TRIGGER_CHECK()
 	
 	-- Update bag overlays if active
 	if bagOverlay.isActive() then
@@ -443,6 +536,63 @@ local function onUpdate(dt)
 	end
 end
 
+local function DEMO_WINDOW_TOGGLE()
+	if demoWindow == nil then 
+		helpers.DevLog("Demo window not initialized yet")
+		return
+	end
+	demoWindow:Show(not demoWindow:IsVisible())
+	if demoWindow:IsVisible() then
+		demoWindow.regionnameInput:SetText("")
+		demoWindow.ownernameInput:SetText("")
+		helpers.SelectComboBoxByText(demoWindow.buildingnameInput, "Unknown", "Unknown")
+		demoWindow.dateinput:SetText("")
+		demoWindow.timeinput:SetText("")
+	end
+end
+
+local function redrawDemos()
+	if demos.InDemoMode() then
+		ships.DisplayShips(false)
+		demos.DisplayDemos(true)
+		events.DisplayEvents(false)
+		maps.HideNextMapButton()
+	end
+end
+
+local function DEMO_WINDOW_CREATE()
+	if demoWindow == nil then 
+		helpers.DevLog("Demo window not initialized yet")
+		return
+	end
+	helpers.DevLog("Creating demo with input data")
+	local regionname = demoWindow.regionnameInput:GetText() or "Unknown"
+	local ownername = demoWindow.ownernameInput:GetText() or "Unknown"
+	local buildingname = helpers.getComboBoxValue(demoWindow.buildingnameInput, "Unknown")
+	local date = demoWindow.dateinput:GetText() or "Unknown"
+	local time = demoWindow.timeinput:GetText() or "Unknown"
+	if buildingname == "Unknown" or ownername == "Unknown" or regionname == "Unknown" then
+		api.Log:Info("SatNav: Invalid region, owner, or building input for demo creation")
+		return
+	end
+	if date == "Unknown" or time == "Unknown" then
+		api.Log:Info("SatNav: Invalid date or time input for demo creation")
+		return
+	end
+	local timestamp, parseError = helpers.ParseDateTimeToUnixtime(date, time)
+	if timestamp == nil then
+		api.Log:Info("SatNav: " .. tostring(parseError))
+		return
+	end
+
+	api.Log:Info(string.format("SatNav: Creating demo - Region: %s, Owner: %s, Building: %s, Date: %s, Time: %s", regionname, ownername, buildingname, date, time))
+	if not demos.CreateDemo(regionname, ownername, buildingname, date, time, timestamp) then
+		api.Log:Info("SatNav: Failed to create demo entry.")
+	end
+	DEMO_WINDOW_TOGGLE()
+	redrawDemos()
+end
+
 local function DEMO_WINDOW_AUTO()
 	if demoWindow == nil then 
 		helpers.DevLog("Demo window not initialized yet")
@@ -453,7 +603,6 @@ local function DEMO_WINDOW_AUTO()
 		helpers.DevLog("DEMO_WINDOW_AUTO: No target selected")
 		return
 	end
-	local targetname = api.Unit:GetUnitNameById(unitid)
 	local targetpos = gps.GetCurrentPosition()
 	local targetdetails = api.Unit:GetUnitInfoById(unitid)
 	if targetdetails.type ~= "housing" then
@@ -476,20 +625,7 @@ local function DEMO_WINDOW_AUTO()
 	api.Log:Info(string.format("SatNav: Auto-filled demo info - Region: %s, Owner: %s, Building: %s", regionname, ownername, buildingname))
 end
 
-local function DEMO_WINDOW_TOGGLE()
-	if demoWindow == nil then 
-		helpers.DevLog("Demo window not initialized yet")
-		return
-	end
-	demoWindow:Show(not demoWindow:IsVisible())
-	if demoWindow:IsVisible() then
-		demoWindow.regionnameInput:SetText("")
-		demoWindow.ownernameInput:SetText("")
-		helpers.SelectComboBoxByText(demoWindow.buildingnameInput, "Unknown", "Unknown")
-		demoWindow.dateinput:SetText("")
-		demoWindow.timeinput:SetText("")
-	end
-end
+
 
 GOTO_TARGET_TEXT = ""
 local function OPEN_GOTO_WINDOW()
@@ -559,6 +695,19 @@ local function CLOSE_GOTO_WINDOW()
 	end
 end
 
+local function DEMO_ALERT_STARTTRACK()
+	if demoWindowAlert == nil then 
+		helpers.DevLog("Demo alert window not initialized yet")
+		return
+	end
+	local targetInfo = demoWindowAlert.targetInfo
+	if targetInfo == nil then
+		helpers.DevLog("No target info set for demo alert tracking")
+		return
+	end
+	START_MAP_TRACKING(targetInfo, true)
+end
+
 -- Addon initialization
 local function OnLoad()
 	-- Load settings
@@ -569,7 +718,8 @@ local function OnLoad()
 	overlayWnd = uiWindows.createOverlayButton(TOGGLE_MAIN_WINDOW)
 	gotoWindow = uiWindows.createGotoWindow()
 	demoAddButton = uiWindows.createDemoPlusButton(DEMO_WINDOW_TOGGLE)
-	demoWindow = uiWindows.createDemoWindow(DEMO_WINDOW_TOGGLE, DEMO_WINDOW_AUTO)
+	demoWindow = uiWindows.createDemoWindow(DEMO_WINDOW_TOGGLE, DEMO_WINDOW_AUTO, DEMO_WINDOW_CREATE)
+	demoWindowAlert = uiWindows.createDemoAlertWindow(DEMO_ALERT_TOGGLE, DEMO_ALERT_STARTTRACK)
 	-- Set up OnClose handler for main window
 	function satNavWindow:OnClose()
 		TOGGLE_MAIN_WINDOW()
@@ -637,7 +787,7 @@ local function OnLoad()
 	end)
 	helpers.CreateSkinnedCheckbox("DrawDemosInNextHour", satNavWindow, "Show Demos in Next Hour", 65, 205, settings.Get("DrawDemosInNextHour"), function(checked)
 		settings.Update("DrawDemosInNextHour", checked)
-		demoAddButton:Show(checked)
+		redrawDemos()
 	end)
 
 	
@@ -736,6 +886,11 @@ local function OnUnload()
 		demoWindow:Show(false)
 		api.Interface:Free(demoWindow)
 		demoWindow = nil
+	end
+	if demoWindowAlert ~= nil then 
+		demoWindowAlert:Show(false)
+		api.Interface:Free(demoWindowAlert)
+		demoWindowAlert = nil
 	end
 end
 

@@ -9,7 +9,61 @@ local settings = require("WorldSatNav/settings")
 local coordinates = require("WorldSatNav/coordinates")
 local UIWindows = {}
 
-function UIWindows.createDemoWindow(onCloseCallback, OnAutoButtonClick)
+function UIWindows.createDemoAlertWindow(onCloseCallback, onTrackingButtonClickCallback)
+	local window = api.Interface:CreateEmptyWindow("DEMO_ALERT_WINDOW")
+	window.targetInfo = nil
+	window:AddAnchor("TOPLEFT", "UIParent", settings.Get("OpenDemoAlertWindowX"), settings.Get("OpenDemoAlertWindowY"))
+	window:SetExtent(300, 258)
+	window:Show(false)
+	-- UI elements
+	window.regionLabel = helpers.createLabel("regionLabel", window, "[?]", 103, 47, 12, true, FONT_COLOR.WHITE)
+	window.buildingLabel = helpers.createLabel("ownerLabel", window, "[?]", 103, 75, 12, true, FONT_COLOR.WHITE)
+	window.ownerLabel = helpers.createLabel("buildingLabel", window, "[?]", 103, 102, 12, true, FONT_COLOR.WHITE)
+	window.timetostart = helpers.createLabel("timetostart", window, "[?]", 129, 156, 12, true, FONT_COLOR.WHITE)
+
+	-- background
+	local background = window:CreateImageDrawable("demoalert", "background")
+	background:AddAnchor("TOPLEFT", window, 0, 0)
+	background:SetExtent(300, 258)
+	background:SetTexture(api.baseDir .. "/WorldSatNav/images/alert.png")
+	window.background = background
+
+	helpers.makeWindowDraggable(window, window, "OpenDemoAlertWindowX", "OpenDemoAlertWindowY")
+
+	-- tracking button
+	local overlayAlertTrackingButton = window:CreateChildWidget("button", "overlayAlertTrackingButton", 0, true)
+	overlayAlertTrackingButton:AddAnchor("TOPLEFT", window, 47, 195)
+	overlayAlertTrackingButton:SetExtent(98, 37)
+	overlayAlertTrackingButton:Show(true)
+	overlayAlertTrackingButton:Enable(true)
+	overlayAlertTrackingButton:Raise()
+	function overlayAlertTrackingButton:OnClick()
+		helpers.DevLog("Tracking button clicked in demo alert window")
+		if onTrackingButtonClickCallback then
+			onTrackingButtonClickCallback()
+		end
+	end
+	overlayAlertTrackingButton:SetHandler("OnClick", overlayAlertTrackingButton.OnClick)
+
+	-- Close button
+	local overlayCloseButton = window:CreateChildWidget("button", "overlayCloseButton", 0, true)
+	overlayCloseButton:AddAnchor("TOPLEFT", window, 153, 195)
+	overlayCloseButton:SetExtent(98, 35)
+	overlayCloseButton:Show(true)
+	overlayCloseButton:Enable(true)
+	overlayCloseButton:Raise()
+	function overlayCloseButton:OnClick()
+		helpers.DevLog("Close button clicked in demo alert window")
+		if onCloseCallback then
+			onCloseCallback()
+		end
+	end
+	overlayCloseButton:SetHandler("OnClick", overlayCloseButton.OnClick)
+
+	return window
+end
+
+function UIWindows.createDemoWindow(onCloseCallback, OnAutoButtonClickCallback, OnCreateButtonClickCallback)
 	local window = api.Interface:CreateEmptyWindow("DEMO_WINDOW")
 	window:AddAnchor("TOPLEFT", "UIParent", settings.Get("OpenDemoWindowX"), settings.Get("OpenDemoWindowY"))
 	window:SetExtent(569, 569)
@@ -24,6 +78,22 @@ function UIWindows.createDemoWindow(onCloseCallback, OnAutoButtonClick)
 
 	helpers.makeWindowDraggable(window, window, "OpenDemoWindowX", "OpenDemoWindowY")
 
+	-- create button
+	local overlayCreateButton = window:CreateChildWidget("button", "overlayCreateButton", 0, true)
+	overlayCreateButton:AddAnchor("TOPLEFT", window, 95, 418)
+	overlayCreateButton:SetExtent(135, 48)
+	overlayCreateButton:Show(true)
+	overlayCreateButton:Enable(true)
+	overlayCreateButton:Raise()
+	function overlayCreateButton:OnClick()
+		helpers.DevLog("Create button clicked")
+		if OnCreateButtonClickCallback then
+			helpers.DevLog("Calling OnCreateButtonClick callback")
+			OnCreateButtonClickCallback()
+		end
+	end
+	overlayCreateButton:SetHandler("OnClick", overlayCreateButton.OnClick)
+
 	-- auto button
 	local overlayAutoButton = window:CreateChildWidget("button", "overlayAutoButton", 0, true)
 	overlayAutoButton:AddAnchor("TOPLEFT", window, 336, 418)
@@ -33,9 +103,9 @@ function UIWindows.createDemoWindow(onCloseCallback, OnAutoButtonClick)
 	overlayAutoButton:Raise()
 	function overlayAutoButton:OnClick()
 		helpers.DevLog("Auto button clicked")
-		if OnAutoButtonClick then
+		if OnAutoButtonClickCallback then
 			helpers.DevLog("Calling OnAutoButtonClick callback")
-			OnAutoButtonClick()
+			OnAutoButtonClickCallback()
 		end
 	end
 	overlayAutoButton:SetHandler("OnClick", overlayAutoButton.OnClick)
