@@ -15,7 +15,17 @@ local defaultSettings = {
     EnableWorldEvents = true,
     WorldEventsKeptFor = 5, -- in minutes, how long to keep world events in the list
     OpenRealMap = true,
-    trackingMode = "guide"
+    trackingMode = "guide",
+    EnableLocationOutput = false,
+    LocationOutputRateLimit = 1000, -- in milliseconds, how often to output player location
+    LocationOutputFile = "location.dat",
+    showDemoCreatePlus = false,
+    EnableAlertDemo = true,
+    OpenDemoAddButtonX = 300,
+    OpenDemoAddButtonY = 300,
+    DrawDemosInNextHour = true,
+    OpenDemoWindowX = 500,
+    OpenDemoWindowY = 300
 }
 
 function  WorldSatNavSettings.Is(key, value)

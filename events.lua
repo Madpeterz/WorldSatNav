@@ -2,6 +2,7 @@ local settings = require("WorldSatNav/settings")
 local api = require("api")
 local mapRenderer = require("WorldSatNav/map_renderer")
 local constants = require("WorldSatNav/constants")
+local helpers = require("WorldSatNav/helpers")
 
 local events = {}
 
@@ -127,9 +128,7 @@ function events.ClearOldEvents()
     for i = #storedEvents, 1, -1 do
         local dif = currentTime - storedEvents[i].timestamp
         if dif > keptForSeconds then
-            if constants.DEV_MODE then
-                api.Log:Info("WorldSatNav: Removing old event of type aged out event "..dif.." secs over: '" .. storedEvents[i].type .. "' from " .. storedEvents[i].timestamp)
-            end
+            helpers.DevLog("WorldSatNav: Removing old event of type aged out event "..dif.." secs over: '" .. storedEvents[i].type .. "' from " .. storedEvents[i].timestamp)
             table.remove(storedEvents, i)
         end
     end
@@ -145,9 +144,7 @@ end
 
 function events.WorldMessageProcessorChat(event, channel, color, status, from, message, unsure1, unsure2, unsure3)
     if(settings.Get("EnableWorldEvents") == false) then
-        if constants.DEV_MODE then
-            api.Log:Info("WorldSatNav: Chat events are disabled in settings, ignoring message")
-        end
+        helpers.DevLog("WorldSatNav: Chat events are disabled in settings, ignoring message")
         return
     end
     local skipChannels = {-4, -3, 6, 14, 7, 9, 5, 10, 4, 0, 1, 3, 2, -2, 11}
@@ -171,7 +168,7 @@ function events.WorldMessageProcessorChat(event, channel, color, status, from, m
         return -- Ignore specified channels
     end
     if constants.DEV_MODE then
-        api.Log:Info("WorldSatNav: Processing event: " .. event.."")
+        helpers.DevLog("WorldSatNav: Processing event: " .. event.."")
         api.File:Write(""..event.."="..api.Time:GetLocalTime()..".message.log", {
             channel = channel,
             color = color,
@@ -187,9 +184,7 @@ end
 
 function events.WorldMessageProcessor(event, message, iconKey, sextants, info)
     if(settings.Get("EnableWorldEvents") == false) then
-        if constants.DEV_MODE then
-            api.Log:Info("WorldSatNav: World events are disabled in settings, ignoring message")
-        end
+        helpers.DevLog("WorldSatNav: World events are disabled in settings, ignoring message")
         return
     end
     if event ~= "WORLD_MESSAGE" then
@@ -197,7 +192,7 @@ function events.WorldMessageProcessor(event, message, iconKey, sextants, info)
         return
     end
     if constants.DEV_MODE then
-        api.Log:Info("WorldSatNav: Processing event: " .. event.."")
+        helpers.DevLog("WorldSatNav: Processing event: " .. event.."")
         api.File:Write(""..event.."="..api.Time:GetLocalTime()..".message.log", {
             message = message,
             iconKey = iconKey,
@@ -208,9 +203,7 @@ function events.WorldMessageProcessor(event, message, iconKey, sextants, info)
     events.ClearOldEvents()
     local cordsResult = events.FindCordsInMessage(message)
     if cordsResult == false then
-        if constants.DEV_MODE then
-            api.Log:Info("WorldSatNav: No coordinates found in message: " .. message)
-        end
+        helpers.DevLog("WorldSatNav: No coordinates found in message: " .. message)
         return
     end
     local eventMatched = false
@@ -230,9 +223,7 @@ function events.WorldMessageProcessor(event, message, iconKey, sextants, info)
                 type = eventType,
                 timestamp = api.Time:GetLocalTime()
             }
-            if constants.DEV_MODE then
-                api.Log:Info("WorldSatNav: Detected event '" .. eventType .. "' in message: " .. message)
-            end
+            helpers.DevLog("WorldSatNav: Detected event '" .. eventType .. "' in message: " .. message)
             table.insert(storedEvents, locData)
             eventMatched = true
             if EnableAutoUpdatesToMap then
@@ -241,8 +232,8 @@ function events.WorldMessageProcessor(event, message, iconKey, sextants, info)
             break
         end
     end
-    if not eventMatched and constants.DEV_MODE then
-        api.Log:Info("WorldSatNav: No event type matched for message: " .. message)
+    if not eventMatched then
+        helpers.DevLog("WorldSatNav: No event type matched for message: " .. message)
     end
 end
 

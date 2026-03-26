@@ -19,10 +19,17 @@
 - Crates, Delphinad Ghostships, Perdita, Leviathan, Sunfish, Warehouse Raids and Warehouse Unlocks
 - events will remain on the map for 5 mins, clicking on it will take you to it
 
-# Tracking a Location
+# Tracking a Location (Guide mode)
 
 Currently player rotation is not supported by the API, so a makeshift version based on multiple
 location reads is used. Start moving to get a direction indicator.
+
+# Shared data
+
+if LocationOutput is enabled
+the players sextent cords are written to file, allowing addons not in game
+to be able to get your current location. helpfull for other apps like my WIP
+wandering app to show my movement over time so I can create heatmaps.
 
 # Zoom in
 

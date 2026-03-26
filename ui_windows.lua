@@ -9,6 +9,123 @@ local settings = require("WorldSatNav/settings")
 local coordinates = require("WorldSatNav/coordinates")
 local UIWindows = {}
 
+function UIWindows.createDemoWindow(onCloseCallback, OnAutoButtonClick)
+	local window = api.Interface:CreateEmptyWindow("DEMO_WINDOW")
+	window:AddAnchor("TOPLEFT", "UIParent", settings.Get("OpenDemoWindowX"), settings.Get("OpenDemoWindowY"))
+	window:SetExtent(569, 569)
+	window:Show(false)
+
+	-- background
+	local background = window:CreateImageDrawable("yesbackground", "background")
+	background:AddAnchor("TOPLEFT", window, 0, 0)
+	background:SetExtent(569, 569)
+	background:SetTexture(api.baseDir .. "/WorldSatNav/images/demowindow.png")
+	window.background = background
+
+	helpers.makeWindowDraggable(window, window, "OpenDemoWindowX", "OpenDemoWindowY")
+
+	-- auto button
+	local overlayAutoButton = window:CreateChildWidget("button", "overlayAutoButton", 0, true)
+	overlayAutoButton:AddAnchor("TOPLEFT", window, 336, 418)
+	overlayAutoButton:SetExtent(135, 48)
+	overlayAutoButton:Show(true)
+	overlayAutoButton:Enable(true)
+	overlayAutoButton:Raise()
+	function overlayAutoButton:OnClick()
+		helpers.DevLog("Auto button clicked")
+		if OnAutoButtonClick then
+			helpers.DevLog("Calling OnAutoButtonClick callback")
+			OnAutoButtonClick()
+		end
+	end
+	overlayAutoButton:SetHandler("OnClick", overlayAutoButton.OnClick)
+
+	-- Close button
+	local overlayCloseButton = window:CreateChildWidget("button", "overlayCloseButton", 0, true)
+	overlayCloseButton:AddAnchor("TOPLEFT", window, 23, 34)
+	overlayCloseButton:SetExtent(58, 60)
+	overlayCloseButton:Show(true)
+	overlayCloseButton:Enable(true)
+	overlayCloseButton:Raise()
+	function overlayCloseButton:OnClick()
+		if onCloseCallback then
+			onCloseCallback()
+		end
+	end
+	overlayCloseButton:SetHandler("OnClick", overlayCloseButton.OnClick)
+
+	-- inputs
+	local selectedfontcolor = FONT_COLOR.WHITE
+	window.regionnameInput = helpers.createTextInput("regionnameInput", window, 165, 112, 306, 29, "Region name for demo", 100, nil, function(text)
+		window.regionnameInput.text = text
+	end,true,selectedfontcolor)
+	window.ownernameInput = helpers.createTextInput("ownernameInput", window, 165, 226, 306, 29, "Owner name for demo", 100, nil, function(text)
+		window.ownernameInput.text = text
+	end,true,selectedfontcolor)
+	window.buildingnameInput = helpers.CreateComboBox(window, helpers.GetBuildingNames(), 250, 168,300, 29, true, selectedfontcolor, "Unknown")
+	local todaysdate = helpers.getTodayDateText()
+	window.dateinput = helpers.createTextInput("dateinput", window, 154, 286, 299, 29, todaysdate, 100, nil, function(text)
+		window.dateinput.text = text
+	end,true,selectedfontcolor)
+	window.timeinput = helpers.createTextInput("timeinput", window, 154, 342, 299, 29, "HH:MM", 100, nil, function(text)
+		window.timeinput.text = text
+	end,true,selectedfontcolor)
+
+
+	return window
+end
+
+
+-- Create the demo add button
+function UIWindows.createDemoPlusButton(onClickCallback)
+	local overlayWnd = api.Interface:CreateEmptyWindow("overlayDemoPlus", "UIParent")
+	overlayWnd:SetExtent(64, 70)
+	overlayWnd:AddAnchor("TOPLEFT", "UIParent", settings.Get("OpenDemoAddButtonX"), settings.Get("OpenDemoAddButtonY"))
+	overlayWnd.bg = overlayWnd:CreateImageDrawable("bg", "background")
+	overlayWnd.bg:SetTexture(api.baseDir .. "/WorldSatNav/images/demo_add.png")
+	overlayWnd.bg:AddAnchor("TOPLEFT", overlayWnd, 0, 0)
+	overlayWnd.bg:SetExtent(64, 70)
+	overlayWnd.bg:Show(true)
+	overlayWnd:Show(settings.Get("showDemoCreatePlus"))
+	helpers.makeWindowDraggable(overlayWnd, overlayWnd, "OpenDemoAddButtonX", "OpenDemoAddButtonY")
+	overlayWnd:Lower()
+
+	-- Drag events for overlay button
+	-- Click handler
+	local clickBtn = overlayWnd:CreateChildWidget("button", "clickBtn", 0, true)
+	clickBtn:AddAnchor("TOPLEFT", overlayWnd, 0, 0)
+	clickBtn:AddAnchor("BOTTOMRIGHT", overlayWnd, 0, 0)
+	clickBtn:Show(true)
+	clickBtn:Enable(true)
+	clickBtn:SetSounds("store_drain")
+
+
+	helpers.makeWindowDraggable(clickBtn, overlayWnd, "OpenDemoAddButtonX", "OpenDemoAddButtonY")
+
+	function clickBtn:HoverStart()
+		local mouseX, mouseY = overlayWnd:GetEffectiveOffset()
+		api.Interface:SetTooltipOnPos("Click to toggle overlay", overlayWnd, mouseX + overlayWnd:GetWidth(), mouseY)
+		overlayWnd.bg:SetTexture(api.baseDir .. "/WorldSatNav/images/demo_add_hover.png")
+	end
+
+	function clickBtn:HoverEnd()
+		api.Interface:SetTooltipOnPos("", overlayWnd, 0, 0)
+		overlayWnd.bg:SetTexture(api.baseDir .. "/WorldSatNav/images/demo_add.png")
+	end
+	clickBtn:SetHandler("OnEnter", clickBtn.HoverStart)
+	clickBtn:SetHandler("OnLeave", clickBtn.HoverEnd)
+
+	function clickBtn:OnClick()
+		if onClickCallback then
+			onClickCallback()
+		end
+	end
+	
+	clickBtn:SetHandler("OnClick", clickBtn.OnClick)
+
+	return overlayWnd
+end
+
 -- Create the GPS tracking window (HUD overlay showing distance/bearing)
 function UIWindows.createTRACK_WINDOW(onCloseCallback)
 	local TRACK_WINDOW = api.Interface:CreateEmptyWindow("TRACK_WINDOW")
@@ -19,7 +136,7 @@ function UIWindows.createTRACK_WINDOW(onCloseCallback)
 	TRACK_WINDOW.bg:SetColor(bg[1], bg[2], bg[3], bg[4])
 	TRACK_WINDOW.bg:AddAnchor("TOPLEFT", TRACK_WINDOW, -100, 0)
 	TRACK_WINDOW.bg:AddAnchor("BOTTOMRIGHT", TRACK_WINDOW, 0, 0)
-	TRACK_WINDOW:SetExtent(200, 150)
+	TRACK_WINDOW:SetExtent(250, 150)
 	TRACK_WINDOW:Show(false)
 
 	TRACK_WINDOW.arrow = TRACK_WINDOW:CreateImageDrawable("trackarrow", "overlay")
@@ -70,8 +187,21 @@ function UIWindows.createTRACK_WINDOW(onCloseCallback)
 	return TRACK_WINDOW
 end
 
+function UIWindows.createGotoWindow()
+	local window = api.Interface:CreateWindow("GOTO_WINDOW")
+	window:AddAnchor("TOPLEFT", "UIParent", settings.Get("MainWindowX")+250, settings.Get("MainWindowY")+350)
+	window:SetExtent(500, 125)
+	window:Show(false)
+	window.textinput = helpers.createTextInput("textinput", window, 75, 10, 180, 30, "00°00'00\" (NS), 00°00'00\" (EW)", 100, "Destination", function(text)
+		GOTO_TARGET_TEXT = text
+		helpers.DevLog("gotoTarget set to " .. tostring(GOTO_TARGET_TEXT))
+	end)
+	window.submit = helpers.createButton("submitgoto", window, "Go", 122, 90)
+	return window
+end
+
 -- Create the main SatNav window with map display
-function UIWindows.createMainWindow(onMapClickCallback, onCloseCallback)
+function UIWindows.createMainWindow(onMapClickCallback, onCloseCallback, onGotoCallback)
 
 
 	local mapOffsetX = 15
@@ -139,7 +269,7 @@ function UIWindows.createMainWindow(onMapClickCallback, onCloseCallback)
 	local overlay = window:CreateImageDrawable("yes", "overlay")
 	overlay:AddAnchor("TOPLEFT", window, 0, 0)
 	overlay:SetExtent(819, 776)
-	overlay:SetTexture(api.baseDir .. "/WorldSatNav/images/overlay4.png")
+	overlay:SetTexture(api.baseDir .. "/WorldSatNav/images/overlay8.png")
 	window.overlay = overlay
 
 	if constants.DEV_MODE then
@@ -182,6 +312,7 @@ function UIWindows.createMainWindow(onMapClickCallback, onCloseCallback)
 	overlayCloseButton:SetExtent(46, 59)
 	overlayCloseButton:Show(true)
 	overlayCloseButton:Enable(true)
+	overlayCloseButton:Raise()
 	
 	function overlayCloseButton:OnClick()
 		if onCloseCallback then
@@ -190,6 +321,22 @@ function UIWindows.createMainWindow(onMapClickCallback, onCloseCallback)
 	end
 	
 	overlayCloseButton:SetHandler("OnClick", overlayCloseButton.OnClick)
+
+
+	local overlayGotoButton = window:CreateChildWidget("button", "overlayGotoButton", 0, true)
+	overlayGotoButton:AddAnchor("TOPLEFT", window, 726, 724)
+	overlayGotoButton:SetExtent(89, 39)
+	overlayGotoButton:Show(true)
+	overlayGotoButton:Enable(true)
+	overlayGotoButton:Raise()
+	
+	function overlayGotoButton:OnClick()
+		if onGotoCallback then
+			onGotoCallback()
+		end
+	end
+	
+	overlayGotoButton:SetHandler("OnClick", overlayGotoButton.OnClick)
 	return window
 end
 

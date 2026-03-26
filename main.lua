@@ -9,12 +9,14 @@ local mapRenderer = require("WorldSatNav/map_renderer")
 local gps = require("WorldSatNav/gps")
 local uiWindows = require("WorldSatNav/ui_windows")
 local ships = require("WorldSatNav/ships")
+local demos = require("WorldSatNav/demos")
 local settings = require("WorldSatNav/settings")
 local helpers = require("WorldSatNav/helpers")
 local events = require("WorldSatNav/events")
 local regions = require("WorldSatNav/regions")
 local shapes = require("WorldSatNav/shapes")
 local maps = require("WorldSatNav/maps")
+local shareddata = require("WorldSatNav/shareddata")
 
 local WorldSatNav = {
 	name = "WorldSatNav",
@@ -26,6 +28,9 @@ local WorldSatNav = {
 -- Module state
 local satNavWindow = nil
 local overlayWnd = nil
+local gotoWindow = nil
+local demoAddButton = nil
+local demoWindow = nil
 TRACK_WINDOW = nil
 local lastUpdate = 0
 
@@ -35,6 +40,9 @@ local function ReRenderMap()
 	if ships.IsInShipMode() then
 		ships.DisplayShips(true)
 		ships.RestoreNextShipButton()
+		maps.HideNextMapButton()
+	elseif demos.InDemoMode() then
+		demos.DisplayDemos(true)
 		maps.HideNextMapButton()
 	elseif events.InEventsMode() then
 		events.DisplayEvents(true)
@@ -66,6 +74,23 @@ local function getNearestMarker(mapX, mapY)
 		end
 		if closestDistance < 30 and closestMarker then
 			ships.SelectedShipClicked(closestMarker)
+		end
+	elseif demos.InDemoMode() then
+		local dataSource = demos.getDemoData() or {}
+		for _, info in pairs(dataSource) do
+			local xPos, yPos = coordinates.getMapDrawPoint(
+				info.longitudeDir, info.latitudeDir,
+				info.longitudeDeg or 0, info.longitudeMin or 0, info.longitudeSec or 0,
+				info.latitudeDeg or 0, info.latitudeMin or 0, info.latitudeSec or 0
+			)
+			local distance = math.sqrt((xPos - mapX)^2 + (yPos - mapY)^2)
+			if distance < closestDistance then
+				closestDistance = distance
+				closestMarker = info
+			end
+		end
+		if closestDistance < 30 and closestMarker then
+			START_MAP_TRACKING(closestMarker)
 		end
 	elseif events.InEventsMode() then
 		local dataSource = events.getEventData() or {}
@@ -115,15 +140,14 @@ local function toggleSettingsVisableZoom()
 		control:Show(not newMode)
 	end
 	for id, overlay in pairs(helpers.CheckBoxs) do
-		if overlay.radioGroup == "mapMode" then
-			helpers.ToggleCheckboxVisable(id, not newMode)
-		elseif overlay.radioGroup == "trackMode" then
+		if overlay.radioGroup == "trackMode" then
 			helpers.ToggleCheckboxVisable(id, not newMode)
 		end
 	end
 	helpers.ToggleCheckboxVisable("UseTeleportHint", not newMode)
 	helpers.ToggleCheckboxVisable("EnableWorldEvents", not newMode)
 	helpers.ToggleCheckboxVisable("OpenRealMap", not newMode)
+	helpers.ToggleCheckboxVisable("EnableLocationOutput", not newMode)
 end
 
 local function ZoomMapControls(mapX, mapY)
@@ -182,8 +206,12 @@ function START_MAP_TRACKING(itemData, ShowMapMarker)
 		targetType = targetType .. " (" .. counter .. ")"
 	elseif(itemData.isship ~= nil) then
 		targetType = "Ship ".. itemData.index .." (group ".. itemData.group ..")"
+	elseif(itemData.isdemo ~= nil) then
+		targetType = "Building demo"
 	elseif(itemData.isevent ~= nil) then
 		targetType = "Event ".. itemData.type
+	elseif(itemData.iscustom ~= nil) then
+		targetType = "Custom location"
 	end
 	gps.setTarget(itemData, targetType)
 	
@@ -305,12 +333,14 @@ local function updateTrackingData()
 	TRACK_WINDOW.distanceLabel.style:SetFontSize(60)
 end
 
+function OPEN_GOTO_WINDOW()
+
+end
 -- Toggle main window and overlays
 function TOGGLE_MAIN_WINDOW()
 	if satNavWindow == nil then
 		return
-	end
-	
+	end	
 	local showWnd = not satNavWindow:IsVisible()
 	satNavWindow:Show(showWnd)
 	
@@ -331,6 +361,9 @@ end
 -- Update loop
 local function onUpdate(dt)
 	-- Update flash animation on every frame (needs to run at frame rate)
+	if settings.Get("EnableLocationOutput") then
+		shareddata.onUpdate(dt)
+	end
 	if satNavWindow ~= nil and satNavWindow:IsVisible() then
 		local needsRender = false
 		
@@ -390,7 +423,7 @@ local function onUpdate(dt)
 			ReRenderMap()
 		end
 	end
-	
+
 	-- Throttled updates (run every 500ms)
 	lastUpdate = lastUpdate + dt
 	if lastUpdate < constants.timing.updateRate then
@@ -410,15 +443,133 @@ local function onUpdate(dt)
 	end
 end
 
+local function DEMO_WINDOW_AUTO()
+	if demoWindow == nil then 
+		helpers.DevLog("Demo window not initialized yet")
+		return
+	end
+	local unitid = api.Unit:GetUnitId("target")
+	if unitid == nil then
+		helpers.DevLog("DEMO_WINDOW_AUTO: No target selected")
+		return
+	end
+	local targetname = api.Unit:GetUnitNameById(unitid)
+	local targetpos = gps.GetCurrentPosition()
+	local targetdetails = api.Unit:GetUnitInfoById(unitid)
+	if targetdetails.type ~= "housing" then
+		helpers.DevLog("DEMO_WINDOW_AUTO: Target is not a housing unit")
+		return
+	end
+	
+	local ownername = targetdetails.owner_name or "Unknown"
+	local buildingname = targetdetails.name or "Unknown"
+	local x, y = coordinates.getMapDrawPoint(
+		targetpos.longitude, targetpos.latitude,
+		targetpos.deg_long or 0, targetpos.min_long or 0, targetpos.sec_long or 0,
+		targetpos.deg_lat or 0, targetpos.min_lat or 0, targetpos.sec_lat or 0
+	)
+	local regionname = shapes.getShapeAt(x, y) or "Unknown"
+	regionname = regionname:match("/(.+)") or regionname
+	demoWindow.regionnameInput:SetText(regionname)
+	demoWindow.ownernameInput:SetText(ownername)
+	helpers.SelectComboBoxByText(demoWindow.buildingnameInput, buildingname, "Unknown")
+	api.Log:Info(string.format("SatNav: Auto-filled demo info - Region: %s, Owner: %s, Building: %s", regionname, ownername, buildingname))
+end
+
+local function DEMO_WINDOW_TOGGLE()
+	if demoWindow == nil then 
+		helpers.DevLog("Demo window not initialized yet")
+		return
+	end
+	demoWindow:Show(not demoWindow:IsVisible())
+	if demoWindow:IsVisible() then
+		demoWindow.regionnameInput:SetText("")
+		demoWindow.ownernameInput:SetText("")
+		helpers.SelectComboBoxByText(demoWindow.buildingnameInput, "Unknown", "Unknown")
+		demoWindow.dateinput:SetText("")
+		demoWindow.timeinput:SetText("")
+	end
+end
+
+GOTO_TARGET_TEXT = ""
+local function OPEN_GOTO_WINDOW()
+	if gotoWindow == nil then
+		helpers.DevLog("Goto window not initialized yet")
+		return
+	end
+	helpers.DevLog("Opening Goto window")
+	gotoWindow:RemoveAllAnchors()
+	helpers.DevLog("Anchoring Goto window to " .. tostring(settings.Get("MainWindowX")+250) .. ", " .. tostring(settings.Get("MainWindowY")+350))
+	gotoWindow:AddAnchor("TOPLEFT", "UIParent", settings.Get("MainWindowX")+250, settings.Get("MainWindowY")+350)
+	GOTO_TARGET_TEXT = ""
+	gotoWindow.textinput:SetText("")
+	gotoWindow:Show(true)
+	helpers.DevLog("Goto window shown")
+end
+
+local function ParseGotoTargetText(rawText)
+	if rawText == nil then
+		return nil
+	end
+
+	local text = rawText:match("^%s*(.-)%s*$")
+	if text == nil or text == "" then
+		return nil
+	end
+
+	local pattern = "^(%d+)%s*°%s*(%d+)%s*'%s*(%d+)%s*\"%s*([NS])%s*,%s*(%d+)%s*°%s*(%d+)%s*'%s*(%d+)%s*\"%s*([EW])%s*$"
+	local latDeg, latMin, latSec, latDir, longDeg, longMin, longSec, longDir = text:upper():match(pattern)
+	if latDeg == nil then
+		return nil
+	end
+
+	return {
+		latitudeDir = latDir,
+		latitudeDeg = tonumber(latDeg),
+		latitudeMin = tonumber(latMin),
+		latitudeSec = tonumber(latSec),
+		longitudeDir = longDir,
+		longitudeDeg = tonumber(longDeg),
+		longitudeMin = tonumber(longMin),
+		longitudeSec = tonumber(longSec),
+		iscustom = true
+	}
+end
+
+local function CLOSE_GOTO_WINDOW()
+	if gotoWindow == nil then
+		helpers.DevLog("Goto window not initialized yet")
+		return
+	end
+	local inputText = GOTO_TARGET_TEXT
+	if gotoWindow.textinput ~= nil and gotoWindow.textinput.GetText ~= nil then
+		inputText = gotoWindow.textinput:GetText() or inputText
+	end
+	GOTO_TARGET_TEXT = inputText or ""
+	gotoWindow:Show(false)
+	helpers.DevLog("Closing Goto window with text: " .. tostring(GOTO_TARGET_TEXT))
+	if GOTO_TARGET_TEXT ~= "" then
+		local itemData = ParseGotoTargetText(GOTO_TARGET_TEXT)
+		if itemData ~= nil then
+			helpers.DevLog("Parsed GOTO input successfully")
+			START_MAP_TRACKING(itemData, true)
+		else
+			helpers.DevLog("Failed to parse GOTO input")
+		end
+	end
+end
+
 -- Addon initialization
 local function OnLoad()
 	-- Load settings
 	settings.LoadSettings()
 	-- Create windows
 	TRACK_WINDOW = uiWindows.createTRACK_WINDOW(onTrackingWindowClose)
-	satNavWindow = uiWindows.createMainWindow(onMapClick, TOGGLE_MAIN_WINDOW)
+	satNavWindow = uiWindows.createMainWindow(onMapClick, TOGGLE_MAIN_WINDOW, OPEN_GOTO_WINDOW)
 	overlayWnd = uiWindows.createOverlayButton(TOGGLE_MAIN_WINDOW)
-	
+	gotoWindow = uiWindows.createGotoWindow()
+	demoAddButton = uiWindows.createDemoPlusButton(DEMO_WINDOW_TOGGLE)
+	demoWindow = uiWindows.createDemoWindow(DEMO_WINDOW_TOGGLE, DEMO_WINDOW_AUTO)
 	-- Set up OnClose handler for main window
 	function satNavWindow:OnClose()
 		TOGGLE_MAIN_WINDOW()
@@ -430,6 +581,16 @@ local function OnLoad()
 			events.WorldMessageProcessorChat(event,unpack(arg))
 		end
 	end
+	function gotoWindow:OnClose()
+		CLOSE_GOTO_WINDOW()
+	end
+	demoWindow:SetHandler("OnClose", DEMO_WINDOW_TOGGLE)
+	demoWindow:SetHandler("OnCloseByEsc", DEMO_WINDOW_TOGGLE)
+
+	gotoWindow.submit:SetHandler("OnClick", gotoWindow.OnClose)
+	gotoWindow:SetHandler("OnClose", gotoWindow.OnClose)
+	gotoWindow:SetHandler("OnCloseByEsc", gotoWindow.OnClose)
+
 	satNavWindow:SetHandler("OnClose", satNavWindow.OnClose)
 	satNavWindow:SetHandler("OnCloseByEsc", satNavWindow.OnClose)
 	satNavWindow:SetHandler("OnEvent", satNavWindow.EventListener)
@@ -460,54 +621,74 @@ local function OnLoad()
 	helpers.CreateSkinnedCheckbox("EnableWorldEvents", satNavWindow, "World Events", 155, 105, settings.Get("EnableWorldEvents"), function(checked)
 		settings.Update("EnableWorldEvents", checked)
 	end)
-	helpers.CreateSkinnedCheckbox("OpenRealMap", satNavWindow, "Open Real Map", 30, 140, settings.Get("OpenRealMap"), function(checked)
+	helpers.CreateSkinnedCheckbox("OpenRealMap", satNavWindow, "Real Map", 30, 140, settings.Get("OpenRealMap"), function(checked)
 		settings.Update("OpenRealMap", checked)
 	end)
 
-	local mylabel3 = helpers.createLabel("SettingsTextLabel3", satNavWindow, "Tracking", 30, 170, 14)
+	helpers.CreateSkinnedCheckbox("EnableLocationOutput", satNavWindow, "Location Output", 155, 140, settings.Get("EnableLocationOutput"), function(checked)
+		settings.Update("EnableLocationOutput", checked)
+	end)
+	helpers.CreateSkinnedCheckbox("EnableAlertDemo", satNavWindow, "Alert 4 Demo", 30, 175, settings.Get("EnableAlertDemo"), function(checked)
+		settings.Update("EnableAlertDemo", checked)
+	end)
+	helpers.CreateSkinnedCheckbox("showDemoCreatePlus", satNavWindow, "UI Demo +", 155, 175, settings.Get("showDemoCreatePlus"), function(checked)
+		settings.Update("showDemoCreatePlus", checked)
+		demoAddButton:Show(checked)
+	end)
+	helpers.CreateSkinnedCheckbox("DrawDemosInNextHour", satNavWindow, "Show Demos in Next Hour", 65, 205, settings.Get("DrawDemosInNextHour"), function(checked)
+		settings.Update("DrawDemosInNextHour", checked)
+		demoAddButton:Show(checked)
+	end)
+
+	
+
+	local mylabel3 = helpers.createLabel("SettingsTextLabel3", satNavWindow, "Tracking", 30, 227, 14)
 	mylabel3:SetExtent(200, 30)
 	mylabel3.style:SetColor(0, 0, 0, 1)
 	mylabel3:Show(true)
 	table.insert(settingsControls, mylabel3)
 
-	helpers.CreateSkinnedCheckbox("trackModeGuideCheckbox1", satNavWindow, "Guide", 30, 195, settings.Is("trackingMode","guide"), function(checked)
+	helpers.CreateSkinnedCheckbox("trackModeGuideCheckbox1", satNavWindow, "Guide", 30, 252, settings.Is("trackingMode","guide"), function(checked)
 		if checked then
 			settings.Update("trackingMode", "guide")
 		end
 	end, nil, nil, "trackMode")
 	
-	helpers.CreateSkinnedCheckbox("trackModeGuideCheckbox2", satNavWindow, "Compass", 30+75, 195, settings.Is("trackingMode","compass"), function(checked)
+	helpers.CreateSkinnedCheckbox("trackModeGuideCheckbox2", satNavWindow, "Compass", 30+75, 252, settings.Is("trackingMode","compass"), function(checked)
 		if checked then
 			settings.Update("trackingMode", "compass")
 		end
 	end, nil, nil, "trackMode")
 
 
-
-	local mylabel2 = helpers.createLabel("SettingsTextLabel2", satNavWindow, "Mode", 30, 225, 14)
-	mylabel2:SetExtent(200, 30)
-	mylabel2.style:SetColor(0, 0, 0, 1)
-	mylabel2:Show(true)
-	table.insert(settingsControls, mylabel2)
-
-	helpers.CreateSkinnedCheckbox("showMapsCheckbox", satNavWindow, "Maps", 30, 250, true, function(checked)
+	helpers.CreateSkinnedCheckbox("showMapsCheckbox", satNavWindow, "Maps", 375+10, 31, true, function(checked)
 		ships.DisplayShips(false)
+		demos.DisplayDemos(false)
 		events.DisplayEvents(false)
 		mapRenderer.render()
 		maps.RestoreNextMapButton()
-	end, nil, nil, "mapMode")
+	end, nil, nil, "mapMode", "overlay", false)
 
-	helpers.CreateSkinnedCheckbox("showShipCheckbox", satNavWindow, "Ships", 30+75, 250, false, function(checked)
+	helpers.CreateSkinnedCheckbox("showShipCheckbox", satNavWindow, "Ships", 375+75+7+10, 31, false, function(checked)
 		ships.DisplayShips(true)
+		demos.DisplayDemos(false)
 		events.DisplayEvents(false)
 		maps.HideNextMapButton()
-	end, nil, nil, "mapMode")
+	end, nil, nil, "mapMode", "overlay", false)
 
-	helpers.CreateSkinnedCheckbox("ShowEventsCheckbox", satNavWindow, "Events", 30+150, 250, false, function(checked)
+	helpers.CreateSkinnedCheckbox("ShowEventsCheckbox", satNavWindow, "Events", 375+150+14+5+10, 31, false, function(checked)
 		ships.DisplayShips(false)
+		demos.DisplayDemos(false)
 		events.DisplayEvents(true)
 		maps.HideNextMapButton()
-	end, nil, nil, "mapMode")
+	end, nil, nil, "mapMode", "overlay", false)
+
+	helpers.CreateSkinnedCheckbox("ShowDemosCheckbox", satNavWindow, "Demos", 375+225+21+5+10, 31, false, function(checked)
+		ships.DisplayShips(false)
+		demos.DisplayDemos(true)
+		events.DisplayEvents(false)
+		maps.HideNextMapButton()
+	end, nil, nil, "mapMode", "overlay", false)
 
 	-- Register update loop
 	api.On("UPDATE", onUpdate)
@@ -540,6 +721,21 @@ local function OnUnload()
 		TRACK_WINDOW:Show(false)
 		api.Interface:Free(TRACK_WINDOW)
 		TRACK_WINDOW = nil
+	end
+	if gotoWindow ~= nil then 
+		gotoWindow:Show(false)
+		api.Interface:Free(gotoWindow)
+		gotoWindow = nil
+	end
+	if demoAddButton ~= nil then 
+		demoAddButton:Show(false)
+		api.Interface:Free(demoAddButton)
+		demoAddButton = nil
+	end
+	if demoWindow ~= nil then 
+		demoWindow:Show(false)
+		api.Interface:Free(demoWindow)
+		demoWindow = nil
 	end
 end
 
