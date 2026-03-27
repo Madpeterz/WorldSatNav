@@ -757,6 +757,8 @@ local function DEMO_ALERT_STARTTRACK()
 		helpers.DevLog("No target info set for demo alert tracking")
 		return
 	end
+	maps.HideNextMapButton()
+	ships.HideNextShipButton()
 	START_MAP_TRACKING(targetInfo, true)
 end
 
