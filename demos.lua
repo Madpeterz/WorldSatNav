@@ -150,7 +150,7 @@ function demos.getNextAlert()
                 helpers.DevLog("Demo " .. demo.id .. " is upcoming within 5 minutes, returning for alert (" .. mins .. " minutes and " .. secs .. " seconds until start)")
                 demo.hadAlert = true
                 return demo
-            elseif timeUntilDemo >= -(60 * 30) then
+            elseif timeUntilDemo < 0 and timeUntilDemo >= -(60 * 30) then
                 local elapsedSeconds = math.abs(timeUntilDemo)
                 local mins = math.floor(elapsedSeconds / 60)
                 local secs = math.floor(elapsedSeconds % 60)

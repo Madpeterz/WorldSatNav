@@ -418,22 +418,7 @@ local function dateTimeToUnixtime(year, month, day, hour, min, sec)
     if timestamp == nil then
         return nil, errorMessage
     end
-
-    local currentLocalTime = api.Time:GetLocalTime()
-    local currentDateValue = api.Time:TimeToDate(currentLocalTime)
-    local currentYear, currentMonth, currentDay, currentHour, currentMin, currentSec = extractDateParts(currentDateValue)
-
-    if currentYear == nil or currentMonth == nil or currentDay == nil then
-        return timestamp
-    end
-
-    local currentTimestamp = dateTimeToUnixtimeUtcLike(currentYear, currentMonth, currentDay, currentHour or 0, currentMin or 0, currentSec or 0)
-    if currentTimestamp == nil then
-        return timestamp
-    end
-
-    local localOffsetSeconds = currentLocalTime - currentTimestamp
-    return timestamp + localOffsetSeconds
+    return timestamp
 end
 
 function helpers.ParseDateTimeToUnixtime(dateText, timeText)
