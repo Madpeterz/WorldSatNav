@@ -21,7 +21,7 @@ local shareddata = require("WorldSatNav/shareddata")
 local WorldSatNav = {
 	name = "WorldSatNav",
 	author = "Madpeter",
-	version = "1.0.5",
+	version = "1.0.6",
 	desc = "Lets fucking go!"
 }
 

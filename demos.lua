@@ -73,8 +73,8 @@ local function loadDemos()
         helpers.DevLog("Raw demo data entries: " .. tostring(#entries))
     end
     if entries == nil then
-        api.Log:Info("WorldSatNav: Failed to load demo data from " .. demosFile .. "")
-        return false
+        helpers.DevLog("No demo data found at " .. demosFile .. ", starting with empty list")
+        entries = {}
     end
     local nowTime = helpers.GetCurrentTimestamp()
     storedDemos = {}
