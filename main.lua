@@ -21,7 +21,7 @@ local shareddata = require("WorldSatNav/shareddata")
 local WorldSatNav = {
 	name = "WorldSatNav",
 	author = "Madpeter",
-	version = "1.0.4",
+	version = "1.0.5",
 	desc = "Lets fucking go!"
 }
 
@@ -447,6 +447,57 @@ function TOGGLE_MAIN_WINDOW()
 	end
 end
 
+local function DEMO_AUTOHIDE_PLUS()
+	if demoAddButton == nil then 
+		helpers.DevLog("Demo add button not initialized yet")
+		return
+	end
+	if demoWindow == nil then 
+		helpers.DevLog("Demo window not initialized yet")
+		return
+	end
+	if settings.Get("showDemoCreatePlus") == true then
+		local unitid = api.Unit:GetUnitId("target")
+		if unitid == nil then
+			helpers.DevLog("DEMO_WINDOW_AUTO: No target selected")
+			if demoAddButton:IsVisible() then
+				demoAddButton:Show(false)
+			end
+			if demoWindow:IsVisible() then
+				demoWindow:Show(false)
+			end
+			return
+		end
+		local targetpos = gps.GetCurrentPosition()
+		local targetdetails = api.Unit:GetUnitInfoById(unitid)
+		if targetdetails.type ~= "housing" then
+			helpers.DevLog("DEMO_WINDOW_AUTO: Target is not a housing unit")
+			if demoAddButton:IsVisible() then
+				demoAddButton:Show(false)
+			end
+			if demoWindow:IsVisible() then
+				demoWindow:Show(false)
+			end
+			return
+		end
+		local targetpos = gps.GetCurrentPosition()
+		local targetdetails = api.Unit:GetUnitInfoById(unitid)
+		if targetdetails.type ~= "housing" then
+			helpers.DevLog("DEMO_WINDOW_AUTO: Target is not a housing unit")
+			if demoAddButton:IsVisible() then
+				demoAddButton:Show(false)
+			end
+			if demoWindow:IsVisible() then
+				demoWindow:Show(false)
+			end
+			return
+		end
+		if not demoAddButton:IsVisible() then
+			demoAddButton:Show(true)
+		end
+	end
+end
+
 -- Update loop
 local function onUpdate(dt)
 	helpers.AdvanceCurrentTimestamp(dt)
@@ -521,6 +572,7 @@ local function onUpdate(dt)
 		return
 	end
 	lastUpdate = 0
+	DEMO_AUTOHIDE_PLUS()
 	DEMO_ALERT_UPDATE_TIME(dt+constants.timing.updateRate)
 	DEMO_ALERT_TRIGGER_CHECK()
 	
