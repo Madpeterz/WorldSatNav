@@ -74,6 +74,7 @@ local function getNearestMarker(mapX, mapY)
 			end
 		end
 		if closestDistance < 30 and closestMarker then
+			helpers.DevLog("Selected ship at distance " .. tostring(closestDistance))
 			ships.SelectedShipClicked(closestMarker)
 		end
 	elseif demos.InDemoMode() then
@@ -182,6 +183,7 @@ end
 -- Start GPS tracking for a treasure map
 function START_MAP_TRACKING(itemData, ShowMapMarker)
 	if itemData == nil then
+		helpers.DevLog("No item data provided for GPS tracking")
 		return
 	end
 
@@ -209,7 +211,7 @@ function START_MAP_TRACKING(itemData, ShowMapMarker)
 		end)
 		targetType = targetType .. " (" .. counter .. ")"
 	elseif(itemData.isship ~= nil) then
-		targetType = "Ship ".. itemData.index .." (group ".. itemData.group ..")"
+		targetType = "Ship ".. itemData.index ..""
 	elseif(itemData.isdemo ~= nil) then
 		targetType = "Building demo"
 	elseif(itemData.isevent ~= nil) then
@@ -459,7 +461,9 @@ local function DEMO_AUTOHIDE_PLUS()
 	if settings.Get("showDemoCreatePlus") == true then
 		local unitid = api.Unit:GetUnitId("target")
 		if unitid == nil then
-			helpers.DevLog("DEMO_WINDOW_AUTO: No target selected")
+			if demos.InDemoMode() then
+				helpers.DevLog("DEMO_WINDOW_AUTO: No target selected")
+			end
 			if demoAddButton:IsVisible() then
 				demoAddButton:Show(false)
 			end
@@ -754,7 +758,9 @@ local function DEMO_ALERT_STARTTRACK()
 	end
 	local targetInfo = demoWindowAlert.targetInfo
 	if targetInfo == nil then
-		helpers.DevLog("No target info set for demo alert tracking")
+		if demos.InDemoMode() then
+			helpers.DevLog("No target info set for demo alert tracking")
+		end
 		return
 	end
 	maps.HideNextMapButton()

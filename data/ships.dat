@@ -12,9 +12,6 @@
         },
         name = "Wreck",
         timestamp = "1770753729",
-        index = 1,
-        nextindex = 80,
-        group = 3,
     },
     {
         sextant = {
@@ -29,9 +26,6 @@
         },
         name = "Wreck",
         timestamp = "1770754335",
-        index = 2,
-        nextindex = 3,
-        group = 3,
     },
     {
         sextant = {
@@ -46,9 +40,6 @@
         },
         name = "Wreck",
         timestamp = "1770755168",
-        index = 3,
-        nextindex = 9,
-        group = 3,
     },
     {
         sextant = {
@@ -63,9 +54,6 @@
         },
         name = "Wreck",
         timestamp = "1770756223",
-        index = 4,
-        nextindex = 129,
-        group = 2,
     },
     {
         sextant = {
@@ -80,9 +68,6 @@
         },
         name = "Wreck",
         timestamp = "1770756735",
-        index = 5,
-        nextindex = 6,
-        group = 2,
     },
     {
         sextant = {
@@ -97,9 +82,6 @@
         },
         name = "Wreck",
         timestamp = "1770756828",
-        index = 6,
-        nextindex = 19,
-        group = 2,
     },
     {
         sextant = {
@@ -114,9 +96,6 @@
         },
         name = "Wreck",
         timestamp = "1770757168",
-        index = 7,
-        nextindex = 4,
-        group = 2,
     },
     {
         sextant = {
@@ -131,9 +110,6 @@
         },
         name = "Wreck",
         timestamp = "1770757418",
-        index = 8,
-        nextindex = 128,
-        group = 3,
     },
     {
         sextant = {
@@ -148,9 +124,6 @@
         },
         name = "Wreck",
         timestamp = "1770757761",
-        index = 9,
-        nextindex = 8,
-        group = 3,
     },
     {
         sextant = {
@@ -165,9 +138,6 @@
         },
         name = "Wreck",
         timestamp = "1770758046",
-        index = 10,
-        nextindex = 2,
-        group = 3,
     },
     {
         sextant = {
@@ -182,9 +152,6 @@
         },
         name = "Wreck",
         timestamp = "1770759663",
-        index = 11,
-        nextindex = 12,
-        group = 2,
     },
     {
         sextant = {
@@ -199,9 +166,6 @@
         },
         name = "Wreck",
         timestamp = "1770760870",
-        index = 12,
-        nextindex = 7,
-        group = 2,
     },
     {
         sextant = {
@@ -216,9 +180,6 @@
         },
         name = "Wreck",
         timestamp = "1770761227",
-        index = 13,
-        nextindex = 11,
-        group = 2,
     },
     {
         sextant = {
@@ -233,9 +194,6 @@
         },
         name = "Wreck",
         timestamp = "1770761372",
-        index = 14,
-        nextindex = 27,
-        group = 2,
     },
     {
         sextant = {
@@ -250,9 +208,6 @@
         },
         name = "Wreck",
         timestamp = "1770761491",
-        index = 15,
-        nextindex = 23,
-        group = 1,
     },
     {
         sextant = {
@@ -267,9 +222,6 @@
         },
         name = "Wreck",
         timestamp = "1770761651",
-        index = 16,
-        nextindex = 46,
-        group = 1,
     },
     {
         sextant = {
@@ -284,9 +236,6 @@
         },
         name = "Wreck",
         timestamp = "1770761711",
-        index = 17,
-        nextindex = 16,
-        group = 1,
     },
     {
         sextant = {
@@ -301,9 +250,6 @@
         },
         name = "Wreck",
         timestamp = "1770761823",
-        index = 18,
-        nextindex = 17,
-        group = 1,
     },
     {
         sextant = {
@@ -318,9 +264,6 @@
         },
         name = "Wreck",
         timestamp = "1770761923",
-        index = 19,
-        nextindex = 20,
-        group = 2,
     },
     {
         sextant = {
@@ -335,9 +278,6 @@
         },
         name = "Wreck",
         timestamp = "1770762052",
-        index = 20,
-        nextindex = 21,
-        group = 2,
     },
     {
         sextant = {
@@ -352,9 +292,6 @@
         },
         name = "Wreck",
         timestamp = "1770762128",
-        index = 21,
-        nextindex = 22,
-        group = 2,
     },
     {
         sextant = {
@@ -369,9 +306,6 @@
         },
         name = "Wreck",
         timestamp = "1770762160",
-        index = 22,
-        nextindex = 25,
-        group = 2,
     },
     {
         sextant = {
@@ -386,9 +320,6 @@
         },
         name = "Wreck",
         timestamp = "1770762244",
-        index = 23,
-        nextindex = 18,
-        group = 1,
     },
     {
         sextant = {
@@ -403,9 +334,6 @@
         },
         name = "Wreck",
         timestamp = "1770762398",
-        index = 24,
-        nextindex = 15,
-        group = 1,
     },
     {
         sextant = {
@@ -420,9 +348,6 @@
         },
         name = "Wreck",
         timestamp = "1770762598",
-        index = 25,
-        nextindex = 14,
-        group = 2,
     },
     {
         sextant = {
@@ -437,9 +362,6 @@
         },
         name = "Wreck",
         timestamp = "1770762949",
-        index = 26,
-        nextindex = 13,
-        group = 2,
     },
     {
         sextant = {
@@ -454,9 +376,6 @@
         },
         name = "Wreck",
         timestamp = "1770763160",
-        index = 27,
-        nextindex = 28,
-        group = 2,
     },
     {
         sextant = {
@@ -471,9 +390,6 @@
         },
         name = "Wreck",
         timestamp = "1770763205",
-        index = 28,
-        nextindex = 31,
-        group = 2,
     },
     {
         sextant = {
@@ -488,9 +404,6 @@
         },
         name = "Wreck",
         timestamp = "1770763258",
-        index = 29,
-        nextindex = 26,
-        group = 2,
     },
     {
         sextant = {
@@ -505,9 +418,6 @@
         },
         name = "Wreck",
         timestamp = "1770763312",
-        index = 30,
-        nextindex = 29,
-        group = 2,
     },
     {
         sextant = {
@@ -522,9 +432,6 @@
         },
         name = "Wreck",
         timestamp = "1770763371",
-        index = 31,
-        nextindex = 32,
-        group = 2,
     },
     {
         sextant = {
@@ -539,9 +446,6 @@
         },
         name = "Wreck",
         timestamp = "1770763456",
-        index = 32,
-        nextindex = 33,
-        group = 2,
     },
     {
         sextant = {
@@ -556,9 +460,6 @@
         },
         name = "Wreck",
         timestamp = "1770763611",
-        index = 33,
-        nextindex = 34,
-        group = 2,
     },
     {
         sextant = {
@@ -573,9 +474,6 @@
         },
         name = "Wreck",
         timestamp = "1770763786",
-        index = 34,
-        nextindex = 37,
-        group = 2,
     },
     {
         sextant = {
@@ -590,9 +488,6 @@
         },
         name = "Wreck",
         timestamp = "1770763853",
-        index = 35,
-        nextindex = 30,
-        group = 2,
     },
     {
         sextant = {
@@ -607,9 +502,6 @@
         },
         name = "Wreck",
         timestamp = "1770763968",
-        index = 36,
-        nextindex = 35,
-        group = 2,
     },
     {
         sextant = {
@@ -624,9 +516,6 @@
         },
         name = "Wreck",
         timestamp = "1770764310",
-        index = 37,
-        nextindex = 10,
-        group = 3,
     },
     {
         sextant = {
@@ -641,9 +530,6 @@
         },
         name = "Wreck",
         timestamp = "1770764585",
-        index = 38,
-        nextindex = 40,
-        group = 1,
     },
     {
         sextant = {
@@ -658,9 +544,6 @@
         },
         name = "Wreck",
         timestamp = "1770764791",
-        index = 39,
-        nextindex = 38,
-        group = 1,
     },
     {
         sextant = {
@@ -675,9 +558,6 @@
         },
         name = "Wreck",
         timestamp = "1770764850",
-        index = 40,
-        nextindex = 42,
-        group = 1,
     },
     {
         sextant = {
@@ -692,9 +572,6 @@
         },
         name = "Wreck",
         timestamp = "1770765038",
-        index = 41,
-        nextindex = 24,
-        group = 1,
     },
     {
         sextant = {
@@ -709,9 +586,6 @@
         },
         name = "Wreck",
         timestamp = "1770765133",
-        index = 42,
-        nextindex = 41,
-        group = 1,
     },
     {
         sextant = {
@@ -726,9 +600,6 @@
         },
         name = "Wreck",
         timestamp = "1770765252",
-        index = 43,
-        nextindex = 39,
-        group = 1,
     },
     {
         sextant = {
@@ -743,9 +614,6 @@
         },
         name = "Wreck",
         timestamp = "1770765334",
-        index = 44,
-        nextindex = 43,
-        group = 1,
     },
     {
         sextant = {
@@ -760,9 +628,6 @@
         },
         name = "Wreck",
         timestamp = "1770765666",
-        index = 45,
-        nextindex = 44,
-        group = 1,
     },
     {
         sextant = {
@@ -777,9 +642,6 @@
         },
         name = "Wreck",
         timestamp = "1770766047",
-        index = 46,
-        nextindex = 47,
-        group = 1,
     },
     {
         sextant = {
@@ -794,9 +656,6 @@
         },
         name = "Wreck",
         timestamp = "1770766344",
-        index = 47,
-        nextindex = 48,
-        group = 1,
     },
     {
         sextant = {
@@ -811,9 +670,6 @@
         },
         name = "Wreck",
         timestamp = "1770791448",
-        index = 48,
-        nextindex = 49,
-        group = 1,
     },
     {
         sextant = {
@@ -828,9 +684,6 @@
         },
         name = "Wreck",
         timestamp = "1770791846",
-        index = 49,
-        nextindex = 50,
-        group = 1,
     },
     {
         sextant = {
@@ -845,9 +698,6 @@
         },
         name = "Wreck",
         timestamp = "1770791958",
-        index = 50,
-        nextindex = 51,
-        group = 1,
     },
     {
         sextant = {
@@ -862,9 +712,6 @@
         },
         name = "Wreck",
         timestamp = "1770792140",
-        index = 51,
-        nextindex = 64,
-        group = 1,
     },
     {
         sextant = {
@@ -879,9 +726,6 @@
         },
         name = "Wreck",
         timestamp = "1770792348",
-        index = 52,
-        nextindex = 53,
-        group = 1,
     },
     {
         sextant = {
@@ -896,9 +740,6 @@
         },
         name = "Wreck",
         timestamp = "1770792568",
-        index = 53,
-        nextindex = 54,
-        group = 1,
     },
     {
         sextant = {
@@ -913,9 +754,6 @@
         },
         name = "Wreck",
         timestamp = "1770792701",
-        index = 54,
-        nextindex = 55,
-        group = 1,
     },
     {
         sextant = {
@@ -930,9 +768,6 @@
         },
         name = "Wreck",
         timestamp = "1770792763",
-        index = 55,
-        nextindex = 56,
-        group = 1,
     },
     {
         sextant = {
@@ -947,9 +782,6 @@
         },
         name = "Wreck",
         timestamp = "1770792963",
-        index = 56,
-        nextindex = 58,
-        group = 1,
     },
     {
         sextant = {
@@ -964,9 +796,6 @@
         },
         name = "Wreck",
         timestamp = "1770793111",
-        index = 57,
-        nextindex = 45,
-        group = 1,
     },
     {
         sextant = {
@@ -981,9 +810,6 @@
         },
         name = "Wreck",
         timestamp = "1770793185",
-        index = 58,
-        nextindex = 60,
-        group = 1,
     },
     {
         sextant = {
@@ -998,9 +824,6 @@
         },
         name = "Wreck",
         timestamp = "1770793226",
-        index = 59,
-        nextindex = 63,
-        group = 2,
     },
     {
         sextant = {
@@ -1015,9 +838,6 @@
         },
         name = "Wreck",
         timestamp = "1770793314",
-        index = 60,
-        nextindex = 59,
-        group = 1,
     },
     {
         sextant = {
@@ -1032,9 +852,6 @@
         },
         name = "Wreck",
         timestamp = "1770793458",
-        index = 61,
-        nextindex = 36,
-        group = 2,
     },
     {
         sextant = {
@@ -1049,9 +866,6 @@
         },
         name = "Wreck",
         timestamp = "1770793621",
-        index = 62,
-        nextindex = 61,
-        group = 2,
     },
     {
         sextant = {
@@ -1066,9 +880,6 @@
         },
         name = "Wreck",
         timestamp = "1770793746",
-        index = 63,
-        nextindex = 62,
-        group = 2,
     },
     {
         sextant = {
@@ -1083,9 +894,6 @@
         },
         name = "Wreck",
         timestamp = "1770794732",
-        index = 64,
-        nextindex = 66,
-        group = 1,
     },
     {
         sextant = {
@@ -1100,9 +908,6 @@
         },
         name = "Wreck",
         timestamp = "1770795011",
-        index = 65,
-        nextindex = 52,
-        group = 1,
     },
     {
         sextant = {
@@ -1117,9 +922,6 @@
         },
         name = "Wreck",
         timestamp = "1770795196",
-        index = 66,
-        nextindex = 65,
-        group = 1,
     },
     {
         sextant = {
@@ -1134,9 +936,6 @@
         },
         name = "Wreck",
         timestamp = "1770797986",
-        index = 67,
-        nextindex = 119,
-        group = 4,
     },
     {
         sextant = {
@@ -1151,9 +950,6 @@
         },
         name = "Wreck",
         timestamp = "1770798403",
-        index = 68,
-        nextindex = 69,
-        group = 4,
     },
     {
         sextant = {
@@ -1168,9 +964,6 @@
         },
         name = "Wreck",
         timestamp = "1770798487",
-        index = 69,
-        nextindex = 71,
-        group = 4,
     },
     {
         sextant = {
@@ -1185,9 +978,6 @@
         },
         name = "Wreck",
         timestamp = "1770798663",
-        index = 70,
-        nextindex = 67,
-        group = 4,
     },
     {
         sextant = {
@@ -1202,9 +992,6 @@
         },
         name = "Wreck",
         timestamp = "1770798857",
-        index = 71,
-        nextindex = 77,
-        group = 4,
     },
     {
         sextant = {
@@ -1219,9 +1006,6 @@
         },
         name = "Wreck",
         timestamp = "1770798977",
-        index = 72,
-        nextindex = 70,
-        group = 4,
     },
     {
         sextant = {
@@ -1236,9 +1020,6 @@
         },
         name = "Wreck",
         timestamp = "1770799490",
-        index = 73,
-        nextindex = 72,
-        group = 4,
     },
     {
         sextant = {
@@ -1253,9 +1034,6 @@
         },
         name = "Wreck",
         timestamp = "1770799821",
-        index = 74,
-        nextindex = 73,
-        group = 4,
     },
     {
         sextant = {
@@ -1270,9 +1048,6 @@
         },
         name = "Wreck",
         timestamp = "1770799958",
-        index = 75,
-        nextindex = 74,
-        group = 4,
     },
     {
         sextant = {
@@ -1287,9 +1062,6 @@
         },
         name = "Wreck",
         timestamp = "1770800053",
-        index = 76,
-        nextindex = 75,
-        group = 4,
     },
     {
         sextant = {
@@ -1304,9 +1076,6 @@
         },
         name = "Wreck",
         timestamp = "1770800155",
-        index = 77,
-        nextindex = 76,
-        group = 4,
     },
     {
         sextant = {
@@ -1321,9 +1090,6 @@
         },
         name = "Wreck",
         timestamp = "1770800941",
-        index = 78,
-        nextindex = 68,
-        group = 4,
     },
     {
         sextant = {
@@ -1338,9 +1104,6 @@
         },
         name = "Wreck",
         timestamp = "1770801003",
-        index = 79,
-        nextindex = 78,
-        group = 4,
     },
     {
         sextant = {
@@ -1355,9 +1118,6 @@
         },
         name = "Wreck",
         timestamp = "1770801065",
-        index = 80,
-        nextindex = 79,
-        group = 4,
     },
     {
         sextant = {
@@ -1372,9 +1132,6 @@
         },
         name = "Wreck",
         timestamp = "1770801139",
-        index = 81,
-        nextindex = 177,
-        group = 4,
     },
     {
         sextant = {
@@ -1389,9 +1146,6 @@
         },
         name = "Wreck",
         timestamp = "1770801632",
-        index = 82,
-        nextindex = 81,
-        group = 4,
     },
     {
         sextant = {
@@ -1406,9 +1160,6 @@
         },
         name = "Wreck",
         timestamp = "1770801961",
-        index = 83,
-        nextindex = 100,
-        group = 5,
     },
     {
         sextant = {
@@ -1423,9 +1174,6 @@
         },
         name = "Wreck",
         timestamp = "1770802278",
-        index = 84,
-        nextindex = 83,
-        group = 5,
     },
     {
         sextant = {
@@ -1440,9 +1188,6 @@
         },
         name = "Wreck",
         timestamp = "1770802556",
-        index = 85,
-        nextindex = 84,
-        group = 5,
     },
     {
         sextant = {
@@ -1457,9 +1202,6 @@
         },
         name = "Wreck",
         timestamp = "1770802747",
-        index = 86,
-        nextindex = 91,
-        group = 5,
     },
     {
         sextant = {
@@ -1474,9 +1216,6 @@
         },
         name = "Wreck",
         timestamp = "1770802850",
-        index = 87,
-        nextindex = 86,
-        group = 5,
     },
     {
         sextant = {
@@ -1491,9 +1230,6 @@
         },
         name = "Wreck",
         timestamp = "1770803003",
-        index = 88,
-        nextindex = 87,
-        group = 5,
     },
     {
         sextant = {
@@ -1508,9 +1244,6 @@
         },
         name = "Wreck",
         timestamp = "1770803205",
-        index = 89,
-        nextindex = 170,
-        group = 5,
     },
     {
         sextant = {
@@ -1525,9 +1258,6 @@
         },
         name = "Wreck",
         timestamp = "1770803403",
-        index = 90,
-        nextindex = 89,
-        group = 5,
     },
     {
         sextant = {
@@ -1542,9 +1272,6 @@
         },
         name = "Wreck",
         timestamp = "1770803561",
-        index = 91,
-        nextindex = 90,
-        group = 5,
     },
     {
         sextant = {
@@ -1559,9 +1286,6 @@
         },
         name = "Wreck",
         timestamp = "1770803670",
-        index = 92,
-        nextindex = 93,
-        group = 5,
     },
     {
         sextant = {
@@ -1576,9 +1300,6 @@
         },
         name = "Wreck",
         timestamp = "1770804159",
-        index = 93,
-        nextindex = 94,
-        group = 5,
     },
     {
         sextant = {
@@ -1593,9 +1314,6 @@
         },
         name = "Wreck",
         timestamp = "1770804211",
-        index = 94,
-        nextindex = 95,
-        group = 5,
     },
     {
         sextant = {
@@ -1610,9 +1328,6 @@
         },
         name = "Wreck",
         timestamp = "1770804358",
-        index = 95,
-        nextindex = 178,
-        group = 5,
     },
     {
         sextant = {
@@ -1627,9 +1342,6 @@
         },
         name = "Wreck",
         timestamp = "1770804632",
-        index = 96,
-        nextindex = 97,
-        group = 5,
     },
     {
         sextant = {
@@ -1644,9 +1356,6 @@
         },
         name = "Wreck",
         timestamp = "1770804761",
-        index = 97,
-        nextindex = 98,
-        group = 5,
     },
     {
         sextant = {
@@ -1661,9 +1370,6 @@
         },
         name = "Wreck",
         timestamp = "1770804852",
-        index = 98,
-        nextindex = 85,
-        group = 5,
     },
     {
         sextant = {
@@ -1678,9 +1384,6 @@
         },
         name = "Wreck",
         timestamp = "1771995075",
-        index = 99,
-        nextindex = 82,
-        group = 4,
     },
     {
         sextant = {
@@ -1695,9 +1398,6 @@
         },
         name = "Wreck",
         timestamp = "1771995490",
-        index = 100,
-        nextindex = 101,
-        group = 5,
     },
     {
         sextant = {
@@ -1712,9 +1412,6 @@
         },
         name = "Wreck",
         timestamp = "1771996088",
-        index = 101,
-        nextindex = 88,
-        group = 5,
     },
     {
         sextant = {
@@ -1729,9 +1426,6 @@
         },
         name = "Wreck",
         timestamp = "1771996464",
-        index = 102,
-        nextindex = 99,
-        group = 4,
     },
     {
         sextant = {
@@ -1746,9 +1440,6 @@
         },
         name = "Wreck",
         timestamp = "1771997225",
-        index = 103,
-        nextindex = 102,
-        group = 4,
     },
     {
         sextant = {
@@ -1763,9 +1454,6 @@
         },
         name = "Wreck",
         timestamp = "1771997673",
-        index = 104,
-        nextindex = 103,
-        group = 4,
     },
     {
         sextant = {
@@ -1780,9 +1468,6 @@
         },
         name = "Wreck",
         timestamp = "1771998163",
-        index = 105,
-        nextindex = 107,
-        group = 5,
     },
     {
         sextant = {
@@ -1797,9 +1482,6 @@
         },
         name = "Wreck",
         timestamp = "1771998287",
-        index = 106,
-        nextindex = 104,
-        group = 4,
     },
     {
         sextant = {
@@ -1814,9 +1496,6 @@
         },
         name = "Wreck",
         timestamp = "1771998995",
-        index = 107,
-        nextindex = 142,
-        group = 5,
     },
     {
         sextant = {
@@ -1831,9 +1510,6 @@
         },
         name = "Wreck",
         timestamp = "1771999135",
-        index = 108,
-        nextindex = 106,
-        group = 4,
     },
     {
         sextant = {
@@ -1848,9 +1524,6 @@
         },
         name = "Wreck",
         timestamp = "1771999230",
-        index = 109,
-        nextindex = 108,
-        group = 4,
     },
     {
         sextant = {
@@ -1865,9 +1538,6 @@
         },
         name = "Wreck",
         timestamp = "1771999492",
-        index = 110,
-        nextindex = 109,
-        group = 4,
     },
     {
         sextant = {
@@ -1882,9 +1552,6 @@
         },
         name = "Wreck",
         timestamp = "1771999826",
-        index = 111,
-        nextindex = 110,
-        group = 4,
     },
     {
         sextant = {
@@ -1899,9 +1566,6 @@
         },
         name = "Wreck",
         timestamp = "1772000068",
-        index = 112,
-        nextindex = 114,
-        group = 4,
     },
     {
         sextant = {
@@ -1916,9 +1580,6 @@
         },
         name = "Wreck",
         timestamp = "1772000465",
-        index = 113,
-        nextindex = 111,
-        group = 4,
     },
     {
         sextant = {
@@ -1933,9 +1594,6 @@
         },
         name = "Wreck",
         timestamp = "1772000548",
-        index = 114,
-        nextindex = 113,
-        group = 4,
     },
     {
         sextant = {
@@ -1950,9 +1608,6 @@
         },
         name = "Wreck",
         timestamp = "1772000671",
-        index = 115,
-        nextindex = 116,
-        group = 3,
     },
     {
         sextant = {
@@ -1967,9 +1622,6 @@
         },
         name = "Wreck",
         timestamp = "1772000770",
-        index = 116,
-        nextindex = 117,
-        group = 3,
     },
     {
         sextant = {
@@ -1984,9 +1636,6 @@
         },
         name = "Wreck",
         timestamp = "1772000909",
-        index = 117,
-        nextindex = 118,
-        group = 3,
     },
     {
         sextant = {
@@ -2001,9 +1650,6 @@
         },
         name = "Wreck",
         timestamp = "1772001009",
-        index = 118,
-        nextindex = 120,
-        group = 3,
     },
     {
         sextant = {
@@ -2018,9 +1664,6 @@
         },
         name = "Wreck",
         timestamp = "1772001202",
-        index = 119,
-        nextindex = 112,
-        group = 4,
     },
     {
         sextant = {
@@ -2035,9 +1678,6 @@
         },
         name = "Wreck",
         timestamp = "1772001262",
-        index = 120,
-        nextindex = 121,
-        group = 3,
     },
     {
         sextant = {
@@ -2052,9 +1692,6 @@
         },
         name = "Wreck",
         timestamp = "1772001361",
-        index = 121,
-        nextindex = 122,
-        group = 3,
     },
     {
         sextant = {
@@ -2069,9 +1706,6 @@
         },
         name = "Wreck",
         timestamp = "1772001558",
-        index = 122,
-        nextindex = 123,
-        group = 3,
     },
     {
         sextant = {
@@ -2086,9 +1720,6 @@
         },
         name = "Wreck",
         timestamp = "1772001659",
-        index = 123,
-        nextindex = 124,
-        group = 3,
     },
     {
         sextant = {
@@ -2103,9 +1734,6 @@
         },
         name = "Wreck",
         timestamp = "1772001722",
-        index = 124,
-        nextindex = 125,
-        group = 3,
     },
     {
         sextant = {
@@ -2120,9 +1748,6 @@
         },
         name = "Wreck",
         timestamp = "1772001815",
-        index = 125,
-        nextindex = 126,
-        group = 3,
     },
     {
         sextant = {
@@ -2137,9 +1762,6 @@
         },
         name = "Wreck",
         timestamp = "1772001924",
-        index = 126,
-        nextindex = 127,
-        group = 3,
     },
     {
         sextant = {
@@ -2154,9 +1776,6 @@
         },
         name = "Wreck",
         timestamp = "1772002046",
-        index = 127,
-        nextindex = 1,
-        group = 3,
     },
     {
         sextant = {
@@ -2171,9 +1790,6 @@
         },
         name = "Wreck",
         timestamp = "1772002378",
-        index = 128,
-        nextindex = 130,
-        group = 3,
     },
     {
         sextant = {
@@ -2188,9 +1804,6 @@
         },
         name = "Wreck",
         timestamp = "1772002907",
-        index = 129,
-        nextindex = 131,
-        group = 2,
     },
     {
         sextant = {
@@ -2205,9 +1818,6 @@
         },
         name = "Wreck",
         timestamp = "1772003281",
-        index = 130,
-        nextindex = 140,
-        group = 3,
     },
     {
         sextant = {
@@ -2222,9 +1832,6 @@
         },
         name = "Wreck",
         timestamp = "1772003599",
-        index = 131,
-        nextindex = 132,
-        group = 2,
     },
     {
         sextant = {
@@ -2239,9 +1846,6 @@
         },
         name = "Wreck",
         timestamp = "1772003843",
-        index = 132,
-        nextindex = 5,
-        group = 2,
     },
     {
         sextant = {
@@ -2256,9 +1860,6 @@
         },
         name = "Wreck",
         timestamp = "1772003954",
-        index = 133,
-        nextindex = 134,
-        group = 3,
     },
     {
         sextant = {
@@ -2273,9 +1874,6 @@
         },
         name = "Wreck",
         timestamp = "1772004030",
-        index = 134,
-        nextindex = 135,
-        group = 3,
     },
     {
         sextant = {
@@ -2290,9 +1888,6 @@
         },
         name = "Wreck",
         timestamp = "1772004326",
-        index = 135,
-        nextindex = 136,
-        group = 3,
     },
     {
         sextant = {
@@ -2307,9 +1902,6 @@
         },
         name = "Wreck",
         timestamp = "1772004504",
-        index = 136,
-        nextindex = 137,
-        group = 3,
     },
     {
         sextant = {
@@ -2324,9 +1916,6 @@
         },
         name = "Wreck",
         timestamp = "1772004562",
-        index = 137,
-        nextindex = 139,
-        group = 3,
     },
     {
         sextant = {
@@ -2341,9 +1930,6 @@
         },
         name = "Wreck",
         timestamp = "1772004675",
-        index = 138,
-        nextindex = 115,
-        group = 3,
     },
     {
         sextant = {
@@ -2358,9 +1944,6 @@
         },
         name = "Wreck",
         timestamp = "1772004883",
-        index = 139,
-        nextindex = 138,
-        group = 3,
     },
     {
         sextant = {
@@ -2375,9 +1958,6 @@
         },
         name = "Wreck",
         timestamp = "1772004954",
-        index = 140,
-        nextindex = 133,
-        group = 3,
     },
     {
         sextant = {
@@ -2392,9 +1972,6 @@
         },
         name = "Wreck",
         timestamp = "1772060658",
-        index = 141,
-        nextindex = 105,
-        group = 5,
     },
     {
         sextant = {
@@ -2409,9 +1986,6 @@
         },
         name = "Wreck",
         timestamp = "1772060933",
-        index = 142,
-        nextindex = 151,
-        group = 5,
     },
     {
         sextant = {
@@ -2426,9 +2000,6 @@
         },
         name = "Wreck",
         timestamp = "1772061860",
-        index = 143,
-        nextindex = 144,
-        group = 5,
     },
     {
         sextant = {
@@ -2443,9 +2014,6 @@
         },
         name = "Wreck",
         timestamp = "1772062069",
-        index = 144,
-        nextindex = 146,
-        group = 5,
     },
     {
         sextant = {
@@ -2460,9 +2028,6 @@
         },
         name = "Wreck",
         timestamp = "1772062295",
-        index = 145,
-        nextindex = 163,
-        group = 5,
     },
     {
         sextant = {
@@ -2477,9 +2042,6 @@
         },
         name = "Wreck",
         timestamp = "1772062379",
-        index = 146,
-        nextindex = 145,
-        group = 5,
     },
     {
         sextant = {
@@ -2494,9 +2056,6 @@
         },
         name = "Wreck",
         timestamp = "1772063150",
-        index = 147,
-        nextindex = 149,
-        group = 5,
     },
     {
         sextant = {
@@ -2511,9 +2070,6 @@
         },
         name = "Wreck",
         timestamp = "1772063778",
-        index = 148,
-        nextindex = 147,
-        group = 5,
     },
     {
         sextant = {
@@ -2528,9 +2084,6 @@
         },
         name = "Wreck",
         timestamp = "1772064227",
-        index = 149,
-        nextindex = 143,
-        group = 5,
     },
     {
         sextant = {
@@ -2545,9 +2098,6 @@
         },
         name = "Wreck",
         timestamp = "1772064648",
-        index = 150,
-        nextindex = 154,
-        group = 5,
     },
     {
         sextant = {
@@ -2562,9 +2112,6 @@
         },
         name = "Wreck",
         timestamp = "1772065131",
-        index = 151,
-        nextindex = 150,
-        group = 5,
     },
     {
         sextant = {
@@ -2579,9 +2126,6 @@
         },
         name = "Wreck",
         timestamp = "1772065892",
-        index = 152,
-        nextindex = 157,
-        group = 5,
     },
     {
         sextant = {
@@ -2596,9 +2140,6 @@
         },
         name = "Wreck",
         timestamp = "1772066215",
-        index = 153,
-        nextindex = 152,
-        group = 5,
     },
     {
         sextant = {
@@ -2613,9 +2154,6 @@
         },
         name = "Wreck",
         timestamp = "1772066222",
-        index = 154,
-        nextindex = 153,
-        group = 5,
     },
     {
         sextant = {
@@ -2630,9 +2168,6 @@
         },
         name = "Wreck",
         timestamp = "1772066887",
-        index = 155,
-        nextindex = 148,
-        group = 5,
     },
     {
         sextant = {
@@ -2647,9 +2182,6 @@
         },
         name = "Wreck",
         timestamp = "1772067201",
-        index = 156,
-        nextindex = 155,
-        group = 5,
     },
     {
         sextant = {
@@ -2664,9 +2196,6 @@
         },
         name = "Wreck",
         timestamp = "1772067361",
-        index = 157,
-        nextindex = 159,
-        group = 5,
     },
     {
         sextant = {
@@ -2681,9 +2210,6 @@
         },
         name = "Wreck",
         timestamp = "1772067726",
-        index = 158,
-        nextindex = 156,
-        group = 5,
     },
     {
         sextant = {
@@ -2698,9 +2224,6 @@
         },
         name = "Wreck",
         timestamp = "1772068003",
-        index = 159,
-        nextindex = 158,
-        group = 5,
     },
     {
         sextant = {
@@ -2715,9 +2238,6 @@
         },
         name = "Wreck",
         timestamp = "1772084268",
-        index = 160,
-        nextindex = 161,
-        group = 5,
     },
     {
         sextant = {
@@ -2732,9 +2252,6 @@
         },
         name = "Wreck",
         timestamp = "1772084714",
-        index = 161,
-        nextindex = 162,
-        group = 5,
     },
     {
         sextant = {
@@ -2749,9 +2266,6 @@
         },
         name = "Wreck",
         timestamp = "1772084937",
-        index = 162,
-        nextindex = 172,
-        group = 5,
     },
     {
         sextant = {
@@ -2766,9 +2280,6 @@
         },
         name = "Wreck",
         timestamp = "1772085081",
-        index = 163,
-        nextindex = 160,
-        group = 5,
     },
     {
         sextant = {
@@ -2783,9 +2294,6 @@
         },
         name = "Wreck",
         timestamp = "1772085509",
-        index = 164,
-        nextindex = 141,
-        group = 5,
     },
     {
         sextant = {
@@ -2800,9 +2308,6 @@
         },
         name = "Wreck",
         timestamp = "1772085800",
-        index = 165,
-        nextindex = 164,
-        group = 5,
     },
     {
         sextant = {
@@ -2817,9 +2322,6 @@
         },
         name = "Wreck",
         timestamp = "1772086238",
-        index = 166,
-        nextindex = 165,
-        group = 5,
     },
     {
         sextant = {
@@ -2834,9 +2336,6 @@
         },
         name = "Wreck",
         timestamp = "1772086374",
-        index = 167,
-        nextindex = 168,
-        group = 5,
     },
     {
         sextant = {
@@ -2851,9 +2350,6 @@
         },
         name = "Wreck",
         timestamp = "1772086687",
-        index = 168,
-        nextindex = 169,
-        group = 5,
     },
     {
         sextant = {
@@ -2868,9 +2364,6 @@
         },
         name = "Wreck",
         timestamp = "1772086918",
-        index = 169,
-        nextindex = 166,
-        group = 5,
     },
     {
         sextant = {
@@ -2885,9 +2378,6 @@
         },
         name = "Wreck",
         timestamp = "1772087418",
-        index = 170,
-        nextindex = 171,
-        group = 5,
     },
     {
         sextant = {
@@ -2902,9 +2392,6 @@
         },
         name = "Wreck",
         timestamp = "1772087786",
-        index = 171,
-        nextindex = 167,
-        group = 5,
     },
     {
         sextant = {
@@ -2919,9 +2406,6 @@
         },
         name = "Wreck",
         timestamp = "1772088031",
-        index = 172,
-        nextindex = 173,
-        group = 5,
     },
     {
         sextant = {
@@ -2936,9 +2420,6 @@
         },
         name = "Wreck",
         timestamp = "1772088265",
-        index = 173,
-        nextindex = 174,
-        group = 5,
     },
     {
         sextant = {
@@ -2953,9 +2434,6 @@
         },
         name = "Wreck",
         timestamp = "1772088443",
-        index = 174,
-        nextindex = 175,
-        group = 5,
     },
     {
         sextant = {
@@ -2970,9 +2448,6 @@
         },
         name = "Wreck",
         timestamp = "1772088518",
-        index = 175,
-        nextindex = 189,
-        group = 5,
     },
     {
         sextant = {
@@ -2987,9 +2462,6 @@
         },
         name = "Wreck",
         timestamp = "1772089228",
-        index = 176,
-        nextindex = 92,
-        group = 5,
     },
     {
         sextant = {
@@ -3004,9 +2476,6 @@
         },
         name = "Wreck",
         timestamp = "1772089468",
-        index = 177,
-        nextindex = 176,
-        group = 5,
     },
     {
         sextant = {
@@ -3021,9 +2490,6 @@
         },
         name = "Wreck",
         timestamp = "1772089878",
-        index = 178,
-        nextindex = 96,
-        group = 5,
     },
     {
         sextant = {
@@ -3038,9 +2504,6 @@
         },
         name = "Wreck",
         timestamp = "1772231595",
-        index = 179,
-        nextindex = 57,
-        group = 6,
     },
     {
         sextant = {
@@ -3055,9 +2518,6 @@
         },
         name = "Wreck",
         timestamp = "1772231743",
-        index = 180,
-        nextindex = 181,
-        group = 5,
     },
     {
         sextant = {
@@ -3072,9 +2532,6 @@
         },
         name = "Wreck",
         timestamp = "1772231796",
-        index = 181,
-        nextindex = 187,
-        group = 6,
     },
     {
         sextant = {
@@ -3089,9 +2546,6 @@
         },
         name = "Wreck",
         timestamp = "1772231893",
-        index = 182,
-        nextindex = 179,
-        group = 6,
     },
     {
         sextant = {
@@ -3106,9 +2560,6 @@
         },
         name = "Wreck",
         timestamp = "1772231962",
-        index = 183,
-        nextindex = 182,
-        group = 6,
     },
     {
         sextant = {
@@ -3123,9 +2574,6 @@
         },
         name = "Wreck",
         timestamp = "1772232062",
-        index = 184,
-        nextindex = 183,
-        group = 6,
     },
     {
         sextant = {
@@ -3140,9 +2588,6 @@
         },
         name = "Wreck",
         timestamp = "1772232326",
-        index = 185,
-        nextindex = 186,
-        group = 6,
     },
     {
         sextant = {
@@ -3157,9 +2602,6 @@
         },
         name = "Wreck",
         timestamp = "1772232430",
-        index = 186,
-        nextindex = 184,
-        group = 6,
     },
     {
         sextant = {
@@ -3174,9 +2616,6 @@
         },
         name = "Wreck",
         timestamp = "1772232497",
-        index = 187,
-        nextindex = 188,
-        group = 6,
     },
     {
         sextant = {
@@ -3191,9 +2630,6 @@
         },
         name = "Wreck",
         timestamp = "1772232747",
-        index = 188,
-        nextindex = 190,
-        group = 6,
     },
     {
         sextant = {
@@ -3208,9 +2644,6 @@
         },
         name = "Wreck",
         timestamp = "1772232875",
-        index = 189,
-        nextindex = 180,
-        group = 5,
     },
     {
         sextant = {
@@ -3225,9 +2658,6 @@
         },
         name = "Wreck",
         timestamp = "1772233024",
-        index = 190,
-        nextindex = 191,
-        group = 6,
     },
     {
         sextant = {
@@ -3242,9 +2672,6 @@
         },
         name = "Wreck",
         timestamp = "1772233096",
-        index = 191,
-        nextindex = 192,
-        group = 6,
     },
     {
         sextant = {
@@ -3259,9 +2686,6 @@
         },
         name = "Wreck",
         timestamp = "1772233208",
-        index = 192,
-        nextindex = 193,
-        group = 6,
     },
     {
         sextant = {
@@ -3276,9 +2700,6 @@
         },
         name = "Wreck",
         timestamp = "1772233362",
-        index = 193,
-        nextindex = 194,
-        group = 6,
     },
     {
         sextant = {
@@ -3293,9 +2714,6 @@
         },
         name = "Wreck",
         timestamp = "1772233515",
-        index = 194,
-        nextindex = 195,
-        group = 6,
     },
     {
         sextant = {
@@ -3310,9 +2728,6 @@
         },
         name = "Wreck",
         timestamp = "1772233716",
-        index = 195,
-        nextindex = 196,
-        group = 6,
     },
     {
         sextant = {
@@ -3327,9 +2742,6 @@
         },
         name = "Wreck",
         timestamp = "1772233909",
-        index = 196,
-        nextindex = 197,
-        group = 6,
     },
     {
         sextant = {
@@ -3344,9 +2756,6 @@
         },
         name = "Wreck",
         timestamp = "1772234025",
-        index = 197,
-        nextindex = 198,
-        group = 6,
     },
     {
         sextant = {
@@ -3361,9 +2770,6 @@
         },
         name = "Wreck",
         timestamp = "1772234118",
-        index = 198,
-        nextindex = 199,
-        group = 6,
     },
     {
         sextant = {
@@ -3378,9 +2784,6 @@
         },
         name = "Wreck",
         timestamp = "1772234199",
-        index = 199,
-        nextindex = 200,
-        group = 6,
     },
     {
         sextant = {
@@ -3395,9 +2798,6 @@
         },
         name = "Wreck",
         timestamp = "1772234354",
-        index = 200,
-        nextindex = 201,
-        group = 6,
     },
     {
         sextant = {
@@ -3412,9 +2812,6 @@
         },
         name = "Wreck",
         timestamp = "1772234508",
-        index = 201,
-        nextindex = 202,
-        group = 6,
     },
     {
         sextant = {
@@ -3429,9 +2826,6 @@
         },
         name = "Wreck",
         timestamp = "1772234613",
-        index = 202,
-        nextindex = 260,
-        group = 6,
     },
     {
         sextant = {
@@ -3446,9 +2840,6 @@
         },
         name = "Wreck",
         timestamp = "1772234708",
-        index = 203,
-        nextindex = 204,
-        group = 6,
     },
     {
         sextant = {
@@ -3463,9 +2854,6 @@
         },
         name = "Wreck",
         timestamp = "1772234804",
-        index = 204,
-        nextindex = 257,
-        group = 6,
     },
     {
         sextant = {
@@ -3480,9 +2868,6 @@
         },
         name = "Wreck",
         timestamp = "1772235029",
-        index = 205,
-        nextindex = 206,
-        group = 6,
     },
     {
         sextant = {
@@ -3497,9 +2882,6 @@
         },
         name = "Wreck",
         timestamp = "1772235147",
-        index = 206,
-        nextindex = 185,
-        group = 6,
     },
     {
         sextant = {
@@ -3514,9 +2896,6 @@
         },
         name = "Wreck",
         timestamp = "1772236087",
-        index = 207,
-        nextindex = 205,
-        group = 6,
     },
     {
         sextant = {
@@ -3531,9 +2910,6 @@
         },
         name = "Wreck",
         timestamp = "1772236191",
-        index = 208,
-        nextindex = 207,
-        group = 6,
     },
     {
         sextant = {
@@ -3548,9 +2924,6 @@
         },
         name = "Wreck",
         timestamp = "1772236589",
-        index = 209,
-        nextindex = 208,
-        group = 6,
     },
     {
         sextant = {
@@ -3565,9 +2938,6 @@
         },
         name = "Wreck",
         timestamp = "1772237023",
-        index = 210,
-        nextindex = 209,
-        group = 6,
     },
     {
         sextant = {
@@ -3582,9 +2952,6 @@
         },
         name = "Wreck",
         timestamp = "1772237257",
-        index = 211,
-        nextindex = 210,
-        group = 6,
     },
     {
         sextant = {
@@ -3599,9 +2966,6 @@
         },
         name = "Wreck",
         timestamp = "1772237400",
-        index = 212,
-        nextindex = 211,
-        group = 6,
     },
     {
         sextant = {
@@ -3616,9 +2980,6 @@
         },
         name = "Wreck",
         timestamp = "1772237685",
-        index = 213,
-        nextindex = 212,
-        group = 6,
     },
     {
         sextant = {
@@ -3633,9 +2994,6 @@
         },
         name = "Wreck",
         timestamp = "1772239263",
-        index = 214,
-        nextindex = 224,
-        group = 6,
     },
     {
         sextant = {
@@ -3650,9 +3008,6 @@
         },
         name = "Wreck",
         timestamp = "1772239521",
-        index = 215,
-        nextindex = 213,
-        group = 6,
     },
     {
         sextant = {
@@ -3667,9 +3022,6 @@
         },
         name = "Wreck",
         timestamp = "1772239659",
-        index = 216,
-        nextindex = 215,
-        group = 6,
     },
     {
         sextant = {
@@ -3684,9 +3036,6 @@
         },
         name = "Wreck",
         timestamp = "1772239869",
-        index = 217,
-        nextindex = 216,
-        group = 6,
     },
     {
         sextant = {
@@ -3701,9 +3050,6 @@
         },
         name = "Wreck",
         timestamp = "1772263977",
-        index = 218,
-        nextindex = 217,
-        group = 6,
     },
     {
         sextant = {
@@ -3718,9 +3064,6 @@
         },
         name = "Wreck",
         timestamp = "1772264639",
-        index = 219,
-        nextindex = 218,
-        group = 6,
     },
     {
         sextant = {
@@ -3735,9 +3078,6 @@
         },
         name = "Wreck",
         timestamp = "1772264786",
-        index = 220,
-        nextindex = 219,
-        group = 6,
     },
     {
         sextant = {
@@ -3752,9 +3092,6 @@
         },
         name = "Wreck",
         timestamp = "1772264955",
-        index = 221,
-        nextindex = 220,
-        group = 6,
     },
     {
         sextant = {
@@ -3769,9 +3106,6 @@
         },
         name = "Wreck",
         timestamp = "1772265078",
-        index = 222,
-        nextindex = 221,
-        group = 6,
     },
     {
         sextant = {
@@ -3786,9 +3120,6 @@
         },
         name = "Wreck",
         timestamp = "1772265225",
-        index = 223,
-        nextindex = 222,
-        group = 6,
     },
     {
         sextant = {
@@ -3803,9 +3134,6 @@
         },
         name = "Wreck",
         timestamp = "1772265338",
-        index = 224,
-        nextindex = 223,
-        group = 6,
     },
     {
         sextant = {
@@ -3820,9 +3148,6 @@
         },
         name = "Wreck",
         timestamp = "1772265509",
-        index = 225,
-        nextindex = 214,
-        group = 6,
     },
     {
         sextant = {
@@ -3837,9 +3162,6 @@
         },
         name = "Wreck",
         timestamp = "1772265673",
-        index = 226,
-        nextindex = 225,
-        group = 6,
     },
     {
         sextant = {
@@ -3854,9 +3176,6 @@
         },
         name = "Wreck",
         timestamp = "1772265914",
-        index = 227,
-        nextindex = 228,
-        group = 6,
     },
     {
         sextant = {
@@ -3871,9 +3190,6 @@
         },
         name = "Wreck",
         timestamp = "1772266076",
-        index = 228,
-        nextindex = 226,
-        group = 6,
     },
     {
         sextant = {
@@ -3888,9 +3204,6 @@
         },
         name = "Wreck",
         timestamp = "1772267016",
-        index = 229,
-        nextindex = 230,
-        group = 6,
     },
     {
         sextant = {
@@ -3905,9 +3218,6 @@
         },
         name = "Wreck",
         timestamp = "1772267340",
-        index = 230,
-        nextindex = 231,
-        group = 6,
     },
     {
         sextant = {
@@ -3922,9 +3232,6 @@
         },
         name = "Wreck",
         timestamp = "1772267531",
-        index = 231,
-        nextindex = 232,
-        group = 6,
     },
     {
         sextant = {
@@ -3939,9 +3246,6 @@
         },
         name = "Wreck",
         timestamp = "1772267791",
-        index = 232,
-        nextindex = 233,
-        group = 6,
     },
     {
         sextant = {
@@ -3956,9 +3260,6 @@
         },
         name = "Wreck",
         timestamp = "1772267882",
-        index = 233,
-        nextindex = 234,
-        group = 6,
     },
     {
         sextant = {
@@ -3973,9 +3274,6 @@
         },
         name = "Wreck",
         timestamp = "1772268154",
-        index = 234,
-        nextindex = 235,
-        group = 6,
     },
     {
         sextant = {
@@ -3990,9 +3288,6 @@
         },
         name = "Wreck",
         timestamp = "1772268304",
-        index = 235,
-        nextindex = 236,
-        group = 6,
     },
     {
         sextant = {
@@ -4007,9 +3302,6 @@
         },
         name = "Wreck",
         timestamp = "1772268482",
-        index = 236,
-        nextindex = 237,
-        group = 6,
     },
     {
         sextant = {
@@ -4024,9 +3316,6 @@
         },
         name = "Wreck",
         timestamp = "1772268586",
-        index = 237,
-        nextindex = 238,
-        group = 6,
     },
     {
         sextant = {
@@ -4041,9 +3330,6 @@
         },
         name = "Wreck",
         timestamp = "1772268923",
-        index = 238,
-        nextindex = 239,
-        group = 6,
     },
     {
         sextant = {
@@ -4058,9 +3344,6 @@
         },
         name = "Wreck",
         timestamp = "1772269137",
-        index = 239,
-        nextindex = 240,
-        group = 6,
     },
     {
         sextant = {
@@ -4075,9 +3358,6 @@
         },
         name = "Wreck",
         timestamp = "1772269333",
-        index = 240,
-        nextindex = 241,
-        group = 6,
     },
     {
         sextant = {
@@ -4092,9 +3372,6 @@
         },
         name = "Wreck",
         timestamp = "1772269419",
-        index = 241,
-        nextindex = 227,
-        group = 6,
     },
     {
         sextant = {
@@ -4109,9 +3386,6 @@
         },
         name = "Wreck",
         timestamp = "1772272046",
-        index = 242,
-        nextindex = 243,
-        group = 6,
     },
     {
         sextant = {
@@ -4126,9 +3400,6 @@
         },
         name = "Wreck",
         timestamp = "1772272195",
-        index = 243,
-        nextindex = 254,
-        group = 6,
     },
     {
         sextant = {
@@ -4143,9 +3414,6 @@
         },
         name = "Wreck",
         timestamp = "1772272502",
-        index = 244,
-        nextindex = 229,
-        group = 6,
     },
     {
         sextant = {
@@ -4160,9 +3428,6 @@
         },
         name = "Wreck",
         timestamp = "1772272874",
-        index = 245,
-        nextindex = 244,
-        group = 6,
     },
     {
         sextant = {
@@ -4177,9 +3442,6 @@
         },
         name = "Wreck",
         timestamp = "1772273489",
-        index = 246,
-        nextindex = 245,
-        group = 6,
     },
     {
         sextant = {
@@ -4194,9 +3456,6 @@
         },
         name = "Wreck",
         timestamp = "1772273837",
-        index = 247,
-        nextindex = 246,
-        group = 6,
     },
     {
         sextant = {
@@ -4211,9 +3470,6 @@
         },
         name = "Wreck",
         timestamp = "1772273956",
-        index = 248,
-        nextindex = 247,
-        group = 6,
     },
     {
         sextant = {
@@ -4228,9 +3484,6 @@
         },
         name = "Wreck",
         timestamp = "1772274172",
-        index = 249,
-        nextindex = 248,
-        group = 6,
     },
     {
         sextant = {
@@ -4245,9 +3498,6 @@
         },
         name = "Wreck",
         timestamp = "1772274289",
-        index = 250,
-        nextindex = 249,
-        group = 6,
     },
     {
         sextant = {
@@ -4262,9 +3512,6 @@
         },
         name = "Wreck",
         timestamp = "1772274418",
-        index = 251,
-        nextindex = 250,
-        group = 6,
     },
     {
         sextant = {
@@ -4279,9 +3526,6 @@
         },
         name = "Wreck",
         timestamp = "1772274621",
-        index = 252,
-        nextindex = 251,
-        group = 6,
     },
     {
         sextant = {
@@ -4296,9 +3540,6 @@
         },
         name = "Wreck",
         timestamp = "1772274750",
-        index = 253,
-        nextindex = 252,
-        group = 6,
     },
     {
         sextant = {
@@ -4313,9 +3554,6 @@
         },
         name = "Wreck",
         timestamp = "1772274829",
-        index = 254,
-        nextindex = 253,
-        group = 6,
     },
     {
         sextant = {
@@ -4330,9 +3568,6 @@
         },
         name = "Wreck",
         timestamp = "1772275050",
-        index = 255,
-        nextindex = 261,
-        group = 6,
     },
     {
         sextant = {
@@ -4347,9 +3582,6 @@
         },
         name = "Wreck",
         timestamp = "1772275246",
-        index = 256,
-        nextindex = 255,
-        group = 6,
     },
     {
         sextant = {
@@ -4364,9 +3596,6 @@
         },
         name = "Wreck",
         timestamp = "1772275388",
-        index = 257,
-        nextindex = 256,
-        group = 6,
     },
     {
         sextant = {
@@ -4381,9 +3610,6 @@
         },
         name = "Wreck",
         timestamp = "1772275500",
-        index = 258,
-        nextindex = 203,
-        group = 6,
     },
     {
         sextant = {
@@ -4398,9 +3624,6 @@
         },
         name = "Wreck",
         timestamp = "1772275757",
-        index = 259,
-        nextindex = 258,
-        group = 6,
     },
     {
         sextant = {
@@ -4415,9 +3638,6 @@
         },
         name = "Wreck",
         timestamp = "1772275875",
-        index = 260,
-        nextindex = 259,
-        group = 6,
     },
     {
         sextant = {
@@ -4432,9 +3652,6 @@
         },
         name = "Wreck",
         timestamp = "1772276143",
-        index = 261,
-        nextindex = 262,
-        group = 6,
     },
     {
         sextant = {
@@ -4449,9 +3666,6 @@
         },
         name = "Wreck",
         timestamp = "1772276366",
-        index = 262,
-        nextindex = 263,
-        group = 6,
     },
     {
         sextant = {
@@ -4466,8 +3680,5 @@
         },
         name = "Wreck",
         timestamp = "1772276564",
-        index = 263,
-        nextindex = 242,
-        group = 6,
     },
 }

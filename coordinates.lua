@@ -99,4 +99,22 @@ function Coordinates.toDecimalDegrees(direction, degrees, minutes, seconds)
     return decimal
 end
 
+function Coordinates.CalculateDistance(SextantA, SextantB)
+	if SextantA == nil or SextantB == nil then
+		-- "Cannot calculate distance: one or both sextants are nil
+		return math.huge
+	end
+	-- Convert both sextants to decimal degrees
+	local lonA = Coordinates.toDecimalDegrees(SextantA.longitudeDir, SextantA.longitudeDeg, SextantA.longitudeMin, SextantA.longitudeSec)
+	local latA = Coordinates.toDecimalDegrees(SextantA.latitudeDir, SextantA.latitudeDeg, SextantA.latitudeMin, SextantA.latitudeSec)
+	local lonB = Coordinates.toDecimalDegrees(SextantB.longitudeDir, SextantB.longitudeDeg, SextantB.longitudeMin, SextantB.longitudeSec)
+	local latB = Coordinates.toDecimalDegrees(SextantB.latitudeDir, SextantB.latitudeDeg, SextantB.latitudeMin, SextantB.latitudeSec)
+	-- Calculate the difference in degrees
+	local deltaLon = lonB - lonA
+	local deltaLat = latB - latA
+	-- Convert degree difference to meters using coordCoef
+	local distance = math.sqrt(deltaLon * deltaLon + deltaLat * deltaLat) / Coordinates.coordCoef
+	return distance
+end
+
 return Coordinates

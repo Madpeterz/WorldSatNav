@@ -1,9 +1,11 @@
 local api = require("api")
 
+
 local shipsHelper = {}
 local mapRenderer = require("WorldSatNav/map_renderer")
 local helpers = require("WorldSatNav/helpers")
 local settings = require("WorldSatNav/settings")
+local coordinates = require("WorldSatNav/coordinates")
 
 local InShipMode = false
 local shipData = nil
@@ -58,7 +60,7 @@ end
 
 
 -- Returns a locData table for the given raw ship entry, or nil
-local function makeLocData(ship)
+local function makeLocData(ship, index)
     local sx = ship.sextant
     return {
         longitudeDir = sx.longitude,
@@ -72,47 +74,18 @@ local function makeLocData(ship)
         isship = true,
         isevent = false,
         ismap = false,
-        id = ship.index,
-        index = ship.index,
-        nextindex = ship.nextindex,
-        group = ship.group
+        id = index,
+        index = index,
     }
 end
 
--- Finds the raw ship entry by index
-local function findShipByIndex(idx)
-    if shipData == nil then
-        return nil
+local function getShipDegCoords(entry)
+    if entry == nil then
+        return nil, nil
     end
-    for _, ship in pairs(shipData) do
-        if ship.index == idx then return ship end
-    end
-    return nil
-end
-
--- Returns the first unvisited ship in the given group by walking the nextindex
--- chain from startShip within that group, then falling back to a full group scan.
-local function findUnvisitedInGroup(group, startShip)
-    -- Walk chain within group
-    local seen = { [startShip.index] = true }
-    local cur = startShip
-    while true do
-        local next = findShipByIndex(cur.nextindex)
-        if next == nil or seen[next.index] or next.group ~= group then break end
-        seen[next.index] = true
-        if shipIndexVisited[next.index] == nil then return next end
-        cur = next
-    end
-    if shipData == nil then
-        return nil
-    end
-    -- Fallback: any unvisited in the group
-    for _, ship in pairs(shipData) do
-        if ship.group == group and shipIndexVisited[ship.index] == nil then
-            return ship
-        end
-    end
-    return nil
+    local lon = entry.longitudeDeg or (entry.sextant and entry.sextant.deg_long)
+    local lat = entry.latitudeDeg or (entry.sextant and entry.sextant.deg_lat)
+    return lon, lat
 end
 
 shipsHelper.GetNextShip = function()
@@ -125,89 +98,85 @@ shipsHelper.GetNextShip = function()
         api.Log:Info("ship data is not loaded, please reload addon")
         return
     end
-
-    local currentGroup = lastVistitedShip.group
-    local startShip = findShipByIndex(lastVistitedShip.index)
-
-    -- Step 1: stay in the current group if any unvisited ships remain in it
-    if currentGroup ~= nil and startShip ~= nil then
-        local candidate = findUnvisitedInGroup(currentGroup, startShip)
-        if candidate ~= nil then
-            StartNextShipTracking(makeLocData(candidate))
-            return
-        end
+    if not lastVistitedShip or not lastVistitedShip.index then
+        helpers.DevLog("No valid last visited ship for distance calculation")
+        return
     end
-
-    -- Step 2: current group is exhausted – before advancing, check lower-numbered
-    -- groups for any unvisited ships (descending: e.g. group 2, then group 1, before group 4).
-    if startShip == nil then
-        api.Log:Info("No last visited ship found please select a ship manually")
+    local lastLon, lastLat = getShipDegCoords(lastVistitedShip)
+    if lastLon == nil or lastLat == nil then
+        helpers.DevLog("No valid coordinates on last visited ship, cannot calculate next ship")
         return
     end
 
-    if currentGroup ~= nil then
-        local allGroups = {}
-        local groupSet = {}
-        for _, ship in pairs(shipData) do
-            if ship.group ~= nil and not groupSet[ship.group] then
-                groupSet[ship.group] = true
-                table.insert(allGroups, ship.group)
+    helpers.DevLog("Finding next ship after index " .. tostring(lastVistitedShip.index))
+    -- Debug: log shipData and lastVistitedShip
+    helpers.DevLog("shipData type: " .. type(shipData))
+    if type(shipData) == "table" then
+        local count = 0
+        for k, v in pairs(shipData) do count = count + 1 end
+        helpers.DevLog("shipData entries: " .. tostring(count))
+    else
+        helpers.DevLog("shipData is not a table!")
+    end
+    helpers.DevLog("lastVistitedShip: " .. tostring(lastVistitedShip))
+    local shipsWithin5km = {}
+    local enteredLoop = false
+    for _, ship in pairs(shipData) do
+        enteredLoop = true
+        helpers.DevLog("Looping ship: " .. tostring(ship) .. ", index: " .. tostring(ship and ship.index))
+        -- Dump ship table fields for debugging
+        if type(ship) == "table" then
+            local fieldDump = ""
+            for k, v in pairs(ship) do
+                fieldDump = fieldDump .. tostring(k) .. "=" .. tostring(v) .. ", "
             end
+            helpers.DevLog("Ship fields: " .. fieldDump)
         end
-        table.sort(allGroups)
-        -- Iterate descending so we check the closest lower group first
-        for i = #allGroups, 1, -1 do
-            local g = allGroups[i]
-            if g < currentGroup then
-                for _, ship in pairs(shipData) do
-                    if ship.group == g then
-                        local candidate = findUnvisitedInGroup(g, ship)
-                        if candidate ~= nil then
-                            StartNextShipTracking(makeLocData(candidate))
-                            return
-                        end
-                        break
+        if ship == nil then
+            helpers.DevLog("Encountered nil ship entry in data, skipping")
+        elseif ship.index == nil then
+            helpers.DevLog("Encountered ship entry with no index, skipping: " .. tostring(ship))
+        elseif shipIndexVisited[ship.index] ~= nil then
+            helpers.DevLog("Ship index " .. tostring(ship.index) .. " already visited at " .. tostring(shipIndexVisited[ship.index]) .. ", skipping")
+        elseif ship.index == trackedShipId then
+            helpers.DevLog("Ship index " .. tostring(ship.index) .. " is currently being tracked, skipping")
+        else
+            -- Fast bounding-box check: skip if longitudeDeg or latitudeDeg differ by more than 5
+            local shipLon, shipLat = getShipDegCoords(ship)
+            if shipLon == nil or shipLat == nil then
+                helpers.DevLog("Ship index " .. tostring(ship.index) .. " has no valid coordinates, skipping")
+            else
+                local Acheck = math.abs(lastLon - shipLon)
+                local Bcheck = math.abs(lastLat - shipLat)
+                if Acheck > 5 or Bcheck > 5 then
+                    helpers.DevLog("Ship index " .. tostring(ship.index) .. " skipped by bounding box check (deg diff > 5) - Acheck: " .. tostring(Acheck) .. ", Bcheck: " .. tostring(Bcheck))
+                else
+                    helpers.DevLog("Calculating distance for ship index " .. tostring(ship.index) .. " using sextant fields.")
+                    local distance = coordinates.CalculateDistance(lastVistitedShip, ship)
+                    helpers.DevLog("Calculated distance for ship index " .. tostring(ship.index) .. ": " .. tostring(distance) .. " meters")
+                    if distance <= 2500 then
+                        local x, y = coordinates.getMapDrawPoint(ship.longitudeDir, ship.latitudeDir, ship.longitudeDeg, ship.longitudeMin, ship.longitudeSec, ship.latitudeDeg, ship.latitudeMin, ship.latitudeSec)
+                        local xx, yy = coordinates.getMapDrawPoint(lastVistitedShip.longitudeDir, lastVistitedShip.latitudeDir, lastVistitedShip.longitudeDeg, lastVistitedShip.longitudeMin, lastVistitedShip.longitudeSec, lastVistitedShip.latitudeDeg, lastVistitedShip.latitudeMin, lastVistitedShip.latitudeSec)
+                        local xxdif = math.abs(xx - x)
+                        local yydif = math.abs(yy - y)
+                        local dif = math.sqrt(xxdif * xxdif + yydif * yydif)
+                        table.insert(shipsWithin5km, {ship = ship, distance = dif})
                     end
                 end
             end
         end
     end
-
-    -- Step 3: no lower group has unvisited ships – walk the nextindex chain to find
-    -- the next higher group that still has unvisited ships.
-    local startedAtIndex = startShip.index
-    local seenDuringTraversal = {}
-    local groupsChecked = {}
-    if currentGroup ~= nil then groupsChecked[currentGroup] = true end
-
-    local cur = startShip
-    while true do
-        local next = findShipByIndex(cur.nextindex)
-
-        if next == nil or next.index == startedAtIndex or seenDuringTraversal[next.index] then
-            api.Log:Info("No more unvisited ships found. toggle Show Ships to reset")
-            return
-        end
-
-        seenDuringTraversal[next.index] = true
-
-        local nextGroup = next.group
-        if nextGroup ~= nil and not groupsChecked[nextGroup] then
-            groupsChecked[nextGroup] = true
-            -- Check this whole new group for unvisited ships
-            local candidate = findUnvisitedInGroup(nextGroup, next)
-            if candidate ~= nil then
-                StartNextShipTracking(makeLocData(candidate))
-                return
-            end
-            -- All visited in this group too – keep following the chain
-        elseif nextGroup == nil and shipIndexVisited[next.index] == nil then
-            StartNextShipTracking(makeLocData(next))
-            return
-        end
-
-        cur = next
+    if not enteredLoop then
+        helpers.DevLog("Did not enter shipData loop at all!")
     end
+    helpers.DevLog("Found " .. tostring(#shipsWithin5km) .. " unvisited ships within 5km")
+    if #shipsWithin5km == 0 then
+        api.Log:Info("No nearby ships found within 2.5km")
+        return
+    end
+    table.sort(shipsWithin5km, function(a, b) return a.distance < b.distance end)
+    local nextShip = shipsWithin5km[1].ship
+    StartNextShipTracking( makeLocData(nextShip, nextShip.index), false)
 end
 
 shipsHelper.HideNextShipButton = function()
@@ -222,6 +191,7 @@ end
 
 shipsHelper.SelectedShipClicked = function(shipInfo)
     if shipInfo == nil or shipInfo.id == nil then
+        helpers.DevLog("Invalid ship info for tracking: " .. tostring(shipInfo))
         return
     end
     StartNextShipTracking(shipInfo, true)
@@ -266,6 +236,25 @@ shipsHelper.DisplayShips = function(enableShipMode)
     end
     if shipData == nil then
         shipData = api.File:Read(shipDataFilePath)
+        -- Add index to each ship entry after loading
+        if shipData ~= nil then
+            local idx = 1
+            for _, ship in pairs(shipData) do
+                ship.index = idx
+                -- Optionally, copy sextant fields to top level for easier access elsewhere
+                if ship.sextant then
+                    ship.longitudeDir = ship.sextant.longitude
+                    ship.longitudeDeg = ship.sextant.deg_long
+                    ship.longitudeMin = ship.sextant.min_long
+                    ship.longitudeSec = ship.sextant.sec_long
+                    ship.latitudeDir = ship.sextant.latitude
+                    ship.latitudeDeg = ship.sextant.deg_lat
+                    ship.latitudeMin = ship.sextant.min_lat
+                    ship.latitudeSec = ship.sextant.sec_lat
+                end
+                idx = idx + 1
+            end
+        end
     end
     if shipData == nil then
          return
@@ -276,7 +265,7 @@ shipsHelper.DisplayShips = function(enableShipMode)
     mapRenderer.renderPlayerMarker()
     for _, ship in pairs(shipData) do
         if shipIndexVisited[ship.index] == nil or ship.index == trackedShipId then
-            local locData = makeLocData(ship)
+            local locData = makeLocData(ship, ship.index)
             table.insert(shipAddonData, locData)
             local icon = (ship.index == trackedShipId) and "ship3.png" or "ship.png"
             mapRenderer.renderDot(locData, 1, icon)
