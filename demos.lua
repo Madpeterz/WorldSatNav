@@ -6,8 +6,11 @@ local settings = require("WorldSatNav/settings")
 local demos = {}
 
 local demosFile = "WorldSatNav/data/demos.dat"
+local demosSyncFile = "WorldSatNav/data/sync.dat"
+local demosSyncServerFile = "WorldSatNav/data/syncserver.dat"
 local storedDemos = {}
 local inDemoMode = false
+local demoFileReadUnixtime = 0
 
 local function normalizeTimestamp(value)
     local numericValue = tonumber(value)
@@ -66,14 +69,17 @@ local function makeLocData(entry, index)
 end
 
 local function loadDemos()
-    helpers.DevLog("Loading demo data from " .. demosFile)
+    helpers.DevLog("[loadDemos] Loading demo data from " .. demosFile)
     local entries = api.File:Read(demosFile)
-    helpers.DevLog("Raw demo data handle: " .. tostring(entries))
+    helpers.DevLog("[loadDemos] Raw demo data handle: " .. tostring(entries))
     if type(entries) == "table" then
-        helpers.DevLog("Raw demo data entries: " .. tostring(#entries))
+        helpers.DevLog("[loadDemos] Raw demo data entries: " .. tostring(#entries))
+    else
+        helpers.DevLog("[loadDemos] Demo data is not a table; resetting to empty list")
+        entries = {}
     end
     if entries == nil then
-        helpers.DevLog("No demo data found at " .. demosFile .. ", starting with empty list")
+        helpers.DevLog("[loadDemos] No demo data found at " .. demosFile .. ", starting with empty list")
         entries = {}
     end
     local nowTime = helpers.GetCurrentTimestamp()
@@ -83,25 +89,43 @@ local function loadDemos()
         if datapoint.startat ~= nil and type(datapoint.startat) == "number" then
             local ageSeconds = nowTime - datapoint.startat
             if ageSeconds > (60 * 60) then
-                helpers.DevLog("skipping entry " .. index .. " due to startat being more than 1 hour in the past (" .. ageSeconds .. " seconds old)")
+                helpers.DevLog("[loadDemos] skipping entry " .. index .. " due to startat being more than 1 hour in the past (" .. ageSeconds .. " seconds old)")
             else
                 table.insert(storedDemos, datapoint)
             end
+        else
+            helpers.DevLog("[loadDemos] entry " .. index .. " missing or invalid startat: " .. tostring(datapoint.startat))
         end
     end
     if #storedDemos ~= #entries then
-        helpers.DevLog("Filtered out " .. (#entries - #storedDemos) .. " old demo entries, " .. #storedDemos .. " remain")
+        helpers.DevLog("[loadDemos] Filtered out " .. (#entries - #storedDemos) .. " old demo entries, " .. #storedDemos .. " remain")
         demos.saveDemos()
     end
-    helpers.DevLog("Loaded " .. #storedDemos .. " demo entries")
+    helpers.DevLog("[loadDemos] Loaded " .. #storedDemos .. " demo entries")
+    demoFileReadUnixtime = nowTime
+    helpers.DevLog("[loadDemos] Setting demoFileReadUnixtime to " .. tostring(demoFileReadUnixtime))
     return true
 end
+local lastCheckForDemosLoaded = 0
 
 local function ensureDemosLoaded()
-    if #storedDemos > 0 then
+    local nowTime = helpers.GetCurrentTimestamp()
+    if #storedDemos == 0 then
+        helpers.DevLog("[ensureDemosLoaded] No demos currently loaded, attempting to load")
+        return loadDemos()
+    end
+    if demoFileReadUnixtime == 0 then
+        helpers.DevLog("[ensureDemosLoaded] demoFileReadUnixtime is 0, setting to current time " .. tostring(nowTime))
+        demoFileReadUnixtime = nowTime
         return true
     end
-    return loadDemos()
+    local secondsSinceLastLoad = nowTime - demoFileReadUnixtime
+    if secondsSinceLastLoad > (60 * 5) then
+        helpers.DevLog("[ensureDemosLoaded] More than 5 minutes since last load (" .. secondsSinceLastLoad .. " seconds), reloading demos")
+        return loadDemos()
+    else
+        return true
+    end
 end
 
 function demos.saveDemos()
@@ -125,6 +149,12 @@ function demos.saveDemos()
         table.insert(entriesToSave, entry)
     end
     api.File:Write(demosFile, entriesToSave)
+    local syncLayer = {
+        type = "demos",
+        action = "sync",
+        unixtime = helpers.GetCurrentTimestamp(),
+    }
+    api.File:Write(demosSyncFile, syncLayer)
     helpers.DevLog("Saved " .. #entriesToSave .. " demos to " .. demosFile)
 end
 
@@ -138,6 +168,7 @@ end
 
 function demos.getNextAlert()
     if not ensureDemosLoaded() then
+        helpers.DevLog("Unable to load demos for alert check, returning nil")
         return nil
     end
     local nowTime = helpers.GetCurrentTimestamp()
@@ -208,9 +239,10 @@ end
 function demos.RenderDemos()
     helpers.DevLog("Rendering demos, total count: " .. #storedDemos)
     if not ensureDemosLoaded() then
+        helpers.DevLog("Unable to load demos, returning nil")
         return nil
     end
-
+    helpers.DevLog("Rendering demos on map, total count after load: " .. #storedDemos)
     mapRenderer.hideDots()
     mapRenderer.renderPlayerMarker()
     local nowTime = helpers.GetCurrentTimestamp()

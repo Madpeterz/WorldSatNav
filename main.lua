@@ -461,9 +461,6 @@ local function DEMO_AUTOHIDE_PLUS()
 	if settings.Get("showDemoCreatePlus") == true then
 		local unitid = api.Unit:GetUnitId("target")
 		if unitid == nil then
-			if demos.InDemoMode() then
-				helpers.DevLog("DEMO_WINDOW_AUTO: No target selected")
-			end
 			if demoAddButton:IsVisible() then
 				demoAddButton:Show(false)
 			end
