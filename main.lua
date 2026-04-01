@@ -472,7 +472,6 @@ local function DEMO_AUTOHIDE_PLUS()
 		local targetpos = gps.GetCurrentPosition()
 		local targetdetails = api.Unit:GetUnitInfoById(unitid)
 		if targetdetails.type ~= "housing" then
-			helpers.DevLog("DEMO_WINDOW_AUTO: Target is not a housing unit")
 			if demoAddButton:IsVisible() then
 				demoAddButton:Show(false)
 			end
@@ -484,7 +483,6 @@ local function DEMO_AUTOHIDE_PLUS()
 		local targetpos = gps.GetCurrentPosition()
 		local targetdetails = api.Unit:GetUnitInfoById(unitid)
 		if targetdetails.type ~= "housing" then
-			helpers.DevLog("DEMO_WINDOW_AUTO: Target is not a housing unit")
 			if demoAddButton:IsVisible() then
 				demoAddButton:Show(false)
 			end
