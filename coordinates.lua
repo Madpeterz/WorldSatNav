@@ -2,63 +2,8 @@
 -- Handles all coordinate conversions and transformations
 
 local constants = require("WorldSatNav/constants")
-local regions = require("WorldSatNav/regions")
 
 local Coordinates = {}
-
-Coordinates.renderingSettings = {
-	scaleHX = 0,
-	scaleHY = 0,
-	centerPointX = 0,
-	centerPointY = 0,
-}
-local renderingSettingsLoaded = false
-
-function Coordinates.ResetRenderingSettings()
-	Coordinates.renderingSettings.scaleHX = constants.map.xpointScale + constants.map.tweakScaleX
-	Coordinates.renderingSettings.scaleHY = constants.map.ypointScale + constants.map.tweakScaleY
-	Coordinates.renderingSettings.centerPointX = constants.map.centerPointX
-	Coordinates.renderingSettings.centerPointY = constants.map.centerPointY
-	renderingSettingsLoaded = true
-end
-
-function Coordinates.UpdateRenderingSettings(centerX, centerY, scaleX, scaleY)
-	Coordinates.renderingSettings.scaleHX = scaleX
-	Coordinates.renderingSettings.scaleHY = scaleY
-	Coordinates.renderingSettings.centerPointX = centerX
-	Coordinates.renderingSettings.centerPointY = centerY
-end
-
--- Convert sextant coordinates (deg/min/sec) to pixel coordinates on the map
-function Coordinates.getMapDrawPoint(lonDirection, latDirection, lonDegrees, lonMinutes, lonSeconds, latDegrees, latMinutes, latSeconds)
-	if renderingSettingsLoaded == false then
-		Coordinates.ResetRenderingSettings()
-		
-	end
-	
-	local dirX = lonDirection == "W" and -1 or 1
-	local dirY = latDirection == "S" and  1 or -1
-
-	local scaleHX = Coordinates.renderingSettings.scaleHX + constants.map.tweakScaleX
-	local scaleMX = scaleHX / 100.0
-	local scaleSX = scaleMX / 100.0
-	local scaleHY = Coordinates.renderingSettings.scaleHY + constants.map.tweakScaleY
-	local scaleMY = scaleHY / 100.0
-	local scaleSY = scaleMY / 100.0
-
-	local weSecond = lonDegrees * scaleHX + lonMinutes * scaleMX + lonSeconds * scaleSX
-	local wePxl = weSecond * dirX
-	local nsSecond = latDegrees * scaleHY + latMinutes * scaleMY + latSeconds * scaleSY
-	local nsPxl = nsSecond * dirY
-
-	local xPosReal = math.floor(Coordinates.renderingSettings.centerPointX + wePxl + 0.5)
-	local yPosReal = math.floor(Coordinates.renderingSettings.centerPointY + nsPxl + 0.5)
-
-	return xPosReal, yPosReal
-end
-
--- Convert sextant coordinates to degrees with scaling for game coordinate system
-local coordCoef = 0.00097657363894522145695357130138029
 
 --- Convert latitude sextant coordinates to game world degrees
 -- @param direction string "N" or "S"
@@ -67,7 +12,7 @@ local coordCoef = 0.00097657363894522145695357130138029
 -- @param seconds number second component (0-59)
 -- @return number game world Y coordinate in degrees
 function Coordinates.latitudeSextantToDegrees(direction, degrees, minutes, seconds)
-    return (Coordinates.toDecimalDegrees(direction, degrees, minutes, seconds) + 28) / coordCoef
+    return (Coordinates.toDecimalDegrees(direction, degrees, minutes, seconds) + 28) / constants.coordCoef
 end
 
 --- Convert longitude sextant coordinates to game world degrees
@@ -77,18 +22,8 @@ end
 -- @param seconds number second component (0-59)
 -- @return number game world X coordinate in degrees
 function Coordinates.longitudeSextantToDegrees(direction, degrees, minutes, seconds)
-    return (Coordinates.toDecimalDegrees(direction, degrees, minutes, seconds) + 21) / coordCoef
+    return (Coordinates.toDecimalDegrees(direction, degrees, minutes, seconds) + 21) / constants.coordCoef
 end
-
--- Get region name from sextant coordinates
-function Coordinates.getRegionFromSextant(lonDirection, latDirection, lonDegrees, lonMinutes, lonSeconds, latDegrees, latMinutes, latSeconds)
-	local x, y = Coordinates.getMapDrawPoint(lonDirection, latDirection, lonDegrees, lonMinutes, lonSeconds, latDegrees, latMinutes, latSeconds)
-	return regions.getRegionFromPixels(x, y)
-end
-
--- Expose the coordinate coefficient so other modules can convert decimal-degree
--- differences directly to game-world meters (distance = degDiff / coordCoef)
-Coordinates.coordCoef = coordCoef
 
 -- Convert sextant coordinates to decimal degrees (for distance/bearing calculations)
 function Coordinates.toDecimalDegrees(direction, degrees, minutes, seconds)
@@ -104,16 +39,32 @@ function Coordinates.CalculateDistance(SextantA, SextantB)
 		-- "Cannot calculate distance: one or both sextants are nil
 		return math.huge
 	end
+	local function unpackSextant(sextant)
+		local longitude = sextant.longitude
+		local latitude = sextant.latitude
+		local degLong = sextant.deg_long or 0
+		local minLong = sextant.min_long or 0
+		local secLong = sextant.sec_long or 0
+		local degLat = sextant.deg_lat or 0
+		local minLat = sextant.min_lat or 0
+		local secLat = sextant.sec_lat or 0
+		return longitude, latitude, degLong, minLong, secLong, degLat, minLat, secLat
+	end
+	local lonDirA, latDirA, degLongA, minLongA, secLongA, degLatA, minLatA, secLatA = unpackSextant(SextantA)
+	local lonDirB, latDirB, degLongB, minLongB, secLongB, degLatB, minLatB, secLatB = unpackSextant(SextantB)
+	if lonDirA == nil or latDirA == nil or lonDirB == nil or latDirB == nil then
+		return math.huge
+	end
 	-- Convert both sextants to decimal degrees
-	local lonA = Coordinates.toDecimalDegrees(SextantA.longitudeDir, SextantA.longitudeDeg, SextantA.longitudeMin, SextantA.longitudeSec)
-	local latA = Coordinates.toDecimalDegrees(SextantA.latitudeDir, SextantA.latitudeDeg, SextantA.latitudeMin, SextantA.latitudeSec)
-	local lonB = Coordinates.toDecimalDegrees(SextantB.longitudeDir, SextantB.longitudeDeg, SextantB.longitudeMin, SextantB.longitudeSec)
-	local latB = Coordinates.toDecimalDegrees(SextantB.latitudeDir, SextantB.latitudeDeg, SextantB.latitudeMin, SextantB.latitudeSec)
+	local lonA = Coordinates.toDecimalDegrees(lonDirA, degLongA, minLongA, secLongA)
+	local latA = Coordinates.toDecimalDegrees(latDirA, degLatA, minLatA, secLatA)
+	local lonB = Coordinates.toDecimalDegrees(lonDirB, degLongB, minLongB, secLongB)
+	local latB = Coordinates.toDecimalDegrees(latDirB, degLatB, minLatB, secLatB)
 	-- Calculate the difference in degrees
 	local deltaLon = lonB - lonA
 	local deltaLat = latB - latA
 	-- Convert degree difference to meters using coordCoef
-	local distance = math.sqrt(deltaLon * deltaLon + deltaLat * deltaLat) / Coordinates.coordCoef
+	local distance = math.sqrt(deltaLon * deltaLon + deltaLat * deltaLat) / constants.coordCoef
 	return distance
 end
 

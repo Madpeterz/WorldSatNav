@@ -1,15 +1,13 @@
--- WorldSatNav GPS Navigation
+-- GPS Navigation
 -- Handles GPS tracking, distance/bearing calculations, and navigation guidance
 
 local api = require("api")
 local coordinates = require("WorldSatNav/coordinates")
+local constants = require("WorldSatNav/constants")
 
 local GPS = {}
 
 -- State (must be declared before functions that use them)
-local gpsNavTo = nil
-local gpsNavToName = ""
-local gpsNavSextant = nil
 local prevPlayerPos = nil
 local playerMovementDirection = nil -- Bearing in degrees (0-360)
 local lastRelativeDirection = nil -- Track last direction for hysteresis
@@ -28,9 +26,30 @@ local function normalizeAngle(angle)
 	return angle
 end
 
+-- Cross-runtime atan2 compatibility (some Lua runtimes do not provide math.atan2)
+local function atan2(y, x)
+	if math.atan2 then
+		return math.atan2(y, x)
+	end
+
+	if x > 0 then
+		return math.atan(y / x)
+	elseif x < 0 and y >= 0 then
+		return math.atan(y / x) + math.pi
+	elseif x < 0 and y < 0 then
+		return math.atan(y / x) - math.pi
+	elseif x == 0 and y > 0 then
+		return math.pi / 2
+	elseif x == 0 and y < 0 then
+		return -math.pi / 2
+	else
+		return 0
+	end
+end
+
 -- Convert atan2(eastComp, northComp) result to a normalised 0-360 degree bearing
 local function bearingDeg(eastComp, northComp)
-	return normalizeAngle(math.atan2(eastComp, northComp) * (180 / math.pi))
+	return normalizeAngle(atan2(eastComp, northComp) * (180 / math.pi))
 end
 
 -- Convert bearing degrees to a 1-16 compass index (1=N, 2=NNE, 3=NE, ... 16=NNW)
@@ -40,6 +59,18 @@ end
 
 -- Extract decimal lon/lat from a sextant position struct
 local function sextantToLonLat(pos)
+	if pos == nil then
+		return nil, nil
+	end
+	if pos.longitude == nil or pos.latitude == nil then
+		return nil, nil
+	end
+	if pos.deg_long == nil or pos.min_long == nil or pos.sec_long == nil then
+		return nil, nil
+	end
+	if pos.deg_lat == nil or pos.min_lat == nil or pos.sec_lat == nil then
+		return nil, nil
+	end
 	local lon = coordinates.toDecimalDegrees(pos.longitude, pos.deg_long, pos.min_long, pos.sec_long)
 	local lat = coordinates.toDecimalDegrees(pos.latitude,  pos.deg_lat,  pos.min_lat,  pos.sec_lat)
 	return lon, lat
@@ -120,6 +151,9 @@ end
 
 -- Update player movement direction from position changes
 local function updateMovementDirection(newPos)
+	if newPos == nil then
+		return
+	end
 	if prevPlayerPos == nil then
 		prevPlayerPos = newPos
 		return
@@ -173,11 +207,19 @@ local function updateMovementDirection(newPos)
 end
 
 -- Calculate GPS guidance text showing direction and distance
-local function getGPSGuideText(playerCord, targetCord)
-	-- playerCord and targetCord have: longitude, deg_long, min_long, sec_long, latitude, deg_lat, min_lat, sec_lat
-	
-	local playerLon, playerLat = sextantToLonLat(playerCord)
-	local targetLon, targetLat = sextantToLonLat(targetCord)
+local function getGPSGuideText(targetSextant)
+	-- targetSextant has: longitude, deg_long, min_long, sec_long, latitude, deg_lat, min_lat, sec_lat
+	-- 	longitude, latitude
+	if targetSextant == nil then
+		return "noidea", 0, "m", 0, nil
+	end
+
+	local playerSextant = api.Map:GetPlayerSextants()
+	local playerLon, playerLat = sextantToLonLat(playerSextant)
+	local targetLon, targetLat = sextantToLonLat(targetSextant)
+	if playerLon == nil or playerLat == nil or targetLon == nil or targetLat == nil then
+		return "noidea", 0, "m", 0, nil
+	end
 	
 	-- Calculate differences
 	local lonDiff = targetLon - playerLon
@@ -222,7 +264,8 @@ local function getGPSGuideText(playerCord, targetCord)
 	-- Calculate distance in game-world meters using the game's own coordinate coefficient.
 	-- coordCoef ≈ 1/1024 maps sextant decimal-degrees to game units (meters).
 	-- An empirical correction factor of 3.2/3.6 ≈ 0.8889 brings readings in line with observed distances.
-	local distance = math.sqrt(lonDiff * lonDiff + latDiff * latDiff) / coordinates.coordCoef * (3.2 / 3.6)
+	local coordCoef = constants.coordCoef or (1 / 1024)
+	local distance = math.sqrt(lonDiff * lonDiff + latDiff * latDiff) / coordCoef * (3.2 / 3.6)
 	local distanceScale = "m"
 	local scales = {"km", "Mm"}
 	for _, scale in ipairs(scales) do
@@ -236,79 +279,9 @@ local function getGPSGuideText(playerCord, targetCord)
 	return compassDir, distance, distanceScale, bearing, relativeDir
 end
 
--- Public API
-
---- Set GPS target location from treasure map item data
--- @param itemData table treasure map item info with coordinate fields
--- @param name string optional display name for the target
-function GPS.setTarget(itemData, name)
-	gpsNavTo = itemData
-	gpsNavToName = name or ""
-	
-	-- Initialize player position for movement tracking
-	prevPlayerPos = api.Map:GetPlayerSextants()
-	
-	if itemData then
-		gpsNavSextant = {
-			longitude = itemData.longitudeDir,
-			deg_long = itemData.longitudeDeg or 0,
-			min_long = itemData.longitudeMin or 0,
-			sec_long = itemData.longitudeSec or 0,
-			latitude = itemData.latitudeDir,
-			deg_lat = itemData.latitudeDeg or 0,
-			min_lat = itemData.latitudeMin or 0,
-			sec_lat = itemData.latitudeSec or 0,
-		}
-	else
-		gpsNavSextant = nil
-	end
-end
-
---- Clear the current GPS target and stop navigation
-function GPS.clearTarget()
-	gpsNavTo = nil
-	gpsNavToName = ""
-	gpsNavSextant = nil
-	prevPlayerPos = nil
-	playerMovementDirection = nil
-	lastRelativeDirection = nil
-	pendingDirection = nil
-	pendingDirectionCount = 0
-	recentBearings = {}
-end
-
---- Check if a GPS target is currently set
--- @return boolean true if a target is set
-function GPS.hasTarget()
-	return gpsNavTo ~= nil
-end
-
---- Get the display name of the current GPS target
--- @return string target name or empty string if no target
-function GPS.getTargetName()
-	return gpsNavToName
-end
-
---- Get the raw item data for the current GPS target
--- @return table item data or nil if no target
-function GPS.getTarget()
-	return gpsNavTo
-end
-
---- Get the sextant coordinates of the current GPS target
--- @return table sextant coordinate structure or nil if no target
-function GPS.getTargetSextant()
-	return gpsNavSextant
-end
-
 --- Update player movement direction (should be called regularly)
 function GPS.updateMovementTracking()
-	if gpsNavSextant == nil then
-		return
-	end
-	
-	local curCoords = api.Map:GetPlayerSextants()
-	updateMovementDirection(curCoords)
+	updateMovementDirection(api.Map:GetPlayerSextants())
 end
 
 --- Get formatted navigation text showing direction and distance to target
@@ -317,14 +290,12 @@ end
 -- @return string distanceScale unit label ("m", "km", or "Mm")
 -- @return number bearing      absolute bearing in degrees (0-360) to the target
 -- @return string relativeDir  direction relative to player movement (same octant names, or "noidea")
-function GPS.getNavigationText()
-	if gpsNavSextant == nil then
-		return ""
+function GPS.getNavigationText(targetSextant)
+	local ok, compassDir, distance, distanceScale, bearing, relativeDir = pcall(getGPSGuideText, targetSextant)
+	if not ok then
+		return "noidea", 0, "m", 0, "noidea"
 	end
-	
-	local curCoords = api.Map:GetPlayerSextants()
-	
-	return getGPSGuideText(curCoords, gpsNavSextant)
+	return compassDir, distance, distanceScale, bearing, relativeDir
 end
 
 --- Get the player's current movement direction in degrees (0-360, North = 0)
@@ -345,21 +316,24 @@ end
 
 --- Get relative direction to target based on movement direction
 -- @return string relative direction ("ahead", "left", "behind-right", etc.) or nil
-function GPS.GetRelativeDirectionToTarget()
-	if gpsNavSextant == nil or playerMovementDirection == nil then
+function GPS.GetRelativeDirectionToTarget(targetSextant)
+	if targetSextant == nil or playerMovementDirection == nil then
 		return nil
 	end
 	
-	local curCoords = api.Map:GetPlayerSextants()
-	local _, _, _, bearing, relativeDir = getGPSGuideText(curCoords, gpsNavSextant)
+	local _, _, _, bearing, relativeDir = getGPSGuideText(targetSextant)
 	
 	return relativeDir
 end
 
---- Get the current player position as sextant coordinates
--- @return table sextant coordinate structure with longitude, latitude, deg_long, min_long, sec_long, deg_lat, min_lat, sec_lat
-function GPS.GetCurrentPosition()
-	return api.Map:GetPlayerSextants()
+local lastUpdate = 0
+function GPS.onUpdate(dt)
+	lastUpdate = lastUpdate + dt
+	if lastUpdate < (constants.timing.updateRate/4) then
+		return
+	end
+    lastUpdate = 0
+	GPS.updateMovementTracking()
 end
 
 return GPS
