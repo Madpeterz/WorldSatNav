@@ -98,11 +98,16 @@ end
 
 local function ExpireOldEvents()
     local currentTime = api.Time:GetLocalTime()
+    if type(currentTime) ~= "number" then
+        helpers.DevLog("WorldSatNav: Unable to expire events, local time is not numeric")
+        return
+    end
+    local expireMinutes = tonumber(settings.Get("WorldEventsKeptFor")) or 5
     local beforeCount = #storedEvents
     local removeEventids = {}
     for i = #storedEvents, 1, -1 do
         local event = storedEvents[i]
-        if (currentTime - event.timestamp) > (60*settings.Get("EventExpireTime")) then
+        if (currentTime - event.timestamp) > (60 * expireMinutes) then
             table.insert(removeEventids, i)
         end
     end
