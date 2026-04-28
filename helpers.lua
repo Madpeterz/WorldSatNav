@@ -494,7 +494,6 @@ local function firstDefined(...)
 end
 
 local calibratedTimeState = {
-    lastKnownLocalTime = nil,
     lastReturnedTimestamp = nil,
 }
 
@@ -535,9 +534,8 @@ end
 function helpers.GetCurrentTimestamp()
     local localTime = unPackTimeStampSource()
     if localTime ~= nil then
-        if calibratedTimeState.lastKnownLocalTime == nil or localTime > calibratedTimeState.lastKnownLocalTime then
-            calibratedTimeState.lastKnownLocalTime = localTime
-            calibratedTimeState.lastReturnedTimestamp = calibratedTimeState.lastKnownLocalTime
+        if calibratedTimeState.lastReturnedTimestamp == nil or localTime > calibratedTimeState.lastReturnedTimestamp then
+            calibratedTimeState.lastReturnedTimestamp = localTime
         end
     else
         helpers.DevLog("WorldSatNav: Falling back to previous timestamp due to invalid local time source")
