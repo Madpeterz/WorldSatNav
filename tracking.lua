@@ -134,7 +134,7 @@ local function UpdateSharedData(dt)
 	end
 	updateTicker = updateTicker + dt
 	local writeFile = {
-		time = api.Time:GetLocalTime(),
+		time = helpers.GetCurrentTimestamp(),
 		location = api.Map:GetPlayerSextants(),
 		updateTicker = updateTicker
 	}

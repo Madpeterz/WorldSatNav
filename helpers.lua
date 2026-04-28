@@ -513,18 +513,36 @@ function helpers.AdvanceCurrentTimestamp(dt)
     end
 end
 
-function helpers.GetCurrentTimestamp()
-    local localTime = api.Time:GetLocalTime()
-    if type(localTime) == "number" then
-        if calibratedTimeState.lastKnownLocalTime == nil or localTime > calibratedTimeState.lastKnownLocalTime then
-            calibratedTimeState.lastKnownLocalTime = localTime
-        end
-        if calibratedTimeState.lastReturnedTimestamp == nil or localTime > calibratedTimeState.lastReturnedTimestamp then
-            calibratedTimeState.lastReturnedTimestamp = localTime
+local function unPackTimeStampSource()
+    local timeSource = api.Time:GetLocalTime()
+    if timeSource == nil then
+        helpers.DevLog("WorldSatNav: Unable to get local time for timestamp, got nil")
+        return nil
+    end
+    if type(timeSource) == "number" then
+        return timeSource
+    end
+    local timeSourceC = tonumber(timeSource)
+    if type(timeSourceC) == "number" then
+        if timeSourceC > 1777395321 then
+            return timeSourceC
         end
     end
+    helpers.DevLog("WorldSatNav: Unable to parse local time for timestamp, got: " .. tostring(timeSourceC).." as type "..type(timeSource))
+    return nil
+end
 
-    return calibratedTimeState.lastReturnedTimestamp or localTime
+function helpers.GetCurrentTimestamp()
+    local localTime = unPackTimeStampSource()
+    if localTime ~= nil then
+        if calibratedTimeState.lastKnownLocalTime == nil or localTime > calibratedTimeState.lastKnownLocalTime then
+            calibratedTimeState.lastKnownLocalTime = localTime
+            calibratedTimeState.lastReturnedTimestamp = calibratedTimeState.lastKnownLocalTime
+        end
+    else
+        helpers.DevLog("WorldSatNav: Falling back to previous timestamp due to invalid local time source")
+    end
+    return calibratedTimeState.lastReturnedTimestamp
 end
 
 local function extractDateParts(dateValue)
@@ -694,8 +712,7 @@ function helpers.TimeRemaining(futureTimestamp, multilineOutput)
 end
 
 function helpers.getTodayDateText()
-	local localTime = api.Time:GetLocalTime()
-    local dateraw = api.Time:TimeToDate(localTime)
+    local dateraw = api.Time:TimeToDate(api.Time:GetLocalTime())
 	if dateraw == nil then
         helpers.DevLog("getTodayDateText: Unable to get date table from local time, got: " .. type(dateraw))
         return "DD-MM-YYYY"

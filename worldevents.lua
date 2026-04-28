@@ -97,22 +97,20 @@ function worldevents.FindCordsInMessage(message)
 end
 
 local function ExpireOldEvents()
-    local currentTime = api.Time:GetLocalTime()
+    local currentTime = helpers.GetCurrentTimestamp()
     if type(currentTime) ~= "number" then
-        helpers.DevLog("WorldSatNav: Unable to expire events, local time is not numeric")
+        helpers.DevLog("WorldSatNav: Unable to expire events, local time is not numeric but is: " .. type(currentTime))
         return
     end
     local expireMinutes = tonumber(settings.Get("WorldEventsKeptFor")) or 5
     local beforeCount = #storedEvents
-    local removeEventids = {}
     for i = #storedEvents, 1, -1 do
         local event = storedEvents[i]
-        if (currentTime - event.timestamp) > (60 * expireMinutes) then
-            table.insert(removeEventids, i)
+        if type(event.timestamp) ~= "number" then
+            helpers.DevLog("WorldSatNav: Skipping expiration for event with invalid timestamp")
+        elseif (currentTime - event.timestamp) > (60 * expireMinutes) then
+            table.remove(storedEvents, i)
         end
-    end
-    for _, id in pairs(removeEventids) do
-        table.remove(storedEvents, id)
     end
     local afterCount = #storedEvents
     if beforeCount ~= afterCount then
@@ -180,7 +178,7 @@ function worldevents.WorldMessageProcessor(event, message, iconKey, sextants, in
 
             local locData = {
                 sextant = sx,
-                timestamp = api.Time:GetLocalTime(),
+                timestamp = helpers.GetCurrentTimestamp(),
                 eventType = eventType
             }
             helpers.DevLog("WorldSatNav: Detected event '" .. eventType .. "' in message: " .. message)

@@ -224,7 +224,7 @@ local function CreateDemoAddUI(onClickCallback)
 end
 
 local function DEMO_EXPIRE()
-	local currentTime = tonumber(helpers.GetCurrentTimestamp())
+	local currentTime = helpers.GetCurrentTimestamp()
 	if currentTime == nil then
 		helpers.DevLog("Skipping demo expiry: current time is not numeric")
 		return
@@ -248,7 +248,7 @@ local function DEMO_EXPIRE()
 end
 
 local function DEMO_TRIGGER_ALERT()
-	local currentTime = tonumber(helpers.GetCurrentTimestamp())
+	local currentTime = helpers.GetCurrentTimestamp()
 	if currentTime == nil then
 		helpers.DevLog("Skipping demo alert trigger: current time is not numeric")
 		return
@@ -323,8 +323,8 @@ function demos.RequestDemosForRender()
 	for _, entry in pairs(demosData) do
 		local skipThis = false
 		if settingsModule.Get("DrawDemosInNextHour") == true then
-			local currentTime = tonumber(helpers.GetCurrentTimestamp())
-			if type(currentTime) ~= "number" then
+			local currentTime = helpers.GetCurrentTimestamp()
+			if currentTime == nil then
 				helpers.DevLog("Current time is not numeric, skipping demo alert time check for this entry and rendering it")
 			elseif entry.startat == nil then
 				helpers.DevLog("Demo entry start time is nil, skipping demo alert time check for this entry and rendering it")
