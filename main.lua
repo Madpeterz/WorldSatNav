@@ -1,27 +1,28 @@
 -- WorldSatNav Main Module
 local api = require("api")
-local maprendering = require("WorldSatNav/maprendering")
-local treasuremaps = require("WorldSatNav/treasuremaps")
-local demos = require("WorldSatNav/demos")
-local ships = require("WorldSatNav/ships")
-local events = require("WorldSatNav/worldevents")
-local alertwindow = require("WorldSatNav/alertwindow")
-local tracking = require("WorldSatNav/tracking")
-local gps = require("WorldSatNav/gps")
-local gotolocation = require("WorldSatNav/gotolocation")
+local maprendering = require("WorldSatNav/ui/maprendering")
+local treasuremaps = require("WorldSatNav/features/treasuremaps")
+local demos = require("WorldSatNav/features/demos")
+local ships = require("WorldSatNav/features/ships")
+local events = require("WorldSatNav/features/worldevents")
+local alertwindow = require("WorldSatNav/ui/alertwindow")
+local tracking = require("WorldSatNav/features/tracking")
+local gps = require("WorldSatNav/features/gps")
+local gotolocation = require("WorldSatNav/features/gotolocation")
 local helpers = require("WorldSatNav/helpers")
-local configui = require("WorldSatNav/configui")
-local eventbus = require("WorldSatNav/eventbus")
+local configui = require("WorldSatNav/ui/configui")
+local eventbus = require("WorldSatNav/core/eventbus")
 
 local WorldSatNav = {
 	name = "WorldSatNav",
 	author = "Madpeter",
-	version = "1.1.0",
+	version = "1.2.0",
 	desc = "Im still not sure where to go"
 }
 
 -- Addon initialization
 local function OnLoad()
+	api.Log:Info("[" .. WorldSatNav.name .. "] Starting version " .. WorldSatNav.version)
 	configui.OnLoad()
 	tracking.OnLoad()
 	alertwindow.OnLoad()

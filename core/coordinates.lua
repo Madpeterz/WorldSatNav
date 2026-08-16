@@ -1,7 +1,7 @@
 -- WorldSatNav Coordinate System
 -- Handles all coordinate conversions and transformations
 
-local constants = require("WorldSatNav/constants")
+local constants = require("WorldSatNav/core/constants")
 
 local Coordinates = {}
 

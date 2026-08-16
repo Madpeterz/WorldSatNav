@@ -1,11 +1,11 @@
 
 local api = require("api")
 local helpers = require("WorldSatNav/helpers")
-local constants = require("WorldSatNav/constants")
-local Coordinates = require("WorldSatNav/coordinates")
-local regionmap = require("WorldSatNav/regionmap")
-local eventbus = require("WorldSatNav/eventbus")
-local eventtopics = require("WorldSatNav/eventtopics")
+local constants = require("WorldSatNav/core/constants")
+local Coordinates = require("WorldSatNav/core/coordinates")
+local regionmap = require("WorldSatNav/ui/regionmap")
+local eventbus = require("WorldSatNav/core/eventbus")
+local eventtopics = require("WorldSatNav/core/eventtopics")
 local ships = {}
 local shipsData = {}
 local shipDataFilePath = "WorldSatNav/data/ships.dat"

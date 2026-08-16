@@ -1,10 +1,10 @@
 local api = require("api")
 local helpers = require("WorldSatNav/helpers")
-local constants = require("WorldSatNav/constants")
-local settings = require("WorldSatNav/settings")
-local eventbus = require("WorldSatNav/eventbus")
-local eventtopics = require("WorldSatNav/eventtopics")
-local regionmap = require("WorldSatNav/regionmap")
+local constants = require("WorldSatNav/core/constants")
+local settings = require("WorldSatNav/core/settings")
+local eventbus = require("WorldSatNav/core/eventbus")
+local eventtopics = require("WorldSatNav/core/eventtopics")
+local regionmap = require("WorldSatNav/ui/regionmap")
 local worldevents = {}
 local storedEvents = {}
 
@@ -97,20 +97,22 @@ function worldevents.FindCordsInMessage(message)
 end
 
 local function ExpireOldEvents()
-    local currentTime = helpers.GetCurrentTimestamp()
+    local currentTime = api.Time:GetLocalTime()
     if type(currentTime) ~= "number" then
-        helpers.DevLog("WorldSatNav: Unable to expire events, local time is not numeric but is: " .. type(currentTime))
+        helpers.DevLog("WorldSatNav: Unable to expire events, local time is not numeric")
         return
     end
     local expireMinutes = tonumber(settings.Get("WorldEventsKeptFor")) or 5
     local beforeCount = #storedEvents
+    local removeEventids = {}
     for i = #storedEvents, 1, -1 do
         local event = storedEvents[i]
-        if type(event.timestamp) ~= "number" then
-            helpers.DevLog("WorldSatNav: Skipping expiration for event with invalid timestamp")
-        elseif (currentTime - event.timestamp) > (60 * expireMinutes) then
-            table.remove(storedEvents, i)
+        if (currentTime - event.timestamp) > (60 * expireMinutes) then
+            table.insert(removeEventids, i)
         end
+    end
+    for _, id in pairs(removeEventids) do
+        table.remove(storedEvents, id)
     end
     local afterCount = #storedEvents
     if beforeCount ~= afterCount then
@@ -159,7 +161,6 @@ function worldevents.WorldMessageProcessor(event, message, iconKey, sextants, in
         helpers.DevLog("WorldSatNav: No coordinates found in message: " .. message)
         return
     end
-    local sx = {}
     local eventMatched = false
     local matchedEventType = ""
     local matchedEventTypeInfo = nil
@@ -178,7 +179,7 @@ function worldevents.WorldMessageProcessor(event, message, iconKey, sextants, in
 
             local locData = {
                 sextant = sx,
-                timestamp = helpers.GetCurrentTimestamp(),
+                timestamp = api.Time:GetLocalTime(),
                 eventType = eventType
             }
             helpers.DevLog("WorldSatNav: Detected event '" .. eventType .. "' in message: " .. message)

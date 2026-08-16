@@ -1,11 +1,11 @@
 
 local api = require("api")
 local helpers = require("WorldSatNav/helpers")
-local constants = require("WorldSatNav/constants")
-local settingsModule = require("WorldSatNav/settings")
-local eventbus = require("WorldSatNav/eventbus")
-local eventtopics = require("WorldSatNav/eventtopics")
-local regionmap = require("WorldSatNav/regionmap")
+local constants = require("WorldSatNav/core/constants")
+local settingsModule = require("WorldSatNav/core/settings")
+local eventbus = require("WorldSatNav/core/eventbus")
+local eventtopics = require("WorldSatNav/core/eventtopics")
+local regionmap = require("WorldSatNav/ui/regionmap")
 
 local demos = {}
 local demosData = {}
@@ -224,7 +224,7 @@ local function CreateDemoAddUI(onClickCallback)
 end
 
 local function DEMO_EXPIRE()
-	local currentTime = helpers.GetCurrentTimestamp()
+	local currentTime = tonumber(helpers.GetCurrentTimestamp())
 	if currentTime == nil then
 		helpers.DevLog("Skipping demo expiry: current time is not numeric")
 		return
@@ -248,7 +248,7 @@ local function DEMO_EXPIRE()
 end
 
 local function DEMO_TRIGGER_ALERT()
-	local currentTime = helpers.GetCurrentTimestamp()
+	local currentTime = tonumber(helpers.GetCurrentTimestamp())
 	if currentTime == nil then
 		helpers.DevLog("Skipping demo alert trigger: current time is not numeric")
 		return
@@ -323,8 +323,8 @@ function demos.RequestDemosForRender()
 	for _, entry in pairs(demosData) do
 		local skipThis = false
 		if settingsModule.Get("DrawDemosInNextHour") == true then
-			local currentTime = helpers.GetCurrentTimestamp()
-			if currentTime == nil then
+			local currentTime = tonumber(helpers.GetCurrentTimestamp())
+			if type(currentTime) ~= "number" then
 				helpers.DevLog("Current time is not numeric, skipping demo alert time check for this entry and rendering it")
 			elseif entry.startat == nil then
 				helpers.DevLog("Demo entry start time is nil, skipping demo alert time check for this entry and rendering it")
@@ -365,13 +365,6 @@ local function DEMO_AUTOHIDE_PLUS()
 	end
 	local unitid = api.Unit:GetUnitId("target")
 	if unitid == nil then
-		if demoAddButton:IsVisible() then
-			demoAddButton:Show(false)
-		end
-		return
-	end
-	local targetdetails = api.Unit:GetUnitInfoById(unitid)
-	if targetdetails.type ~= "housing" then
 		if demoAddButton:IsVisible() then
 			demoAddButton:Show(false)
 		end

@@ -1,5 +1,5 @@
 local helpers = require("WorldSatNav/helpers")
-local eventtopics = require("WorldSatNav/eventtopics")
+local eventtopics = require("WorldSatNav/core/eventtopics")
 
 local eventbus = {}
 local tinsert = table.insert

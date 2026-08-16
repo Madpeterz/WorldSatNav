@@ -2,8 +2,8 @@
 -- Handles GPS tracking, distance/bearing calculations, and navigation guidance
 
 local api = require("api")
-local coordinates = require("WorldSatNav/coordinates")
-local constants = require("WorldSatNav/constants")
+local coordinates = require("WorldSatNav/core/coordinates")
+local constants = require("WorldSatNav/core/constants")
 
 local GPS = {}
 

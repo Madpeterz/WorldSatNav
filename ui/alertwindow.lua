@@ -1,9 +1,9 @@
 local api = require("api")
 local helpers = require("WorldSatNav/helpers")
-local constants = require("WorldSatNav/constants")
-local settingsModule = require("WorldSatNav/settings")
-local eventbus = require("WorldSatNav/eventbus")
-local eventtopics = require("WorldSatNav/eventtopics")
+local constants = require("WorldSatNav/core/constants")
+local settingsModule = require("WorldSatNav/core/settings")
+local eventbus = require("WorldSatNav/core/eventbus")
+local eventtopics = require("WorldSatNav/core/eventtopics")
 
 local alertwindow = {}
 

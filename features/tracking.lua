@@ -1,12 +1,12 @@
 local api = require("api")
-local coordinates = require("WorldSatNav/coordinates")
-local constants = require("WorldSatNav/constants")
+local coordinates = require("WorldSatNav/core/coordinates")
+local constants = require("WorldSatNav/core/constants")
 local helpers = require("WorldSatNav/helpers")
-local settings = require("WorldSatNav/settings")
-local gps = require("WorldSatNav/gps")
-local regionmap = require("WorldSatNav/regionmap")
-local eventbus = require("WorldSatNav/eventbus")
-local eventtopics = require("WorldSatNav/eventtopics")
+local settings = require("WorldSatNav/core/settings")
+local gps = require("WorldSatNav/features/gps")
+local regionmap = require("WorldSatNav/ui/regionmap")
+local eventbus = require("WorldSatNav/core/eventbus")
+local eventtopics = require("WorldSatNav/core/eventtopics")
 
 local tracking = {}
 
@@ -134,7 +134,7 @@ local function UpdateSharedData(dt)
 	end
 	updateTicker = updateTicker + dt
 	local writeFile = {
-		time = helpers.GetCurrentTimestamp(),
+		time = api.Time:GetLocalTime(),
 		location = api.Map:GetPlayerSextants(),
 		updateTicker = updateTicker
 	}
@@ -174,6 +174,9 @@ local function updateTrackingData()
 	local stringlen = string.len(targetName)
 	if(stringlen > 22) then
 		fontsize = math.floor(18 - ((15 / 22) * (stringlen - 22)))
+	end
+	if fontsize < 10 then
+		fontsize = 10
 	end
 	local appliedFontSize = TRACK_WINDOW.markNameLabel.fontSize
 	if appliedFontSize ~= fontsize then

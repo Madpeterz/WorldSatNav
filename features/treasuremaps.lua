@@ -1,12 +1,12 @@
 
 local api = require("api")
 local helpers = require("WorldSatNav/helpers")
-local regionmap = require("WorldSatNav/regionmap")
-local constants = require("WorldSatNav/constants")
-local eventbus = require("WorldSatNav/eventbus")
-local eventtopics = require("WorldSatNav/eventtopics")
-local maprendering = require("WorldSatNav/maprendering")
-local tracking = require("WorldSatNav/tracking")
+local regionmap = require("WorldSatNav/ui/regionmap")
+local constants = require("WorldSatNav/core/constants")
+local eventbus = require("WorldSatNav/core/eventbus")
+local eventtopics = require("WorldSatNav/core/eventtopics")
+local maprendering = require("WorldSatNav/ui/maprendering")
+local tracking = require("WorldSatNav/features/tracking")
 local treasuremaps = {}
 
 local BAG_POLL_INTERVAL = 100

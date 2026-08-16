@@ -1,7 +1,7 @@
 local helpers = require("WorldSatNav/helpers")
-local settingsModule = require("WorldSatNav/settings")
-local eventbus = require("WorldSatNav/eventbus")
-local eventtopics = require("WorldSatNav/eventtopics")
+local settingsModule = require("WorldSatNav/core/settings")
+local eventbus = require("WorldSatNav/core/eventbus")
+local eventtopics = require("WorldSatNav/core/eventtopics")
 
 local configui = {}
 

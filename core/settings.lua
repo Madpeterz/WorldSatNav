@@ -1,5 +1,5 @@
 local api = require("api")
-local constants = require("WorldSatNav/constants")
+local constants = require("WorldSatNav/core/constants")
 
 local WorldSatNavSettings = {}
 local addonName = constants.addonName

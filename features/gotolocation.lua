@@ -1,8 +1,8 @@
 local api = require("api")
-local settingsModule = require("WorldSatNav/settings")
+local settingsModule = require("WorldSatNav/core/settings")
 local helpers = require("WorldSatNav/helpers")
-local eventbus = require("WorldSatNav/eventbus")
-local eventtopics = require("WorldSatNav/eventtopics")
+local eventbus = require("WorldSatNav/core/eventbus")
+local eventtopics = require("WorldSatNav/core/eventtopics")
 local gotoLocation = {}
 local GOTO_TARGET_TEXT = ""
 
