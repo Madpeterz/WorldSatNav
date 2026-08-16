@@ -48,6 +48,37 @@ local iconsStore = {}
 local iconsStoreIndexCounter = 1
 local flashModeTicks = 0
 
+-- Active/free-list bookkeeping so icon reuse and redraw don't have to scan the whole pool.
+local activeIcons = {}          -- set: icon -> true, only icons currently inuse
+local freeIconsByTexture = {}   -- texture path -> array of free icons using that texture
+local freeIconsAny = {}         -- array of free icons, any texture
+
+local function markIconActive(icon)
+	activeIcons[icon] = true
+end
+
+local function markIconInactive(icon)
+	activeIcons[icon] = nil
+end
+
+-- Release an icon back to the free pool so findOrCreateIcon can reuse it in O(1).
+local function releaseIcon(icon)
+	icon.inuse = false
+	markIconInactive(icon)
+	if icon == maprendering.playerIcon then
+		return -- never recycle the player icon
+	end
+	if icon.textureNode then
+		local bucket = freeIconsByTexture[icon.textureNode]
+		if bucket == nil then
+			bucket = {}
+			freeIconsByTexture[icon.textureNode] = bucket
+		end
+		table.insert(bucket, icon)
+	end
+	table.insert(freeIconsAny, icon)
+end
+
 local function SextantEquals(left, right)
 	if left == nil or right == nil then
 		return left == right
@@ -110,20 +141,27 @@ end
 
 local function findOrCreateIcon(withTexturePath, customIconSize)
 	customIconSize = customIconSize or WorldSatNavState.iconSize
-	-- First look for free icons with the same texture
-	for index, icon in pairs(iconsStore) do
-		if (icon.textureNode == withTexturePath) and (icon.inuse == false) then
-			icon.inuse = true
-			ApplyIconSize(icon, customIconSize)
-			return icon
+	-- First look for a free icon already using this texture (no SetTexture needed)
+	local sameTextureBucket = freeIconsByTexture[withTexturePath]
+	if sameTextureBucket ~= nil then
+		while #sameTextureBucket > 0 do
+			local icon = table.remove(sameTextureBucket)
+			if icon.inuse == false then
+				icon.inuse = true
+				markIconActive(icon)
+				ApplyIconSize(icon, customIconSize)
+				return icon
+			end
 		end
 	end
-	-- No free icons with the same texture, look for any free icon
-	for index, icon in pairs(iconsStore) do
-		if icon ~= maprendering.playerIcon and (icon.inuse == false) then
+	-- No free icons with the same texture, take any free icon
+	while #freeIconsAny > 0 do
+		local icon = table.remove(freeIconsAny)
+		if icon.inuse == false and icon ~= maprendering.playerIcon then
 			icon.inuse = true
 			icon.textureNode = withTexturePath
 			icon:SetTexture(constants.folderPath.."images/" .. withTexturePath)
+			markIconActive(icon)
 			ApplyIconSize(icon, customIconSize)
 			return icon
 		end
@@ -168,6 +206,7 @@ local function findOrCreateIcon(withTexturePath, customIconSize)
 	button:SetHandler("OnClick", button.OnClick)
 	icon.button = button
 	iconsStore[iconsStoreIndexCounter] = icon
+	markIconActive(icon)
 	ApplyIconSize(icon, customIconSize)
 	return icon
 end
@@ -213,7 +252,7 @@ function maprendering.DisableIconBySextent(sextent,matchtype)
 		if icon.sourceType == matchtype then
 			if icon.sextant ~= nil and SextantEquals(icon.sextant, sextent) then
 				icon:Show(false)
-				icon.inuse = false
+				releaseIcon(icon)
 				return
 			end
 		end
@@ -235,6 +274,7 @@ local function AttachDrawableIcon(icon, sextant, drawTarget)
 	end
 	if icon and drawTarget then
 		icon.inuse = true
+		markIconActive(icon)
 		if sextant ~= nil then
 			icon.sextant = sextant
 		end
@@ -265,20 +305,21 @@ local function IsValidSextant(sextant)
 		and sextant.sec_lat ~= nil
 end
 
-function maprendering.NormalizeSextant(sextant)
+-- target: optional table to write into instead of allocating a new one (used by
+-- GetCurrentPosition's scratch buffer to avoid a table allocation every poll).
+function maprendering.NormalizeSextant(sextant, target)
 	if sextant == nil then
 		return nil
 	end
-	local normalized = {
-		longitude = sextant.longitudeDir or sextant.longitude,
-		latitude = sextant.latitudeDir or sextant.latitude,
-		deg_long = sextant.longitudeDeg or sextant.deg_long or sextant.degLong,
-		min_long = sextant.longitudeMin or sextant.min_long or sextant.minLong,
-		sec_long = sextant.longitudeSec or sextant.sec_long or sextant.secLong,
-		deg_lat = sextant.latitudeDeg or sextant.deg_lat or sextant.degLat,
-		min_lat = sextant.latitudeMin or sextant.min_lat or sextant.minLat,
-		sec_lat = sextant.latitudeSec or sextant.sec_lat or sextant.secLat
-	}
+	local normalized = target or {}
+	normalized.longitude = sextant.longitudeDir or sextant.longitude
+	normalized.latitude = sextant.latitudeDir or sextant.latitude
+	normalized.deg_long = sextant.longitudeDeg or sextant.deg_long or sextant.degLong
+	normalized.min_long = sextant.longitudeMin or sextant.min_long or sextant.minLong
+	normalized.sec_long = sextant.longitudeSec or sextant.sec_long or sextant.secLong
+	normalized.deg_lat = sextant.latitudeDeg or sextant.deg_lat or sextant.degLat
+	normalized.min_lat = sextant.latitudeMin or sextant.min_lat or sextant.minLat
+	normalized.sec_lat = sextant.latitudeSec or sextant.sec_lat or sextant.secLat
 	if normalized.min_long == nil then normalized.min_long = 0 end
 	if normalized.sec_long == nil then normalized.sec_long = 0 end
 	if normalized.min_lat == nil then normalized.min_lat = 0 end
@@ -290,7 +331,7 @@ local function HideIcon(index)
 	if iconsStore[index] then
 		local iconU = iconsStore[index]
 		iconU:Show(false)
-		iconU.inuse = false
+		releaseIcon(iconU)
 		iconU.sextant = nil
 		iconU.renderedZoomLevel = nil
 		iconU.renderedXstate = nil
@@ -408,7 +449,7 @@ local function redrawMapIcons(drawTarget)
 
 	local scaleX = imageWidth / viewWidth
 	local scaleY = imageHeight / viewHeight
-	for index, icon in pairs(iconsStore) do
+	for icon in pairs(activeIcons) do
 		if icon.inuse == true and icon.sextant ~= nil and icon.attachedto == drawTarget then
 			ApplyIconSize(icon, icon.baseSize or WorldSatNavState.iconSize)
 			local iconScaledSize = icon.scaledSize or (WorldSatNavState.iconSize * settingsModule.Get("uiDrawScale"))
@@ -445,7 +486,7 @@ local function redrawMapIcons(drawTarget)
 						icon:Show(true)
 					end
 				else
-					helpers.DevLog("Failed to convert sextant to map coordinates for icon index " .. index .. ", hiding icon")
+					helpers.DevLog("Failed to convert sextant to map coordinates for icon index " .. tostring(icon.indexId) .. ", hiding icon")
 					icon:Show(false)
 				end
 			end
@@ -459,6 +500,7 @@ function maprendering.FlashModeIcon(sextant, withTexturePath, sourceType, custom
 	end
 	HideAllIcons()
 	maprendering.playerIcon.inuse = true
+	markIconActive(maprendering.playerIcon)
 	selectedFlashIcon = maprendering.CreateIconAttachedToMap(sextant, withTexturePath, sourceType, customIconSize)
 	flashModeTicks = 0
 	flashState = true
@@ -784,10 +826,32 @@ local function CreateWorldSatNavWindow()
 	return window
 end
 
+-- Reused across calls so polling an unmoved player doesn't allocate a table every tick.
+local positionScratch = {}
+local cachedPosition = nil
+
 --- Get the current player position as sextant coordinates
 -- @return table sextant coordinate structure with longitude, latitude, deg_long, min_long, sec_long, deg_lat, min_lat, sec_lat
 GetCurrentPosition = function()
-	return maprendering.NormalizeSextant(api.Map:GetPlayerSextants())
+	local raw = api.Map:GetPlayerSextants()
+	if raw == nil then
+		return nil
+	end
+	maprendering.NormalizeSextant(raw, positionScratch)
+	if cachedPosition ~= nil and SextantEquals(cachedPosition, positionScratch) then
+		return cachedPosition
+	end
+	cachedPosition = {
+		longitude = positionScratch.longitude,
+		latitude = positionScratch.latitude,
+		deg_long = positionScratch.deg_long,
+		min_long = positionScratch.min_long,
+		sec_long = positionScratch.sec_long,
+		deg_lat = positionScratch.deg_lat,
+		min_lat = positionScratch.min_lat,
+		sec_lat = positionScratch.sec_lat,
+	}
+	return cachedPosition
 end
 
 local lastupdate = 0
