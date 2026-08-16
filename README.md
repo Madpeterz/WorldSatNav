@@ -1,48 +1,72 @@
-# Treasure Maps
+# WorldSatNav
+
+Version 1.2.0
+
+World map navigation addon — treasure map tracking, sea box routing, world events, live location tracking, and shared location output for external tools.
+
+## Features
+
+### Treasure Maps
 
 - Click and hold a map from your bag to show only its location on the map
 - Click on a X from the map view to start navigation to it
 - When your bag is open, shows you what region each map is in
 
-# Lost Sea Boxes
+### Lost Sea Boxes
 
 - Click on a ship to start going to each node
-- Shows a list of known good locations for sea boxes provided by Zelight.
-- After switching to show ships, use the next button to go to the next location.
+- Shows a list of known good locations for sea boxes provided by Zelight
+- After switching to show ships, use the next button to go to the next location
 
 > **Note:** Traveling salesman problem — the sea is split into multiple vertical groups and route
 > planning is used to find the shortest paths within each group. While not perfect, it works well.
 
-# Events
+### Events
 
-- if Enable world events is checked world events like 
-- Crates, Delphinad Ghostships, Perdita, Leviathan, Sunfish, Warehouse Raids and Warehouse Unlocks
-- events will remain on the map for 5 mins, clicking on it will take you to it
+- If "Enable world events" is checked, world events like Crates, Delphinad Ghostships, Perdita,
+  Leviathan, Sunfish, Warehouse Raids and Warehouse Unlocks show on the map
+- Events remain on the map for 5 mins; clicking one navigates to it
 
-# Tracking a Location (Guide mode)
+### Tracking a Location (Guide mode)
 
-Currently player rotation is not supported by the API, so a makeshift version based on multiple
-location reads is used. Start moving to get a direction indicator.
+Player rotation is not exposed by the API, so a makeshift direction indicator based on multiple
+location reads is used instead. Start moving to get a direction indicator.
 
-# Shared data
+### Shared Data
 
-if LocationOutput is enabled
-the players sextent cords are written to file, allowing addons not in game
-to be able to get your current location. helpfull for other apps like my WIP
-wandering app to show my movement over time so I can create heatmaps.
+If `LocationOutput` is enabled, your sextant coordinates are written to file, letting tools
+outside the game read your current location — e.g. an external heatmap/wandering tracker.
 
-# Zoom in
+### Zoom
 
-You can zoom in on the map by holding CTRL and then clicking
+Hold CTRL and click on the map to zoom in.
 
-# move it!
+### Move It
 
-you can move all elements by holding shift and dragging
+Hold shift and drag any element to reposition it. Positions are saved.
 
-# Based on Code / Assets / Ideas From 
+## Project Structure
+
+```
+main.lua        addon entry point (OnLoad/OnUnload, update loop)
+helpers.lua     facade re-exporting helpers/* as a single `helpers` table
+
+core/           foundational modules: api stub, constants, settings, coordinates, eventbus, eventtopics
+ui/             rendering/config windows: maprendering, regionmap, configui, alertwindow
+features/       gameplay logic: tracking, gps, ships, treasuremaps, gotolocation, worldevents, demos
+helpers/        UI widget builders, date/time utils, geo/distance math, building name lookups, misc utils
+```
+
+Modules `require` each other via `WorldSatNav/<folder>/<module>` paths (e.g.
+`require("WorldSatNav/core/settings")`), except `helpers`, which stays at the addon root so its
+public API (`helpers.X`) doesn't need updating across call sites when its internals change.
+
+## Credits
+
+Based on code / assets / ideas from:
 
 **AA-Clissic/Map**
-- for the world map for the version I play on
+- World map for the game version this addon targets
 
 **IvanLeviathan/Navigate**
 - First version of the tracking code; also the plugin used to create stage 1 of data
@@ -52,13 +76,12 @@ you can move all elements by holding shift and dragging
 - Used to get up to speed with the addon library for rendering windows
 
 **FungusMungus/Treasure Track**
-- did not do what I had hoped todo, so resulted in the creation
-- of a new version of my old OCR app, I liked the labeling of maps but not the 
-- fact you had to type it all in yourself
+- Didn't do what I had hoped, which led to a new version of my old OCR app — liked the map
+  labeling but not having to type it all in yourself
 
 **michaelqtz/aac-addon-tier_2_sextant**
-- For showing me how to hook up the world events so we can include them as part of this addon
+- Showed how to hook up world events so they could be included in this addon
 
 **Madpeterz/mapocr_aa**
-- A C# app used in retail that would read map text via OCR
-- Allowed adding maps to a display tracking multiple of them
+- A C# app used in retail that read map text via OCR, allowing multiple tracked maps to be added
+  to a display
