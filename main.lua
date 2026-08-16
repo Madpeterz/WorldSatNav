@@ -49,8 +49,8 @@ local function OnLoad()
 	end)
 	-- attach events
 	function WorldSatNav:EventListener(event, ...)
-		if(event == "WORLD_MESSAGE") then 
-			events.WorldMessageProcessor(event,unpack(arg))
+		if(event == "WORLD_MESSAGE") then
+			events.WorldMessageProcessor(event, ...)
 		end
 	end
 	if maprendering.MapUI == nil then
