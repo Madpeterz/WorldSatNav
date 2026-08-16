@@ -139,7 +139,7 @@ function alertwindow.onUpdate(dt)
     if alertWindow.timeRemaining == nil then
         return
     end
-    local deltaSeconds = tonumber(dt) and (dt / 1000) or 0
+    local deltaSeconds = (tonumber(dt) or 0) / 1000
     if alertWindow.IsCountingUp == true then
         local countUp = alertWindow.timeRemaining + deltaSeconds
         alertWindow.timeRemaining = countUp
