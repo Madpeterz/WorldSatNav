@@ -12,6 +12,9 @@ local Coordinates = {}
 -- @param seconds number second component (0-59)
 -- @return number game world Y coordinate in degrees
 function Coordinates.latitudeSextantToDegrees(direction, degrees, minutes, seconds)
+	if constants.coordCoef == nil then
+		return 0
+	end
     return (Coordinates.toDecimalDegrees(direction, degrees, minutes, seconds) + 28) / constants.coordCoef
 end
 
@@ -22,6 +25,9 @@ end
 -- @param seconds number second component (0-59)
 -- @return number game world X coordinate in degrees
 function Coordinates.longitudeSextantToDegrees(direction, degrees, minutes, seconds)
+	if constants.coordCoef == nil then
+		return 0
+	end
     return (Coordinates.toDecimalDegrees(direction, degrees, minutes, seconds) + 21) / constants.coordCoef
 end
 
