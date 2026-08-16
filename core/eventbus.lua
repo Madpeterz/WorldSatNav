@@ -13,13 +13,17 @@ local maxDeferredPerTick = 5
 local function DispatchEvent(topic, arg1, arg2, arg3, arg4, arg5)
     local topicWatchers = watchers[topic]
     if topicWatchers ~= nil then
-        helpers.DevLog("Triggering event topic: " .. topic .. " with " .. #topicWatchers .. " subscribers")
+        if helpers.DEV_MODE then
+            helpers.DevLog("Triggering event topic: " .. topic .. " with " .. #topicWatchers .. " subscribers")
+        end
         for i = 1, #topicWatchers do
             local callback = topicWatchers[i]
             callback(arg1, arg2, arg3, arg4, arg5)
         end
     else
-        helpers.DevLog("No subscribers for event topic: " .. topic)
+        if helpers.DEV_MODE then
+            helpers.DevLog("No subscribers for event topic: " .. topic)
+        end
     end
 end
 

@@ -3,6 +3,8 @@ local constants = require("WorldSatNav/core/constants")
 
 local log = {}
 
+log.DEV_MODE = constants.DEV_MODE
+
 function log.DevLog(message)
     if constants.DEV_MODE then
         api.Log:Info(message)
