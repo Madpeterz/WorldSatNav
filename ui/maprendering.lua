@@ -146,7 +146,10 @@ local function findOrCreateIcon(withTexturePath, customIconSize)
 	if sameTextureBucket ~= nil then
 		while #sameTextureBucket > 0 do
 			local icon = table.remove(sameTextureBucket)
-			if icon.inuse == false then
+			-- icon.textureNode can drift from this bucket's key: the "any free
+			-- icon" path below reassigns textureNode without purging the icon
+			-- from its old bucket, leaving a stale entry here. Skip it.
+			if icon.inuse == false and icon.textureNode == withTexturePath then
 				icon.inuse = true
 				markIconActive(icon)
 				ApplyIconSize(icon, customIconSize)
