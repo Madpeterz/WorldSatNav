@@ -46,8 +46,18 @@ buildings.BuildingNames = {
     "Gazebo Farm",
 }
 
+-- name -> numeric id, derived from BuildingNames order (id 0 = "Unknown")
+buildings.BuildingIds = {}
+for index, name in ipairs(buildings.BuildingNames) do
+    buildings.BuildingIds[name] = index - 1
+end
+
 function buildings.GetBuildingNames()
     return buildings.BuildingNames
+end
+
+function buildings.GetBuildingId(name)
+    return buildings.BuildingIds[name]
 end
 
 return buildings
