@@ -406,11 +406,6 @@ function demos.AutoFillClicked()
 		api.Log:Info("WorldSatNav: Auto fill abort - no target selected")
 		return
 	end
-	local targetUnit = api.Unit:TargetUnit("target");
-	if targetUnit == nil then
-		api.Log:Info("WorldSatNav: Auto fill abort - targetUnit is nil")
-		return
-	end
 	local targetpos = api.Map:GetPlayerSextants()
 	if targetpos == nil then
 		api.Log:Info("WorldSatNav: Auto fill abort - could not get player position")
