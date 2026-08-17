@@ -6,10 +6,11 @@ local buildings = require("WorldSatNav/helpers/buildings")
 local datetime = require("WorldSatNav/helpers/datetime")
 local widgets = require("WorldSatNav/helpers/widgets")
 local misc = require("WorldSatNav/helpers/misc")
+local sharecode = require("WorldSatNav/helpers/sharecode")
 
 local helpers = {}
 
-for _, submodule in ipairs({log, geo, buildings, datetime, widgets, misc}) do
+for _, submodule in ipairs({log, geo, buildings, datetime, widgets, misc, sharecode}) do
     for key, value in pairs(submodule) do
         helpers[key] = value
     end
