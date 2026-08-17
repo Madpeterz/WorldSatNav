@@ -279,7 +279,7 @@ local function createTrackUI(onCloseCallback)
 end
 
 
-function tracking.setTargetGoto(sextant, name, ShowMapMarker)
+function tracking.setTargetGoto(sextant, name, ShowMapMarker, displayName)
 	local normalizedSextant = NormalizeSextant(sextant)
 	if normalizedSextant == nil or normalizedSextant.longitude == nil or normalizedSextant.latitude == nil
 		or normalizedSextant.deg_long == nil or normalizedSextant.deg_lat == nil then
@@ -287,7 +287,7 @@ function tracking.setTargetGoto(sextant, name, ShowMapMarker)
 		return
 	end
 	targetSextant = normalizedSextant
-	targetName = name
+	targetName = displayName or name
 	ShowMapMarker = ShowMapMarker or false
 	if TRACK_WINDOW == nil then
 		helpers.DevLog("tracking window not initialized, cannot set target")

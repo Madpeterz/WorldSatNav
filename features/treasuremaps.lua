@@ -32,14 +32,16 @@ local function SextantFromInfo(info)
 end
 
 local function renderMapFromStorage(sextant, count)
-	if count > 3 then
-		count = 3
+	local textureCount = count
+	if textureCount > 3 then
+		textureCount = 3
 	end
 	return {
 		sextant = sextant,
-		texture = "icons/marker"..count..".png",
+		texture = "icons/marker"..textureCount..".png",
 		sourceType = "Map",
 		customIconSize = 7,
+		count = count,
 	}
 end
 
@@ -69,12 +71,14 @@ function treasuremaps.GetNextMap()
     if curCoords == nil then
 		helpers.DevLog("GetNextMap abort: player sextants nil")
         api.Log:Info("WorldSatNav: Cannot get player position")
+        tracking.AssignNextButton(nil, nil)
         return
     end
 	local playerRegionCode, playerRegionName = regionmap.GetRegionForSextant(curCoords)
     if playerRegionCode == nil or playerRegionName == nil then
 		helpers.DevLog("GetNextMap abort: player region unknown")
         api.Log:Info("WorldSatNav: Cannot determine player region")
+        tracking.AssignNextButton(nil, nil)
         return
     end
 
@@ -83,6 +87,7 @@ function treasuremaps.GetNextMap()
     if playerRegionCode == "?" then
 		helpers.DevLog("GetNextMap abort: player region code '?' ")
 		api.Log:Info("WorldSatNav: Player region unknown, showing all maps in inventory, open map and select next map")
+		tracking.AssignNextButton(nil, nil)
 		return
 	end
 	local mapregioncounters = {}
@@ -102,6 +107,7 @@ function treasuremaps.GetNextMap()
     if #regionMaps == 0 then
 		helpers.DevLog("GetNextMap abort: no maps found in region " .. tostring(playerRegionName))
         api.Log:Info("WorldSatNav: No maps found in player region " .. playerRegionName .." open map and select next")
+        tracking.AssignNextButton(nil, nil)
         return
     end
 
@@ -109,7 +115,15 @@ function treasuremaps.GetNextMap()
     table.sort(regionMaps, function(a, b)
         return helpers.distSqToPlayer(a, curCoords) < helpers.distSqToPlayer(b, curCoords)
     end)
-	eventbus.TriggerEvent(eventtopics.topics.tracking.custom, regionMaps[1], "Next map in region: " .. playerRegionName, true)
+	local targetKey = helpers.SextantKey(regionMaps[1])
+	local mapsAtLocation = 0
+	for _, sextant in ipairs(regionMaps) do
+		if helpers.SextantKey(sextant) == targetKey then
+			mapsAtLocation = mapsAtLocation + 1
+		end
+	end
+	eventbus.TriggerEvent(eventtopics.topics.tracking.custom, regionMaps[1], "Map", true,
+		"Map (" .. mapsAtLocation .. ")")
 end
 
 local function GetBagIconForIndex(slotIndex, SlotBtn)

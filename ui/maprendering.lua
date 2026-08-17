@@ -134,7 +134,11 @@ local function SelectActiveMapIcon(icon)
 		helpers.DevLog("Selected icon source type is not Ship")
 	end
 	helpers.DevLog("Publishing icon click event for sourceType: "..tostring(icon.sourceType))
-	eventbus.TriggerEvent(TOPICS.tracking.start, icon.sextant, icon.sourceType, true)
+	local displayName = nil
+	if icon.sourceType == "Map" and icon.count ~= nil then
+		displayName = "Map (" .. icon.count .. ")"
+	end
+	eventbus.TriggerEvent(TOPICS.tracking.start, icon.sextant, icon.sourceType, true, displayName)
 	maprendering.ToggleMap()
 end
 
@@ -351,13 +355,14 @@ local function HideAllIcons()
 	end
 end
 
-function maprendering.CreateIconAttachedToMap(sextant, withTexturePath, sourceType, customIconSize)
+function maprendering.CreateIconAttachedToMap(sextant, withTexturePath, sourceType, customIconSize, count)
 	local icon = findOrCreateIcon(withTexturePath, customIconSize)
 	if not icon then
 		helpers.DevLog("Failed to create or find icon for texture: " .. withTexturePath)
 		return nil
 	end
 	icon.sourceType = sourceType
+	icon.count = count
 	AttachDrawableIcon(icon, sextant, maprendering.MapUI.mapImage)
 	return icon
 end
@@ -1111,7 +1116,7 @@ local function BulkDrawIcons(iconsData)
 	iconsData = iconsData or {}
 	helpers.DevLog("Received request to bulk draw icons, count: " .. tostring(#iconsData))
 	for _, iconData in pairs(iconsData) do
-		maprendering.CreateIconAttachedToMap(iconData.sextant, iconData.texture, iconData.sourceType, iconData.customIconSize)
+		maprendering.CreateIconAttachedToMap(iconData.sextant, iconData.texture, iconData.sourceType, iconData.customIconSize, iconData.count)
 	end
 	-- Do not request a full mode redraw here: that path clears icons and republishes render events.
 	WorldSatNavState.LastRenderConfig.iconsversion = false
