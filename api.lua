@@ -1,4 +1,3 @@
----@diagnostic disable: undefined-global, lowercase-global
 -- GLOBALS
 -- These are all provided in the environment you'll be using.
 ADDON = {
@@ -33,17 +32,16 @@ UIC = {
     WATCH_TARGET_FRAME = 0,
     RAID_MANAGER = 0,
     COMMUNITY_WINDOW = 0,
-    ENCHANT_WINDOW = 0
-}
+        ENCHANT_WINDOW = 0,
+        ADVENTURE_GUIDE = 0,
+        RESIDENT_GLOBAL_TRADE = 0
+  }
 BUTTON_BASIC = BUTTON_BASIC
-BUTTON_CONTENTS = BUTTON_CONTENTS
 CURSOR_PATH = CURSOR_PATH
 FONT_COLOR = FONT_COLOR
 FONT_SIZE = FONT_SIZE
-COMBAT_TEXT_COLOR = COMBAT_TEXT_COLOR
 TEXTURE_PATH = TEXTURE_PATH
 F_SLOT = F_SLOT
-F_UNIT = F_UNIT
 SLOT_STYLE = {
   DEFAULT = {},
   BAG_DEFAULT = {},
@@ -75,82 +73,31 @@ SLOT_STYLE = {
     WATERWHEEL = {}
   }
 }
-STATUSBAR_STYLE = STATUSBAR_STYLE
-ALIGN = {
-    LEFT = 0,
-    RIGHT = 0,
-    CENTER = 0,
-    TOP = 0,
-    BOTTOM = 0,
-    BOTTOM_RIGHT = 0,
-    BOTTOM_LEFT = 0,
-    TOP_LEFT = 0,
-    TOP_RIGHT = 0
-}
-
--- chatTabWindow
--- This is a global table that contains the chat windows provided in the game. Window 1 is the default.
----@diagnostic disable-next-line: lowercase-global
-chatTabWindow = {}
-
--- petFrame
--- A global table containing all pet unit frames such as combat pets and mounts.
-petFrame = {}
-
--- combatTextLocale
--- A global table containing the combat text localization strings and font choice.
-combatTextLocale = {}
-
--- Global Functions
-
--- ConvertColor(color)
--- Takes a single color as a value from 1 to 255, returns as a percentage decimal
+COMBAT_TEXT_COLOR = {}
 ConvertColor = {}
-
--- ApplyTextColor(widget, color)
--- Applies a color to the widget. Use FONT_COLOR values.
 ApplyTextColor = {}
-
--- ApplyButtonSkin(widget, skin)
--- Applies a skin to a button. Skins are available in BUTTON_BASIC but can also be customized.
 ApplyButtonSkin = {}
-
--- X2Util, a utility library in the game's client.
 X2Util = {
     GetMyMoneyString = {},
     -- Takes x,y,z and returns screenX, screenY and distance
     -- Negative distance means the coordinate is off screen
     ConvertWorldToScreen = {}
 }
--- X2Chat, a library containing multiple functions to handle chat messages.
-X2Chat = {
-    -- ExpressEmotion(emotion)
-    ExpressEmotion = {},
-    -- DispatchChatMessage(channel, message)
-    DispatchChatMessage = {},
-
-}
-
--- X2Hotkey, a helper library for hotkeys.
-X2Hotkey = {
-    
-}
-
--- X2NameTag, a helper library for in-game nametags
-X2NameTag = {
-
-}
-
--- CreateItemIconButton(id, parent)
 CreateItemIconButton = {}
-
--- ParseCombatMessage(combatEvent, ...)
+combatTextLocale = {}
 ParseCombatMessage = {}
-
--- GetTextureInfo(path, key)
 GetTextureInfo = {}
-
--- Money Window Helper
+ALIGN = {
+  LEFT = 0,
+  RIGHT = 0,
+  CENTER = 0,
+  TOP = 0,
+  BOTTOM = 0,
+  BOTTOM_RIGHT = 0,
+  BOTTOM_LEFT = 0,
+  TOP_LEFT = 0,
+  TOP_RIGHT = 0
+}
 W_MONEY = {
     -- CreateMoneyEditsWindow(id, parent, titleText)
     CreateMoneyEditsWindow = {},
@@ -161,7 +108,6 @@ W_MONEY = {
     -- CreateTitleMoneyWindow(id, parent, titleText, direction, layoutType)
     CreateTitleMoneyWindow = {},
 }
--- Control Widget Helper
 W_CTRL = {
     -- CreateComboBox(parent)
     CreateComboBox = {},
@@ -186,14 +132,12 @@ W_CTRL = {
     -- CreateScrollListCtrl(id, parent, index)
     CreateScrollListCtrl = {},
 }
--- Unit Widget Helper
 W_UNIT = {
     -- CreateBuffWindow(id, parent, maxCount, isBuff, isRaidMember)
     CreateBuffWindow = {},
     -- CreateLevelLabel(id, parent, useLevelTexture)
     CreateLevelLabel = {},
 }
--- Bar Widget Helper
 W_BAR = {
     --CreateCastingBar(id, parent, unit)
     CreateCastingBar = {},
@@ -214,7 +158,6 @@ W_BAR = {
     --CreateStatusBar(id, parent, style)
     CreateStatusBar = {},
 }
--- Icon Widget Helper
 W_ICON = {
     -- CreateDestroyIcon(widget, layer)
     CreateDestroyIcon = {},
@@ -263,7 +206,6 @@ W_ICON = {
     -- CreateLeaderMark(id, parent)
     CreateLeaderMark = {}
 }
--- Character Equipment Slots
 EQUIP_SLOT = {
     HEAD = 0,
     NECK = 0,
@@ -287,17 +229,275 @@ EQUIP_SLOT = {
     BACKPACK = 0,
     COSPLAY = 0,
 }
+CHAT_MESSAGE_FILTERS = {
+    CHANNEL_INFO = 0,
+    WHISPER = 0,
+    SYSTEM = 0,
+    NOTICE = 0,
+    SAY = 0,
+    PARTY = 0,
+    RAID = 0,
+    RAID_COMMAND = 0,
+    EXPEDITION = 0,
+    FAMILY = 0,
+    FACTION = 0,
+    ZONE = 0,
+    TRADE = 0,
+    FIND_PARTY = 0,
+    TRIAL = 0,
+    RACE = 0,
+    MSG_QUEST = 0,
+    ETC_GROUP = 0,
+    LOOT_METHOD_CHANGED = 0,
+    ADDED_ITEM_SELF = 0,
+    ADDED_ITEM_TEAM = 0,
+    SELF_SKILL_INFO = 0,
+    SELF_STATUS_INFO = 0,
+    SELF_MONEY_CHANGED = 0,
+    SELF_HONOR_POINT_CHANGED = 0,
+    SELF_LIVING_POINT_CHANGED = 0,
+    SELF_CONTRIBUTION_POINT_CHANGED = 0,
+    SELF_LEADERSHIP_POINT_CHANGED = 0,
+    TRADE_STORE_MSG = 0,
+    HERO_SEASON_UPDATED = 0,
+    WEB_CAST_INFO = 0,
+    DOMINION_AND_SIEGE_INFO = 0,
+    COMMUNITY = 0,
+    BLOCK_INFO = 0,
+    FRIEND_INFO = 0,
+    FAMILY_INFO = 0,
+    COMBAT_MELEE_DAMAGE = 0,
+    COMBAT_MELEE_MISSED = 0,
+    COMBAT_SPELL_DAMAGE = 0,
+    COMBAT_SPELL_MISSED = 0,
+    COMBAT_SPELL_HEALED = 0,
+    COMBAT_SPELL_ENERGIZE = 0,
+    COMBAT_SPELL_CAST = 0,
+    COMBAT_SPELL_AURA = 0,
+    COMBAT_ENVIRONMENTAL_DMANAGE = 0,
+    COMBAT_SRC_GROUP = 0,
+    COMBAT_DST_GROUP = 0
+}
+UI_EVENTS = {
+    CHAT_MESSAGE = "CHAT_MESSAGE",
+    LOOT_DICE = "LOOT_DICE",
+    LOOTING_RULE_METHOD_CHANGED = "LOOTING_RULE_METHOD_CHANGED",
+    LOOTING_RULE_MASTER_CHANGED = "LOOTING_RULE_MASTER_CHANGED",
+    LOOTING_RULE_GRADE_CHANGED = "LOOTING_RULE_GRADE_CHANGED",
+    APPELLATION_GAINED = "APPELLATION_GAINED",
+    LOOTING_RULE_BOP_CHANGED = "LOOTING_RULE_BOP_CHANGED",
+    TOGGLE_WALK = "TOGGLE_WALK",
+    TOGGLE_FOLLOW = "TOGGLE_FOLLOW",
+    CHAT_JOINED_CHANNEL = "CHAT_JOINED_CHANNEL",
+    CHAT_LEAVED_CHANNEL = "CHAT_LEAVED_CHANNEL",
+    NOTICE_MESSAGE = "NOTICE_MESSAGE",
+    CHAT_FAILED = "CHAT_FAILED",
+    REQUIRE_ITEM_TO_CHAT = "REQUIRE_ITEM_TO_CHAT",
+    REQUIRE_DELAY_TO_CHAT = "REQUIRE_DELAY_TO_CHAT",
+    CHAT_MSG_QUEST = "CHAT_MSG_QUEST",
+    CHAT_MSG_DOODAD = "CHAT_MSG_DOODAD",
+    EXPIRED_ITEM = "EXPIRED_ITEM",
+    ADDED_ITEM = "ADDED_ITEM",
+    REMOVED_ITEM = "REMOVED_ITEM",
+    CRAFT_FAILED = "CRAFT_FAILED",
+    GLIDER_MOVED_INTO_BAG = "GLIDER_MOVED_INTO_BAG",
+    ITEM_ACQUISITION_BY_LOOT = "ITEM_ACQUISITION_BY_LOOT",
+    MONEY_ACQUISITION_BY_LOOT = "MONEY_ACQUISITION_BY_LOOT",
+    SKILL_LEARNED = "SKILL_LEARNED",
+    MATE_SKILL_LEARNED = "MATE_SKILL_LEARNED",
+    SKILL_CHANGED = "SKILL_CHANGED",
+    SKILLS_RESET = "SKILLS_RESET",
+    ABILITY_CHANGED = "ABILITY_CHANGED",
+    PREMIUM_LABORPOWER_CHANGED = "PREMIUM_LABORPOWER_CHANGED",
+    LABORPOWER_CHANGED = "LABORPOWER_CHANGED",
+    ACTABILITY_EXPERT_CHANGED = "ACTABILITY_EXPERT_CHANGED",
+    ACTABILITY_EXPERT_GRADE_CHANGED = "ACTABILITY_EXPERT_GRADE_CHANGED",
+    DOODAD_PHASE_MSG = "DOODAD_PHASE_MSG",
+    HOUSE_FARM_MSG = "HOUSE_FARM_MSG",
+    UCC_IMPRINT_SUCCEEDED = "UCC_IMPRINT_SUCCEEDED",
+    BUILD_AREA_MSG = "BUILD_AREA_MSG",
+    PLAYER_MONEY = "PLAYER_MONEY",
+    PLAYER_HONOR_POINT = "PLAYER_HONOR_POINT",
+    PLAYER_LIVING_POINT = "PLAYER_LIVING_POINT",
+    PLAYER_CONTRIBUTION_POINT = "PLAYER_CONTRIBUTION_POINT",
+    PLAYER_LEADERSHIP_POINT = "PLAYER_LEADERSHIP_POINT",
+    PLAYER_AA_POINT = "PLAYER_AA_POINT",
+    GRADE_ENCHANT_RESULT = "GRADE_ENCHANT_RESULT",
+    ITEM_SOCKETING_RESULT = "ITEM_SOCKETING_RESULT",
+    ITEM_ENCHANT_MAGICAL_RESULT = "ITEM_ENCHANT_MAGICAL_RESULT",
+    ITEM_SMELTING_RESULT = "ITEM_SMELTING_RESULT",
+    GRADE_ENCHANT_BROADCAST = "GRADE_ENCHANT_BROADCAST",
+    NOTIFY_WEB_TRANSFER_STATE = "NOTIFY_WEB_TRANSFER_STATE",
+    DOMINION = "DOMINION",
+    COMMUNITY_ERROR = "COMMUNITY_ERROR",
+    BLOCKED_USER_LIST = "BLOCKED_USER_LIST",
+    FRIENDLIST = "FRIENDLIST",
+    FAMILY_ERROR = "FAMILY_ERROR",
+    FAMILY_MEMBER_ADDED = "FAMILY_MEMBER_ADDED",
+    FAMILY_MEMBER_LEFT = "FAMILY_MEMBER_LEFT",
+    FAMILY_MEMBER_KICKED = "FAMILY_MEMBER_KICKED",
+    FAMILY_MEMBER = "FAMILY_MEMBER",
+    FAMILY_OWNER_CHANGED = "FAMILY_OWNER_CHANGED",
+    FAMILY_REMOVED = "FAMILY_REMOVED",
+    EXPEDITION_EXP = "EXPEDITION_EXP",
+    FAMILY_EXP_ADD = "FAMILY_EXP_ADD",
+    FAMILY_NAME_CHANGED = "FAMILY_NAME_CHANGED",
+    RESIDENT_SERVICE_POINT_CHANGED = "RESIDENT_SERVICE_POINT_CHANGED",
+    CHAT_DICE_VALUE = "CHAT_DICE_VALUE",
+    CRIME_REPORTED = "CRIME_REPORTED",
+    TOWER_DEF_MSG = "TOWER_DEF_MSG",
+    SAVE_SCREEN_SHOT = "SAVE_SCREEN_SHOT",
+    TRIAL_MESSAGE = "TRIAL_MESSAGE",
+    AUCTION_BIDDEN = "AUCTION_BIDDEN",
+    AUCTION_BOUGHT_BY_SOMEONE = "AUCTION_BOUGHT_BY_SOMEONE",
+    SELL_SPECIALTY = "SELL_SPECIALTY",
+    SHOW_SEXTANT_POS = "SHOW_SEXTANT_POS",
+    EXP_CHANGED = "EXP_CHANGED",
+    ABILITY_EXP_CHANGED = "ABILITY_EXP_CHANGED",
+    ACQUAINTANCE_LOGIN = "ACQUAINTANCE_LOGIN",
+    HPW_ZONE_STATE_CHANGE = "HPW_ZONE_STATE_CHANGE",
+    SHOW_ACCUMULATE_HONOR_POINT_DURING_HPW = "SHOW_ACCUMULATE_HONOR_POINT_DURING_HPW",
+    ITEM_EQUIP_RESULT = "ITEM_EQUIP_RESULT",
+    INSTANT_GAME_KILL = "INSTANT_GAME_KILL",
+    INSTANT_GAME_UNEARNED_WIN_REMAIN_TIME = "INSTANT_GAME_UNEARNED_WIN_REMAIN_TIME",
+    CHAT_MSG_ALARM = "CHAT_MSG_ALARM",
+    HOUSE_CANCEL_SELL_SUCCESS = "HOUSE_CANCEL_SELL_SUCCESS",
+    HOUSE_CANCEL_SELL_FAIL = "HOUSE_CANCEL_SELL_FAIL",
+    HOUSE_SET_SELL_SUCCESS = "HOUSE_SET_SELL_SUCCESS",
+    HOUSE_SET_SELL_FAIL = "HOUSE_SET_SELL_FAIL",
+    HOUSE_BUY_SUCCESS = "HOUSE_BUY_SUCCESS",
+    HOUSE_BUY_FAIL = "HOUSE_BUY_FAIL",
+    HOUSE_SALE_SUCCESS = "HOUSE_SALE_SUCCESS",
+    BOT_SUSPECT_REPORTED = "BOT_SUSPECT_REPORTED",
+    NATION_INDEPENDENCE = "NATION_INDEPENDENCE",
+    NATION_TAXRATE = "NATION_TAXRATE",
+    ITEM_LOOK_CONVERTED = "ITEM_LOOK_CONVERTED",
+    AUDIENCE_JOINED = "AUDIENCE_JOINED",
+    AUDIENCE_LEFT = "AUDIENCE_LEFT",
+    ACTABILITY_EXPERT_EXPANDED = "ACTABILITY_EXPERT_EXPANDED",
+    INVALID_NAME_POLICY = "INVALID_NAME_POLICY",
+    HERO_SEASON_UPDATED = "HERO_SEASON_UPDATED",
+    LOOT_PACK_ITEM_BROADCAST = "LOOT_PACK_ITEM_BROADCAST",
+    DICE_BID_RULE_CHANGED = "DICE_BID_RULE_CHANGED",
+    BADWORD_USER_REPORED_RESPONE_MSG = "BADWORD_USER_REPORED_RESPONE_MSG",
+    HEIR_SKILL_LEARN = "HEIR_SKILL_LEARN",
+    HEIR_SKILL_RESET = "HEIR_SKILL_RESET",
+    TEAM_MEMBERS_CHANGED = "TEAM_MEMBERS_CHANGED",
+    UI_RELOADED = "UI_RELOADED",
+    UPDATE_PING_INFO = "UPDATE_PING_INFO",
+    MOUSE_DOWN = "MOUSE_DOWN",
+    LEFT_LOADING = "LEFT_LOADING",
+    HERO_SCORE_UPDATED = "HERO_SCORE_UPDATED",
+    START_HERO_ELECTION_PERIOD = "START_HERO_ELECTION_PERIOD",
+    UPDATE_HERO_ELECTION_CONDITION = "UPDATE_HERO_ELECTION_CONDITION",
+    END_HERO_ELECTION_PERIOD = "END_HERO_ELECTION_PERIOD",
+    NATION_INVITE = "NATION_INVITE",
+    NATION_KICK = "NATION_KICK",
+    PLAYER_JURY_POINT = "PLAYER_JURY_POINT",
+    JURY_WAITING_NUMBER = "JURY_WAITING_NUMBER",
+    CHAT_EMOTION = "CHAT_EMOTION",
+    IME_STATUS_CHANGED = "IME_STATUS_CHANGED",
+    OPEN_COMMON_FARM_INFO = "OPEN_COMMON_FARM_INFO",
+    INTERACTION_END = "INTERACTION_END",
+    WEB_BROWSER_ESC_EVENT = "WEB_BROWSER_ESC_EVENT",
+    BLOCKED_USER_UPDATE = "BLOCKED_USER_UPDATE",
+    UNIT_COMBAT_STATE_CHANGED = "UNIT_COMBAT_STATE_CHANGED",
+    ENTERED_WORLD = "ENTERED_WORLD",
+    TARGET_OVER = "TARGET_OVER",
+    RELOAD_COSMETIC_WINDOW = "RELOAD_COSMETIC_WINDOW",
+    DEMO_MODE = "DEMO_MODE",
+    DEMO_CHAR_RESET = "DEMO_CHAR_RESET",
+    AGGRO_METER_UPDATED = "AGGRO_METER_UPDATED",
+    AGGRO_METER_CLEARED = "AGGRO_METER_CLEARED",
+    DYNAMIC_ACTION_BAR_SHOW = "DYNAMIC_ACTION_BAR_SHOW",
+    DYNAMIC_ACTION_BAR_HIDE = "DYNAMIC_ACTION_BAR_HIDE",
+    DYNAMIC_ACTION_EXECUTE = "DYNAMIC_ACTION_EXECUTE",
+    UPDATE_BINDINGS = "UPDATE_BINDINGS",
+    GOODS_MAIL_INBOX_UPDATE = "GOODS_MAIL_INBOX_UPDATE",
+    UNIT_NPC_EQUIPMENT_CHANGED = "UNIT_NPC_EQUIPMENT_CHANGED",
+    UPDATE_INGAME_SHOP = "UPDATE_INGAME_SHOP",
+    PLAYER_BM_POINT = "PLAYER_BM_POINT",
+    INTERACTION_START = "INTERACTION_START",
+    INTERACTION_LIST = "INTERACTION_LIST",
+    DRAW_DOODAD_SIGN_TAG = "DRAW_DOODAD_SIGN_TAG",
+    DRAW_DOODAD_TOOLTIP = "DRAW_DOODAD_TOOLTIP",
+    SIM_DOODAD_MSG = "SIM_DOODAD_MSG",
+    BAG_UPDATE = "BAG_UPDATE",
+    BAG_EXPANDED = "BAG_EXPANDED",
+    CHANGED_AUTO_USE_AAPOINT = "CHANGED_AUTO_USE_AAPOINT",
+    BANK_UPDATE = "BANK_UPDATE",
+    BANK_EXPANDED = "BANK_EXPANDED",
+    PLAYER_BANK_MONEY = "PLAYER_BANK_MONEY",
+    PLAYER_BANK_AA_POINT = "PLAYER_BANK_AA_POINT",
+    COFFER_UPDATE = "COFFER_UPDATE",
+    CREATE_CHARACTER_FAILED = "CREATE_CHARACTER_FAILED",
+    FADE_INOUT_DONE = "FADE_INOUT_DONE",
+    OPEN_WORLD_QUEUE = "OPEN_WORLD_QUEUE",
+    REFRESH_WORLD_QUEUE = "REFRESH_WORLD_QUEUE",
+    SHOW_CHARACTER_CREATE_WINDOW = "SHOW_CHARACTER_CREATE_WINDOW",
+    SHOW_CHARACTER_CUSTOMIZE_WINDOW = "SHOW_CHARACTER_CUSTOMIZE_WINDOW",
+    SHOW_CHARACTER_ABILITY_WINDOW = "SHOW_CHARACTER_ABILITY_WINDOW",
+    USE_ALL_ASSETS = "USE_ALL_ASSETS",
+    ENTERED_LOGIN = "ENTERED_LOGIN",
+    LEFT_LOGIN = "LEFT_LOGIN",
+    LOOT_BAG_CLOSE = "LOOT_BAG_CLOSE",
+    MAIL_INBOX_UPDATE = "MAIL_INBOX_UPDATE",
+    MAIL_SENTBOX_UPDATE = "MAIL_SENTBOX_UPDATE",
+    MAIL_RETURNED = "MAIL_RETURNED",
+    MAIL_SENT_SUCCESS = "MAIL_SENT_SUCCESS",
+    MAIL_INBOX_ITEM_TAKEN = "MAIL_INBOX_ITEM_TAKEN",
+    MAIL_INBOX_MONEY_TAKEN = "MAIL_INBOX_MONEY_TAKEN",
+    MAIL_INBOX_ATTACHMENT_TAKEN_ALL = "MAIL_INBOX_ATTACHMENT_TAKEN_ALL",
+    MAIL_INBOX_TAX_PAID = "MAIL_INBOX_TAX_PAID",
+    MAIL_WRITE_ITEM_UPDATE = "MAIL_WRITE_ITEM_UPDATE",
+    UPDATE_OPTION_BINDINGS = "UPDATE_OPTION_BINDINGS",
+    OPEN_CONFIG = "OPEN_CONFIG",
+    LEAVING_WORLD_STARTED = "LEAVING_WORLD_STARTED",
+    LEAVING_WORLD_CANCELED = "LEAVING_WORLD_CANCELED",
+    SAVE_PORTAL = "SAVE_PORTAL",
+    DELETE_PORTAL = "DELETE_PORTAL",
+    RENAME_PORTAL = "RENAME_PORTAL",
+    QUEST_LEFT_TIME_UPDATED = "QUEST_LEFT_TIME_UPDATED",
+    FOLDER_STATE_CHANGED = "FOLDER_STATE_CHANGED",
+    END_QUEST_CHAT_BUBBLE = "END_QUEST_CHAT_BUBBLE",
+    QUEST_HIDDEN_READY = "QUEST_HIDDEN_READY",
+    QUEST_HIDDEN_COMPLETE = "QUEST_HIDDEN_COMPLETE",
+    QUEST_ERROR_INFO = "QUEST_ERROR_INFO",
+    QUEST_TASK_READY = "QUEST_TASK_READY",
+    TEAM_MEMBER_DISCONNECTED = "TEAM_MEMBER_DISCONNECTED",
+    SET_OVERHEAD_MARK = "SET_OVERHEAD_MARK",
+    TEAM_ROLE_CHANGED = "TEAM_ROLE_CHANGED",
+    TEAM_HEALTH_CHANGED = "TEAM_HEALTH_CHANGED",
+    TEAM_MANA_CHANGED = "TEAM_MANA_CHANGED",
+    TOGGLE_RAID_FRAME_PARTY = "TOGGLE_RAID_FRAME_PARTY",
+    TOGGLE_PARTY_FRAME = "TOGGLE_PARTY_FRAME",
+    RAID_FRAME_SIMPLE_VIEW = "RAID_FRAME_SIMPLE_VIEW",
+    UPDATE_DURABILITY_STATUS = "UPDATE_DURABILITY_STATUS",
+    UNIT_EQUIPMENT_CHANGED = "UNIT_EQUIPMENT_CHANGED",
+    NPC_INTERACTION_END = "NPC_INTERACTION_END",
+    OPEN_EMBLEM_IMPRINT_UI = "OPEN_EMBLEM_IMPRINT_UI",
+    DIVE_START = "DIVE_START",
+    DIVE_END = "DIVE_END",
+    SPELLCAST_START = "SPELLCAST_START",
+    SPELLCAST_STOP = "SPELLCAST_STOP",
+    SPELLCAST_SUCCEEDED = "SPELLCAST_SUCCEEDED",
+    TARGET_CHANGED = "TARGET_CHANGED",
+    TARGET_TO_TARGET_CHANGED = "TARGET_TO_TARGET_CHANGED",
+    BAD_USER_LIST_UPDATE = "BAD_USER_LIST_UPDATE",
+    SET_UI_MESSAGE = "SET_UI_MESSAGE"
+}
 
+-- API
 ADDON_API = {
-    File = {},
-    Unit = {},
-    Team = {},
-    Log = {},
-    Interface = {},
-    Cursor = {},
-    Input = {},
-    Time = {},
-    Player = {},
+	File = {},
+	Unit = {},
+	Team = {},
+	Log = {},
+	Interface = {},
+	Cursor = {},
+	Input = {},
+	Time = {},
+	Player = {},
     Bag = {},
     Ability = {},
     Item = {},
@@ -310,11 +510,17 @@ ADDON_API = {
     Map = {},
     Quest = {},
     Zone = {},
-    -- This is the 'addons' directory at runtime
-    baseDir = "",
-    rootWindow = {},
+    Craft = {},
+    Option = {},
+    Chat = {},
+    Nametag = {},
+    Voice = {},
+	-- This is the 'addons' directory at runtime
+	baseDir = "",
+	rootWindow = {},
     timers = {}
 }
+
 
 -- ======
 -- Logging
@@ -334,6 +540,20 @@ end
     @returns (nil)
 ]]
 function ADDON_API.Log:Err(message)
+end
+
+--[[ 
+    Logs an event and its parameters to chat. Useful for debugging events.
+    Example usage in code:
+    	function events:OnEvent(event, ...)
+		if event == "COMBAT_MSG" then 
+			api.Log:WriteEventParameters(event, ...)
+		end 
+    @param event (string) The event name
+    @param ... The event parameters
+    @returns (nil)
+]]
+function ADDON_API.Log:WriteEventParameters(event, ...)
 end
 
 -- ======
@@ -372,6 +592,13 @@ end
     @returns (nil)
 ]]
 function ADDON_API.SaveSettings()
+end
+
+--[[ 
+    Gets current UI memory usage in MB
+    @returns (number|nil) Memory usage in MB, or nil if unavailable
+]]
+function ADDON_API.GetMemoryUsage()
 end
 
 -- ======
@@ -544,6 +771,14 @@ function ADDON_API.Unit:UnitBuffCount(unit)
 end
 
 --[[ 
+    Returns the name of a unit
+    @param unit (string) The unit identifier
+    @returns (string) The unit name
+]]
+function ADDON_API.Unit:UnitName(unit)
+end
+
+--[[ 
     Returns the buff at index for a unit. Nil if no buff is found
     @param unit (string) The unit identifier
     @param index (number) The buff index
@@ -704,6 +939,30 @@ end
 function ADDON_API.Unit:GetOverHeadMarkerUnitId(markerIndex)
 end
 
+--[[ 
+    Gets the current zone group of the player
+    @returns (number) The current zone group ID
+]]
+function ADDON_API.Unit:GetCurrentZoneGroup()
+end
+
+--[[ 
+    Registers a raw unit ID received from a game event into the known store.
+    Returns the ID so it can be passed to GetUnitInfoById for safe-subset info.
+    @param unitId (number) The unit ID from an event
+    @returns (number) The registered unit ID
+]]
+function ADDON_API.Unit:RememberEventUnitId(unitId)
+end
+
+--[[ 
+    Gets the current target unit
+    @param unit (string) The unit identifier
+    @returns (string) The current target unit identifier
+]]
+function ADDON_API.Unit:TargetUnit(unit)
+end
+
 -- ======
 -- Team
 -- ======
@@ -769,6 +1028,23 @@ end
     @returns (number) The role ID
 ]]
 function ADDON_API.Team:GetRole(memberIndex)
+end
+
+--[[ 
+    Promotes a player to team owner
+    @param target (string) The player name to promote
+    @returns (nil)
+]]
+function ADDON_API.Team:MakeTeamOwner(target)
+end
+
+--[[ 
+    Moves a team member from one position to another
+    @param fromIndex (number) The current member index
+    @param toIndex (number) The new member index
+    @returns (nil)
+]]
+function ADDON_API.Team:MoveTeamMember(fromIndex, toIndex)
 end
 
 -- ======
@@ -1312,3 +1588,221 @@ end
 ]]
 function ADDON_API.Zone:GetZoneStateInfoByZoneId(zoneId)
 end
+
+-- ======
+-- Craft
+-- ======
+
+--[[ 
+    Gets the base information for a craft
+    @param craftId (number) The craft ID
+    @returns (table) The base information
+]]
+function ADDON_API.Craft:GetCraftBaseInfo(craftId)
+end
+
+--[[ 
+    Gets the material information for a craft
+    @param craftId (number) The craft ID
+    @returns (table) The material information
+]]
+function ADDON_API.Craft:GetCraftMaterialInfo(craftId)
+end
+
+--[[ 
+    Gets the product information for a craft
+    @param craftId (number) The craft ID
+    @returns (table) The product information
+]]
+function ADDON_API.Craft:GetCraftProductInfo(craftId)
+end
+
+--[[ 
+    Gets the craft type information for a craft from an item type ID
+    @param itemType (string) The item type ID
+    @returns (table) The craft type information
+]]
+function ADDON_API.Craft:GetCraftTypeByItemType(itemType)
+end
+
+--[[
+    Gets the craft type information for a craft by it's name and category
+    @param actAbilityGroupType (number) The ability group type
+    @param actAbilityCategoryType (number) The ability category type
+    @param keyword (string) The keyword for craft searching, can be empty for all crafts in the category
+    @returns (table) The craft type information
+]]
+function ADDON_API.Craft:GetCraftTypesByName(actAbilityGroupType, actAbilityCategoryType, keyword)
+end
+
+-- ======
+-- Option
+-- ======
+
+--[[ 
+    Gets the "only use my portal" setting.
+    @returns (boolean) True if the setting is enabled, false otherwise
+]]
+function ADDON_API.Option:GetOnlyUseMyPortalSetting()
+end
+
+--[[
+    Sets the "only use my portal" setting.
+    @param value (boolean) The value to set
+    @returns (nil)
+]]
+function ADDON_API.Option:SetOnlyUseMyPortalSetting(value)
+end
+
+--[[ 
+    Gets the "custom clone model count" setting.
+    @returns (number) The custom clone model count
+]]
+function ADDON_API.Option:GetCustomCloneModelCountSetting()
+end
+
+--[[
+    Sets the "custom clone model count" setting.
+    @param value (number) The custom clone model count to set
+    @returns (nil)
+]]
+function ADDON_API.Option:SetCustomCloneModelCountSetting(value)
+end
+
+--[[ 
+    Gets the "custom clone mode" setting.
+    @returns (number) The custom clone mode
+]]
+function ADDON_API.Option:GetCustomCloneModeSetting()
+end
+--[[
+    Sets the "custom clone mode" setting.
+    @param value (number) The custom clone mode to set
+    @returns (nil)
+]]
+function ADDON_API.Option:SetCustomCloneModeSetting(value)
+end
+
+-- ======
+-- Chat
+-- ======
+
+--[[ 
+    Dispatches a chat message with the desired filter
+    @param chatMessageFilter (number) The chat message filter ID, use CHAT_MESSAGE_FILTER
+    @param message (string) The message to dispatch
+    @returns (nil)
+]]
+function ADDON_API.Chat:DispatchChatMessage(chatMessageFilter, message)
+end
+--[[ 
+    Expresses an emotion in chat
+    @param emotion (string) the emotion.
+    @returns (nil)
+]]
+function ADDON_API.Chat:ExpressEmotion(emotion)
+end
+
+-- ======
+-- Nametag
+-- ======
+
+--[[ 
+    Sets the nameplate color for friendly players
+    @param color (number|string) The color value (can be integer or numeric string)
+    @returns (nil)
+]]
+function ADDON_API.Nametag:SetColorFriendly(color)
+end
+
+--[[ 
+    Sets the nameplate color for friendly NPCs
+    @param color (number|string) The color value (can be integer or numeric string)
+    @returns (nil)
+]]
+function ADDON_API.Nametag:SetColorFriendlyNPC(color)
+end
+
+--[[ 
+    Sets the nameplate color for neutral units
+    @param color (number|string) The color value (can be integer or numeric string)
+    @returns (nil)
+]]
+function ADDON_API.Nametag:SetColorNeutral(color)
+end
+
+--[[ 
+    Sets the nameplate color for party members
+    @param color (number|string) The color value (can be integer or numeric string)
+    @returns (nil)
+]]
+function ADDON_API.Nametag:SetColorParty(color)
+end
+
+--[[ 
+    Sets the nameplate color for raid members
+    @param color (number|string) The color value (can be integer or numeric string)
+    @returns (nil)
+]]
+function ADDON_API.Nametag:SetColorRaid(color)
+end
+
+--[[ 
+    Sets the nameplate color for flagged raid members (PK)
+    @param color (number|string) The color value (can be integer or numeric string)
+    @returns (nil)
+]]
+function ADDON_API.Nametag:SetColorRaidPK(color)
+end
+
+--[[ 
+    Sets the nameplate color for flagged players
+    @param color (number|string) The color value (can be integer or numeric string)
+    @returns (nil)
+]]
+function ADDON_API.Nametag:SetColorPK(color)
+end
+
+--[[ 
+    Sets the nameplate color for enemy players
+    @param color (number|string) The color value (can be integer or numeric string)
+    @returns (nil)
+]]
+function ADDON_API.Nametag:SetColorEnemy(color)
+end
+
+--[[ 
+    Sets the nameplate color for monsters
+    @param color (number|string) The color value (can be integer or numeric string)
+    @returns (nil)
+]]
+function ADDON_API.Nametag:SetColorMonster(color)
+end
+
+--[[ 
+    Sets the nameplate color for pirates
+    @param color (number|string) The color value (can be integer or numeric string)
+    @returns (nil)
+]]
+function ADDON_API.Nametag:SetColorPirate(color)
+end
+
+-- ======
+-- Voice
+-- ======
+
+--[[ 
+    Gets current voice connection status
+    @returns (string) Voice status (for example: Disconnected, Connected, Unavailable)
+]]
+function ADDON_API.Voice:GetVoiceStatus()
+end
+
+--[[ 
+    Gets the current list of active voice talkers
+    @returns (table) A list of talkers: { { charId = number, name = string }, ... }
+]]
+function ADDON_API.Voice:GetTalkerList()
+end
+
+return ADDON_API

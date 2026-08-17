@@ -357,21 +357,17 @@ local function DEMO_AUTOHIDE_PLUS()
 		helpers.DevLog("Demo window not initialized yet")
 		return
 	end
+
 	if settingsModule.Get("showDemoCreatePlus") == false then
+		helpers.DevLog("DEMO_AUTOHIDE_PLUS abort: showDemoCreatePlus setting is false")
 		if demoAddButton:IsVisible() then
 			demoAddButton:Show(false)
 		end
 		return
 	end
-	local unitid = api.Unit:GetUnitId("target")
-	if unitid == nil then
-		if demoAddButton:IsVisible() then
-			demoAddButton:Show(false)
-		end
-		return
-	end
-	local targetdetails = api.Unit:GetUnitInfoById(unitid)
-	if targetdetails.type ~= "housing" then
+	local targetName = api.Unit:UnitName("target")
+	if targetName == nil or targetName == "" then
+		helpers.DevLog("DEMO_AUTOHIDE_PLUS abort: no target selected")
 		if demoAddButton:IsVisible() then
 			demoAddButton:Show(false)
 		end
@@ -401,34 +397,30 @@ function demos.onUpdate(dt)
 end
 
 function demos.AutoFillClicked()
-	if demoWindow == nil then 
+	if demoWindow == nil then
 		helpers.DevLog("Demo window not initialized yet")
 		return
 	end
-	local unitid = api.Unit:GetUnitId("target")
-	if unitid == nil then
-		helpers.DevLog("DEMO_WINDOW_AUTO: No target selected")
+	local buildingname = api.Unit:UnitName("target")
+	if buildingname == nil or buildingname == "" then
+		api.Log:Info("WorldSatNav: Auto fill abort - no target selected")
+		return
+	end
+	local targetUnit = api.Unit:TargetUnit("target");
+	if targetUnit == nil then
+		api.Log:Info("WorldSatNav: Auto fill abort - targetUnit is nil")
 		return
 	end
 	local targetpos = api.Map:GetPlayerSextants()
 	if targetpos == nil then
-		helpers.DevLog("DEMO_WINDOW_AUTO: Could not get player position")
+		api.Log:Info("WorldSatNav: Auto fill abort - could not get player position")
 		return
 	end
-	local targetdetails = api.Unit:GetUnitInfoById(unitid)
-	if targetdetails.type ~= "housing" then
-		helpers.DevLog("DEMO_WINDOW_AUTO: Target is not a housing unit")
-		return
-	end
-	
-	local ownername = targetdetails.owner_name or "Unknown"
-	local buildingname = targetdetails.name or "Unknown"
 	local _, regionname = regionmap.GetRegionForSextant(targetpos)
 	regionname = regionname or "Unknown"
 	demoWindow.demo.regionnameInput:SetText(regionname)
-	demoWindow.demo.ownernameInput:SetText(ownername)
 	helpers.SelectComboBoxByText(demoWindow.demo.buildingnameInput, buildingname, "Unknown")
-	api.Log:Info(string.format("Auto-filled demo info - Region: %s, Owner: %s, Building: %s", regionname, ownername, buildingname))
+	api.Log:Info(string.format("Auto-filled demo info - Region: %s, Building: %s", regionname, buildingname))
 end
 
 function demos.CreateDemo(regionname, ownername, buildingname, dateText, timeText, timestamp)

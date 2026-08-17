@@ -367,6 +367,7 @@ function widgets.createButton(id, parent, text, x, y)
     button:AddAnchor("TOPLEFT", parent, x, y)
     button:SetText(text)
     api.Interface:ApplyButtonSkin(button, BUTTON_BASIC.DEFAULT)
+    button:Enable(true)
     return button
 end
 

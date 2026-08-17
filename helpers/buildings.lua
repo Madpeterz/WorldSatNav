@@ -13,6 +13,7 @@ buildings.BuildingNames = {
     "Private Smelter",
     "Private Sawmill",
     "Private Masonry Table",
+    "Private Leatherwork Table",
     -- 16x16
     "Gazebo Farm",
     "Solar Scarecrow Farm",
