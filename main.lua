@@ -16,7 +16,7 @@ local eventbus = require("WorldSatNav/core/eventbus")
 local WorldSatNav = {
 	name = "WorldSatNav",
 	author = "Madpeter",
-	version = "1.2.2",
+	version = "1.2.3",
 	desc = "Im still not sure where to go"
 }
 
