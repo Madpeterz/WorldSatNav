@@ -45,6 +45,7 @@ local function OnLoad()
 		demos.onUpdate(dt)
 		alertwindow.onUpdate(dt)
 		treasuremaps.onUpdate(dt)
+		events.onUpdate(dt)
 		-- Pump again for events queued by module updates in this same frame.
 		eventbus.ProcessDeferredEvents()
 	end)
