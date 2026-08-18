@@ -60,4 +60,12 @@ function buildings.GetBuildingId(name)
     return buildings.BuildingIds[name]
 end
 
+function buildings.GetBuildingNameById(id)
+    id = tonumber(id)
+    if id == nil then
+        return nil
+    end
+    return buildings.BuildingNames[id + 1]
+end
+
 return buildings

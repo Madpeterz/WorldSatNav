@@ -75,36 +75,44 @@ local function bytesToInt(str)
 end
 
 -- sextant = { longitude="E"/"W", deg_long, min_long, sec_long, latitude="N"/"S", deg_lat, min_lat, sec_lat }
--- Packs buildingId + sextant into one 48-bit value (well under Lua's 2^53 exact-integer limit).
+-- Packs buildingId + sextant into two 24-bit halves instead of one 48-bit value.
+-- This engine's Lua numbers round like a 32-bit float (~24-bit mantissa), so any
+-- single accumulator built past 2^24 silently drops further small additions -
+-- splitting keeps every intermediate value under that ceiling.
 local function packGroupA(buildingId, sextant)
-    local v = buildingId or 0                                        -- 7 bits (0-127)
-    v = v * 2 + ((sextant.longitude == "W") and 1 or 0)               -- 1 bit
-    v = v * 256 + (sextant.deg_long or 0)                             -- 8 bits (0-255)
-    v = v * 64 + (sextant.min_long or 0)                              -- 6 bits (0-59)
-    v = v * 64 + (sextant.sec_long or 0)                              -- 6 bits (0-59)
-    v = v * 2 + ((sextant.latitude == "S") and 1 or 0)                -- 1 bit
-    v = v * 128 + (sextant.deg_lat or 0)                              -- 7 bits (0-89)
-    v = v * 64 + (sextant.min_lat or 0)                               -- 6 bits (0-59)
-    v = v * 64 + (sextant.sec_lat or 0)                               -- 6 bits (0-59)
-    return v
+    local hi = buildingId or 0                                        -- 7 bits (0-127)
+    hi = hi * 2 + ((sextant.longitude == "W") and 1 or 0)              -- 1 bit
+    hi = hi * 256 + (sextant.deg_long or 0)                            -- 8 bits (0-255)
+    hi = hi * 64 + (sextant.min_long or 0)                             -- 6 bits (0-59)
+    local secLong = sextant.sec_long or 0                              -- 6 bits (0-59)
+    hi = hi * 4 + math.floor(secLong / 16)                             -- top 2 bits of sec_long
+
+    local lo = secLong % 16                                            -- bottom 4 bits of sec_long
+    lo = lo * 2 + ((sextant.latitude == "S") and 1 or 0)                -- 1 bit
+    lo = lo * 128 + (sextant.deg_lat or 0)                              -- 7 bits (0-89)
+    lo = lo * 64 + (sextant.min_lat or 0)                               -- 6 bits (0-59)
+    lo = lo * 64 + (sextant.sec_lat or 0)                               -- 6 bits (0-59)
+    return hi, lo
 end
 
-local function unpackGroupA(v)
-    local secLat = v % 64; v = math.floor(v / 64)
-    local minLat = v % 64; v = math.floor(v / 64)
-    local degLat = v % 128; v = math.floor(v / 128)
-    local latDir = (v % 2 == 1) and "S" or "N"; v = math.floor(v / 2)
-    local secLong = v % 64; v = math.floor(v / 64)
-    local minLong = v % 64; v = math.floor(v / 64)
-    local degLong = v % 256; v = math.floor(v / 256)
-    local lonDir = (v % 2 == 1) and "W" or "E"; v = math.floor(v / 2)
-    local buildingId = v % 128
+local function unpackGroupA(hi, lo)
+    local secLat = lo % 64; lo = math.floor(lo / 64)
+    local minLat = lo % 64; lo = math.floor(lo / 64)
+    local degLat = lo % 128; lo = math.floor(lo / 128)
+    local latDir = (lo % 2 == 1) and "S" or "N"; lo = math.floor(lo / 2)
+    local secLongLow = lo % 16
+
+    local secLongHigh = hi % 4; hi = math.floor(hi / 4)
+    local minLong = hi % 64; hi = math.floor(hi / 64)
+    local degLong = hi % 256; hi = math.floor(hi / 256)
+    local lonDir = (hi % 2 == 1) and "W" or "E"; hi = math.floor(hi / 2)
+    local buildingId = hi % 128
 
     return buildingId, {
         longitude = lonDir,
         deg_long = degLong,
         min_long = minLong,
-        sec_long = secLong,
+        sec_long = secLongHigh * 16 + secLongLow,
         latitude = latDir,
         deg_lat = degLat,
         min_lat = minLat,
@@ -115,8 +123,11 @@ end
 -- Encodes buildingId + sextant + unixtime as an opaque binary blob, with owner appended as plain text.
 -- Not human-readable, but ~25 chars shorter than a delimited text format for typical inputs.
 function sharecode.Encode(buildingId, sextant, owner, unixtime)
-    local a = packGroupA(buildingId or 0, sextant or {})
-    local blob = intToBytes(a, 6) .. intToBytes((unixtime or EPOCH) - EPOCH, 4)
+    local hi, lo = packGroupA(buildingId or 0, sextant or {})
+    local delta = math.floor((unixtime or EPOCH) - EPOCH)
+    local deltaHi = math.floor(delta / 65536)
+    local deltaLo = delta % 65536
+    local blob = intToBytes(hi, 3) .. intToBytes(lo, 3) .. intToBytes(deltaHi, 2) .. intToBytes(deltaLo, 2)
     return b64encode(blob) .. "|" .. tostring(owner or "")
 end
 
@@ -127,8 +138,12 @@ function sharecode.Decode(code)
         return nil
     end
     local blob = b64decode(blobPart)
-    local buildingId, sextant = unpackGroupA(bytesToInt(string.sub(blob, 1, 6)))
-    local unixtime = bytesToInt(string.sub(blob, 7, 10)) + EPOCH
+    local hi = bytesToInt(string.sub(blob, 1, 3))
+    local lo = bytesToInt(string.sub(blob, 4, 6))
+    local buildingId, sextant = unpackGroupA(hi, lo)
+    local deltaHi = bytesToInt(string.sub(blob, 7, 8))
+    local deltaLo = bytesToInt(string.sub(blob, 9, 10))
+    local unixtime = deltaHi * 65536 + deltaLo + EPOCH
     return buildingId, sextant, owner, unixtime
 end
 

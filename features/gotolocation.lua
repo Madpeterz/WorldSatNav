@@ -6,7 +6,17 @@ local eventtopics = require("WorldSatNav/core/eventtopics")
 local gotoLocation = {}
 local GOTO_TARGET_TEXT = ""
 
+local DEFAULT_LABEL = "Destination"
+local DEFAULT_HINT = "00°00'00\" (NS), 00°00'00\" (EW)"
+local DEFAULT_BUTTON = "Go"
+local IMPORT_LABEL = "Import via sharecode"
+local IMPORT_HINT = "ShareCode|Here"
+local IMPORT_BUTTON = "Add"
+local EXPORT_LABEL = "Export demo sharecode"
+
 local gotoLocationWindow = nil
+local currentMode = "goto"
+local importSubmitCallback = nil
 
 local function ParseGotoTargetText(rawText)
 	if rawText == nil then
@@ -41,6 +51,28 @@ local function ParseGotoTargetText(rawText)
 	return sextant
 end
 
+local function ResetToGotoMode()
+	currentMode = "goto"
+	importSubmitCallback = nil
+	GOTO_TARGET_TEXT = ""
+	if gotoLocationWindow == nil then
+		return
+	end
+	if gotoLocationWindow.textinput ~= nil then
+		gotoLocationWindow.textinput:SetText("")
+		if gotoLocationWindow.textinput.label ~= nil then
+			gotoLocationWindow.textinput.label:SetText(DEFAULT_LABEL)
+		end
+		if gotoLocationWindow.textinput.CreateGuideText ~= nil then
+			gotoLocationWindow.textinput:CreateGuideText("  "..DEFAULT_HINT, ALIGN_LEFT)
+		end
+	end
+	if gotoLocationWindow.submit ~= nil then
+		gotoLocationWindow.submit:SetText(DEFAULT_BUTTON)
+		gotoLocationWindow.submit:Show(true)
+	end
+end
+
 local function CLOSE_GOTO_WINDOW()
 	if gotoLocationWindow == nil then
 		helpers.DevLog("Goto window not initialized yet")
@@ -53,6 +85,19 @@ local function CLOSE_GOTO_WINDOW()
 	GOTO_TARGET_TEXT = inputText or ""
 	gotoLocationWindow:Show(false)
 	helpers.DevLog("Closing Goto window with text: " .. tostring(GOTO_TARGET_TEXT))
+	if currentMode == "import" then
+		local callback = importSubmitCallback
+		local submittedText = GOTO_TARGET_TEXT
+		ResetToGotoMode()
+		if submittedText ~= "" and callback ~= nil then
+			callback(submittedText)
+		end
+		return
+	end
+	if currentMode == "export" then
+		ResetToGotoMode()
+		return
+	end
 	if GOTO_TARGET_TEXT ~= "" then
 		local sextant = ParseGotoTargetText(GOTO_TARGET_TEXT)
 		if sextant ~= nil then
@@ -80,12 +125,12 @@ local function CreateUI(parent, width, height)
 	window.Background:SetTexture(api.baseDir .. "/WorldSatNav/images/mainuibackground3.png")
     window.Background:SetColor(1,1,1,0.9)
 	window.Background:Show(true)
-		window.textinput = helpers.createTextInput("textinput", window, 10, 0, 175, 20, "00°00'00\" (NS), 00°00'00\" (EW)", 100, "Destination", function(text)
+		window.textinput = helpers.createTextInput("textinput", window, 10, 0, 175, 20, DEFAULT_HINT, 100, DEFAULT_LABEL, function(text)
 		GOTO_TARGET_TEXT = text
 		helpers.DevLog("gotoTarget set to " .. tostring(GOTO_TARGET_TEXT))
     end)
     local gobuttonXoffset = (10*settingsModule.Get("uiDrawScale")) + (175 * settingsModule.Get("uiDrawScale"))
-    window.submit = helpers.createButton("submitgoto", window, "Go", gobuttonXoffset, 12 * settingsModule.Get("uiDrawScale"))
+    window.submit = helpers.createButton("submitgoto", window, DEFAULT_BUTTON, gobuttonXoffset, 12 * settingsModule.Get("uiDrawScale"))
 	return window
 end
 
@@ -97,6 +142,9 @@ function gotoLocation.CloseIfOpen()
     if gotoLocationWindow:IsVisible() then
         gotoLocationWindow:Show(false)
     end
+    if currentMode ~= "goto" then
+        ResetToGotoMode()
+    end
 end
 
 function gotoLocation.ToggleUI()
@@ -104,11 +152,69 @@ function gotoLocation.ToggleUI()
         helpers.DevLog("Goto window not initialized yet")
         return
     end
+    if currentMode ~= "goto" then
+        ResetToGotoMode()
+    end
     if gotoLocationWindow:IsVisible() == true then
         gotoLocationWindow:Show(false)
     else
         gotoLocationWindow:Show(true)
     end
+end
+
+-- Opens the goto window repurposed as a sharecode import panel.
+-- onSubmit(rawText) is called with the entered text when the Add button is pressed.
+function gotoLocation.OpenImportSharecode(onSubmit)
+    if gotoLocationWindow == nil then
+        helpers.DevLog("Goto window not initialized yet")
+        return
+    end
+    if currentMode == "import" and gotoLocationWindow:IsVisible() then
+        CLOSE_GOTO_WINDOW()
+        return
+    end
+    currentMode = "import"
+    importSubmitCallback = onSubmit
+    GOTO_TARGET_TEXT = ""
+    if gotoLocationWindow.textinput ~= nil then
+        gotoLocationWindow.textinput:SetText("")
+        if gotoLocationWindow.textinput.label ~= nil then
+            gotoLocationWindow.textinput.label:SetText(IMPORT_LABEL)
+        end
+        if gotoLocationWindow.textinput.CreateGuideText ~= nil then
+            gotoLocationWindow.textinput:CreateGuideText("  "..IMPORT_HINT, ALIGN_LEFT)
+        end
+    end
+    if gotoLocationWindow.submit ~= nil then
+        gotoLocationWindow.submit:SetText(IMPORT_BUTTON)
+        gotoLocationWindow.submit:Show(true)
+    end
+    gotoLocationWindow:Show(true)
+end
+
+-- Opens the goto window repurposed as a read-only sharecode export panel.
+function gotoLocation.OpenExportSharecode(shareCode)
+    if gotoLocationWindow == nil then
+        helpers.DevLog("Goto window not initialized yet")
+        return
+    end
+    if currentMode == "export" and gotoLocationWindow:IsVisible() then
+        CLOSE_GOTO_WINDOW()
+        return
+    end
+    currentMode = "export"
+    importSubmitCallback = nil
+    GOTO_TARGET_TEXT = shareCode or ""
+    if gotoLocationWindow.textinput ~= nil then
+        gotoLocationWindow.textinput:SetText(GOTO_TARGET_TEXT)
+        if gotoLocationWindow.textinput.label ~= nil then
+            gotoLocationWindow.textinput.label:SetText(EXPORT_LABEL)
+        end
+    end
+    if gotoLocationWindow.submit ~= nil then
+        gotoLocationWindow.submit:Show(false)
+    end
+    gotoLocationWindow:Show(true)
 end
 
 local function MainUIReady(MainUI)
@@ -124,10 +230,20 @@ local function MainUIReady(MainUI)
 	gotoLocationWindow:SetHandler("OnCloseByEsc", CLOSE_GOTO_WINDOW)
 end
 
+local function OnModeChanged(mode)
+	if currentMode == "goto" or mode == "demos" then
+		return
+	end
+	gotoLocation.CloseIfOpen()
+end
+
 function gotoLocation.OnLoad()
 	eventbus.WatchEvent(eventtopics.topics.UI.MainUILoaded, MainUIReady, "gotoLocation")
 	eventbus.WatchEvent(eventtopics.topics.UI.toggleGoto, gotoLocation.ToggleUI, "gotoLocation")
 	eventbus.WatchEvent(eventtopics.topics.UI.closeGoto, gotoLocation.CloseIfOpen, "gotoLocation")
+	eventbus.WatchEvent(eventtopics.topics.UI.openImportSharecode, gotoLocation.OpenImportSharecode, "gotoLocation")
+	eventbus.WatchEvent(eventtopics.topics.UI.openExportSharecode, gotoLocation.OpenExportSharecode, "gotoLocation")
+	eventbus.WatchEvent(eventtopics.topics.render.modeChanged, OnModeChanged, "gotoLocation")
 end
 
 function gotoLocation.OnUnload()

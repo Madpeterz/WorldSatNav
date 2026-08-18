@@ -6,6 +6,7 @@ local settingsModule = require("WorldSatNav/core/settings")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
 local regionmap = require("WorldSatNav/ui/regionmap")
+local maprendering = require("WorldSatNav/ui/maprendering")
 
 local demos = {}
 local demosData = {}
@@ -14,6 +15,7 @@ local demosFilePath = "WorldSatNav/data/demos.dat"
 local demoAddButton = nil
 local demoWindow = nil
 local demoControlsListMenubutton = nil
+local demoImportButton = nil
 local TableListControlForDemos = nil
 
 local function normalizeTimestamp(value)
@@ -111,6 +113,9 @@ function demos.HideAllDemoUI()
 	if demoControlsListMenubutton ~= nil and demoControlsListMenubutton:IsVisible() then
 		demoControlsListMenubutton:Show(false)
 		demoControlsListMenubutton:SetText("List demos")
+	end
+	if demoImportButton ~= nil and demoImportButton:IsVisible() then
+		demoImportButton:Show(false)
 	end
 	if TableListControlForDemos ~= nil then
 		TableListControlForDemos.Show(false)
@@ -295,11 +300,12 @@ local function loadDemosData()
 	end
 	local newDemoscount = 0
 	for _, demo in pairs(demosDataFromFile) do
-		local sextentKey = helpers.SextantKey(demo.location)
+		local normalizedLocation = maprendering.NormalizeSextant(demo.location)
+		local sextentKey = helpers.SextantKey(normalizedLocation)
 		local startAt = tonumber(demo.startat)
 		local isNew = demosData[sextentKey] == nil
 		demosData[sextentKey] = {
-			sextent = demo.location,
+			sextent = normalizedLocation,
 			ownername = demo.ownername,
 			buildingname = demo.buildingname,
 			regionname = demo.regionname,
@@ -344,6 +350,9 @@ function demos.RequestDemosForRender()
 	end
 	if demoControlsListMenubutton ~= nil then
 		demoControlsListMenubutton:Show(true)
+	end
+	if demoImportButton ~= nil then
+		demoImportButton:Show(true)
 	end
 	eventbus.TriggerEvent(eventtopics.topics.icons.BulkDrawIconsAndRedraw, bulkRenderData)
 end
@@ -406,7 +415,7 @@ function demos.AutoFillClicked()
 		api.Log:Info("WorldSatNav: Auto fill abort - no target selected")
 		return
 	end
-	local targetpos = api.Map:GetPlayerSextants()
+	local targetpos = maprendering.NormalizeSextant(api.Map:GetPlayerSextants())
 	if targetpos == nil then
 		api.Log:Info("WorldSatNav: Auto fill abort - could not get player position")
 		return
@@ -419,7 +428,7 @@ function demos.AutoFillClicked()
 end
 
 function demos.CreateDemo(regionname, ownername, buildingname, dateText, timeText, timestamp)
-    local playerSextants = api.Map:GetPlayerSextants()
+    local playerSextants = maprendering.NormalizeSextant(api.Map:GetPlayerSextants())
     if type(playerSextants) ~= "table" then
         api.Log:Info("WorldSatNav: Unable to create demo because player coordinates are unavailable.")
         return false
@@ -451,6 +460,55 @@ function demos.CreateDemo(regionname, ownername, buildingname, dateText, timeTex
 	end
     helpers.DevLog(string.format("Created demo '%s' for '%s' in region '%s' at %d", tostring(buildingname), tostring(ownername), tostring(regionname), demoTimestamp))
     return true
+end
+
+local function ImportDemoFromShareCode(rawText)
+	local text = rawText and rawText:match("^%s*(.-)%s*$") or ""
+	if text == "" then
+		api.Log:Info("WorldSatNav: Import aborted - no sharecode provided")
+		return
+	end
+	local buildingId, sextant, owner, unixtime = helpers.Decode(text)
+	if buildingId == nil or type(sextant) ~= "table" then
+		api.Log:Info("WorldSatNav: Import aborted - sharecode could not be decoded")
+		return
+	end
+	local currentTime = tonumber(helpers.GetCurrentTimestamp())
+	if type(currentTime) ~= "number" then
+		api.Log:Info("WorldSatNav: Import aborted - current time unavailable")
+		return
+	end
+	if type(unixtime) ~= "number" or unixtime <= currentTime then
+		api.Log:Info("WorldSatNav: Import aborted - sharecode start time is not in the future")
+		return
+	end
+	local buildingname = helpers.GetBuildingNameById(buildingId) or "Unknown"
+	local _, regionname = regionmap.GetRegionForSextant(sextant)
+	regionname = regionname or "Unknown"
+	local ownername = owner
+	if ownername == nil or ownername == "" then
+		ownername = "Unknown"
+	end
+	local newDemo = {
+		sextent = sextant,
+		ownername = ownername,
+		buildingname = buildingname,
+		startat = unixtime,
+		regionname = regionname,
+		expiretime = unixtime + constants.timing.demoExpireTime + 30,
+		alertTriggered = false,
+	}
+	demosData[helpers.SextantKey(sextant)] = newDemo
+	if SaveDemosFile() == false then
+		api.Log:Info("WorldSatNav: Failed to save demo data to file after importing sharecode.")
+		return
+	end
+	api.Log:Info(string.format("WorldSatNav: Imported demo '%s' for '%s' in region '%s'", buildingname, ownername, regionname))
+	eventbus.TriggerEvent(eventtopics.topics.UI.requestUIMode, "demos")
+end
+
+function demos.ImportShareCodeClicked()
+	eventbus.TriggerEvent(eventtopics.topics.UI.openImportSharecode, ImportDemoFromShareCode)
 end
 
 function demos.CreateDemoClicked()
@@ -558,6 +616,18 @@ function demos.ListMenuGotoClicked(row,col)
 	helpers.DevLog("Started tracking demo at sextant: " .. tostring(demo.sextent))
 end
 
+function demos.ListMenuExportClicked(row,col)
+	helpers.DevLog("Export clicked for row: " .. tostring(row) .. " col: " .. tostring(col))
+	local demo = getDemoByRow(row)
+	if demo == nil then
+		helpers.DevLog("Could not find demo for row: " .. tostring(row))
+		return
+	end
+	local buildingId = helpers.GetBuildingId(demo.buildingname) or 0
+	local shareCode = helpers.Encode(buildingId, demo.sextent, demo.ownername, demo.startat)
+	eventbus.TriggerEvent(eventtopics.topics.UI.openExportSharecode, shareCode)
+end
+
 function demos.ListMenuRemoveClicked(row,col)
 	helpers.DevLog("Remove clicked for row: " .. tostring(row) .. " col: " .. tostring(col))
 	if TableListControlForDemos == nil then
@@ -585,10 +655,11 @@ function demos.RedrawDemosList()
 	local rowKeys = {}
 	for sextantKey, demosDataEntry in pairs(demosData) do
 		local thisRow = {
-			"->",
+			"»",
+			"|>",
 			string.format("%s\n in %s", demosDataEntry.buildingname or "Unknown",demosDataEntry.regionname or "Unknown"),
 			demosDataEntry.startat and helpers.TimeRemaining(demosDataEntry.startat, true) or "Unknown",
-			"[X]",
+			"×",
 		}
 		table.insert(rowData, thisRow)
 		table.insert(rowKeys, sextantKey)
@@ -607,6 +678,9 @@ function demos.MainUIReady(MainUIWindow)
 	createDemoWindowControls(demos.AutoFillClicked, demos.CreateDemoClicked)
 	demoControlsListMenubutton = helpers.createButton("DemoControlListShow",MainUIWindow,"List demos", MainUIWindow:GetWidth() - 85, MainUIWindow:GetHeight() - 35)
 	demoControlsListMenubutton:Show(false)
+	demoImportButton = helpers.createButton("DemoImportButton", MainUIWindow, "Import", 10, MainUIWindow:GetHeight() - 35)
+	demoImportButton:Show(false)
+	demoImportButton:SetHandler("OnClick", demos.ImportShareCodeClicked)
 	demoControlsListMenubutton:SetHandler("OnClick", function(button)
 		button = button or demoControlsListMenubutton
 		if button:GetText() == "List demos" then
@@ -615,13 +689,15 @@ function demos.MainUIReady(MainUIWindow)
 			eventbus.TriggerEvent(eventtopics.topics.UI.EmptyUI)
 			helpers.DevLog("WorldSatNav: Demo list click handler running")
 			if TableListControlForDemos == nil then
-				TableListControlForDemos = helpers.CreateListTable(MainUIWindow, 30, 30, {"Goto", "Info", "Status", "Remove"})
+				TableListControlForDemos = helpers.CreateListTable(MainUIWindow, 30, 30, {"Goto", "Share", "Info", "Status", "Del"})
 				TableListControlForDemos.ConfigCol(1, true, demos.ListMenuGotoClicked) -- set goto as a button
-				TableListControlForDemos.ConfigCol(4, true, demos.ListMenuRemoveClicked) -- set remove as a button
-				TableListControlForDemos.setColSize(1, 75)
-				TableListControlForDemos.setColSize(2, 225)
-				TableListControlForDemos.setColSize(3, 150)
-				TableListControlForDemos.setColSize(4, 100)
+				TableListControlForDemos.ConfigCol(2, true, demos.ListMenuExportClicked) -- set export as a button
+				TableListControlForDemos.ConfigCol(5, true, demos.ListMenuRemoveClicked) -- set remove as a button
+				TableListControlForDemos.setColSize(1, 60)
+				TableListControlForDemos.setColSize(2, 60)
+				TableListControlForDemos.setColSize(3, 225)
+				TableListControlForDemos.setColSize(4, 150)
+				TableListControlForDemos.setColSize(5, 60)
 			end
 			demos.RedrawDemosList()
 		else
