@@ -57,8 +57,6 @@ local function setDemoWindowUIStatue(status)
 		end
 	end
 
-	addElement(demoWindow.demo.regionnameInput)
-	addElement(demoWindow.demo.regionnameInput and demoWindow.demo.regionnameInput.label)
 	addElement(demoWindow.demo.ownernameInput)
 	addElement(demoWindow.demo.ownernameInput and demoWindow.demo.ownernameInput.label)
 	addElement(demoWindow.demo.buildingnameInput)
@@ -92,7 +90,6 @@ function demos.DemosWindowDisplay(mode)
 	end
 	eventbus.TriggerEvent(eventtopics.topics.UI.EmptyUI)
 	helpers.DevLog("Setting up demo add window for display")
-	demoWindow.demo.regionnameInput.text = ""
 	demoWindow.demo.ownernameInput.text = ""
 	if demoWindow.demo.buildingnameInput ~= nil then
 		helpers.SelectComboBoxByText(demoWindow.demo.buildingnameInput, "Unknown")
@@ -134,7 +131,6 @@ local function SaveDemosFile()
 			ownername = demo.ownername,
 			buildingname = demo.buildingname,
 			startat = serializeTimestamp(demo.startat),
-			regionname = demo.regionname,
 		}
 		table.insert(demosToSave, entry)
 		demoCount = demoCount + 1
@@ -163,18 +159,15 @@ local function createDemoWindowControls(OnAutoButtonClickCallback, OnCreateButto
 	demoWindow.demo.AutoButton = autoButton
 	-- inputs
 	local selectedfontcolor = FONT_COLOR.BLACK
-	demoWindow.demo.regionnameInput = helpers.createTextInput("regionnameInput", demoWindow, 60, 30, 306, 29, "Region name for demo", 100, "Region", function(text)
-		demoWindow.demo.regionnameInput.text = text
-	end,false,selectedfontcolor)
-	demoWindow.demo.ownernameInput = helpers.createTextInput("ownernameInput", demoWindow, 60, 90, 306, 29, "Owner name for demo", 100, "Owner", function(text)
+	demoWindow.demo.ownernameInput = helpers.createTextInput("ownernameInput", demoWindow, 60, 30, 306, 29, "Owner name for demo", 100, "Owner", function(text)
 		demoWindow.demo.ownernameInput.text = text
 	end,false,selectedfontcolor)
-	demoWindow.demo.buildingnameInput = helpers.CreateComboBox(demoWindow, helpers.GetBuildingNames(), 60, 150,300, 29, false, selectedfontcolor, "Unknown","Building", "buildingnameInput")
+	demoWindow.demo.buildingnameInput = helpers.CreateComboBox(demoWindow, helpers.GetBuildingNames(), 60, 90,300, 29, false, selectedfontcolor, "Unknown","Building", "buildingnameInput")
 	local todaysdate = helpers.getTodayDateText()
-	demoWindow.demo.dateinput = helpers.createTextInput("dateinput", demoWindow, 60, 210, 299, 29, todaysdate, 100, "Date", function(text)
+	demoWindow.demo.dateinput = helpers.createTextInput("dateinput", demoWindow, 60, 150, 299, 29, todaysdate, 100, "Date", function(text)
 		demoWindow.demo.dateinput.text = text
 	end,false,selectedfontcolor)
-	demoWindow.demo.timeinput = helpers.createTextInput("timeinput", demoWindow, 60, 275, 299, 29, "HH:MM", 100, "Time", function(text)
+	demoWindow.demo.timeinput = helpers.createTextInput("timeinput", demoWindow, 60, 215, 299, 29, "HH:MM", 100, "Time", function(text)
 		demoWindow.demo.timeinput.text = text
 	end,false,selectedfontcolor)
 
@@ -271,10 +264,11 @@ local function DEMO_TRIGGER_ALERT()
 	end
 	helpers.DevLog("Triggering alert for demo at sextant: " .. tostring(demosData[selectedKey].sextent) .. " starting at: " .. tostring(demosData[selectedKey].startat))
 	demosData[selectedKey].alertTriggered = true
+	local _, alertRegionname = regionmap.GetRegionForSextant(demosData[selectedKey].sextent)
 	local alertData = {
 		title = "Demo Alert!",
 		lines = {
-			{ label = "Region:", value = demosData[selectedKey].regionname or "Unknown" },
+			{ label = "Region:", value = alertRegionname or "Unknown" },
 			{ label = "Owner:", value = demosData[selectedKey].ownername or "Unknown" },
 			{ label = "Building:", value = demosData[selectedKey].buildingname or "Unknown" },
 		},
@@ -308,7 +302,6 @@ local function loadDemosData()
 			sextent = normalizedLocation,
 			ownername = demo.ownername,
 			buildingname = demo.buildingname,
-			regionname = demo.regionname,
 			startat = startAt,
 			expiretime = startAt and (startAt + constants.timing.demoExpireTime + 30) or nil,
 			alertTriggered = false,
@@ -420,14 +413,11 @@ function demos.AutoFillClicked()
 		api.Log:Info("WorldSatNav: Auto fill abort - could not get player position")
 		return
 	end
-	local _, regionname = regionmap.GetRegionForSextant(targetpos)
-	regionname = regionname or "Unknown"
-	demoWindow.demo.regionnameInput:SetText(regionname)
 	helpers.SelectComboBoxByText(demoWindow.demo.buildingnameInput, buildingname, "Unknown")
-	api.Log:Info(string.format("Auto-filled demo info - Region: %s, Building: %s", regionname, buildingname))
+	api.Log:Info(string.format("Auto-filled demo info - Building: %s", buildingname))
 end
 
-function demos.CreateDemo(regionname, ownername, buildingname, dateText, timeText, timestamp)
+function demos.CreateDemo(ownername, buildingname, dateText, timeText, timestamp)
     local playerSextants = maprendering.NormalizeSextant(api.Map:GetPlayerSextants())
     if type(playerSextants) ~= "table" then
         api.Log:Info("WorldSatNav: Unable to create demo because player coordinates are unavailable.")
@@ -448,7 +438,6 @@ function demos.CreateDemo(regionname, ownername, buildingname, dateText, timeTex
 		ownername = ownername,
 		buildingname = buildingname,
 		startat = demoTimestamp,
-		regionname = regionname,
 		expiretime = demoTimestamp and (demoTimestamp + constants.timing.demoExpireTime + 30) or nil,
 		alertTriggered = false,
     }
@@ -458,7 +447,7 @@ function demos.CreateDemo(regionname, ownername, buildingname, dateText, timeTex
 		api.Log:Info("WorldSatNav: Failed to save demo data to file after creating a new demo.")
 		return false
 	end
-    helpers.DevLog(string.format("Created demo '%s' for '%s' in region '%s' at %d", tostring(buildingname), tostring(ownername), tostring(regionname), demoTimestamp))
+    helpers.DevLog(string.format("Created demo '%s' for '%s' at %d", tostring(buildingname), tostring(ownername), demoTimestamp))
     return true
 end
 
@@ -483,8 +472,6 @@ local function ImportDemoFromShareCode(rawText)
 		return
 	end
 	local buildingname = helpers.GetBuildingNameById(buildingId) or "Unknown"
-	local _, regionname = regionmap.GetRegionForSextant(sextant)
-	regionname = regionname or "Unknown"
 	local ownername = owner
 	if ownername == nil or ownername == "" then
 		ownername = "Unknown"
@@ -494,7 +481,6 @@ local function ImportDemoFromShareCode(rawText)
 		ownername = ownername,
 		buildingname = buildingname,
 		startat = unixtime,
-		regionname = regionname,
 		expiretime = unixtime + constants.timing.demoExpireTime + 30,
 		alertTriggered = false,
 	}
@@ -503,7 +489,8 @@ local function ImportDemoFromShareCode(rawText)
 		api.Log:Info("WorldSatNav: Failed to save demo data to file after importing sharecode.")
 		return
 	end
-	api.Log:Info(string.format("WorldSatNav: Imported demo '%s' for '%s' in region '%s'", buildingname, ownername, regionname))
+	local _, importedRegionname = regionmap.GetRegionForSextant(sextant)
+	api.Log:Info(string.format("WorldSatNav: Imported demo '%s' for '%s' in region '%s'", buildingname, ownername, importedRegionname or "Unknown"))
 	eventbus.TriggerEvent(eventtopics.topics.UI.requestUIMode, "demos")
 end
 
@@ -517,7 +504,6 @@ function demos.CreateDemoClicked()
 		return
 	end
 	helpers.DevLog("Creating demo with input data")
-	local regionname = demoWindow.demo.regionnameInput:GetText() or "Unknown"
 	local ownername = demoWindow.demo.ownernameInput:GetText() or "Unknown"
 	local buildingname = helpers.getComboBoxValue(demoWindow.demo.buildingnameInput, "Unknown")
 	local date = demoWindow.demo.dateinput:GetText() or "Unknown"
@@ -528,10 +514,6 @@ function demos.CreateDemoClicked()
 	end
 	if ownername == "Unknown" then
 		api.Log:Info("WorldSatNav: Invalid owner input for demo creation")
-		return
-	end
-	if regionname == "Unknown" then
-		api.Log:Info("WorldSatNav: Invalid region input for demo creation")
 		return
 	end
 	if date == "Unknown" then
@@ -549,8 +531,8 @@ function demos.CreateDemoClicked()
 	end
 	local timeleft = timestamp - helpers.GetCurrentTimestamp()
 	local hours, mins, secs = helpers.SecondsToTime(timeleft)
-	api.Log:Info(string.format("WorldSatNav: Creating demo - Region: %s, Owner: %s, Building: %s, Date: %s, Time: %s, Time left: %02d:%02d:%02d", regionname, ownername, buildingname, date, time, hours, mins, secs))
-	if not demos.CreateDemo(regionname, ownername, buildingname, date, time, timestamp) then
+	api.Log:Info(string.format("WorldSatNav: Creating demo - Owner: %s, Building: %s, Date: %s, Time: %s, Time left: %02d:%02d:%02d", ownername, buildingname, date, time, hours, mins, secs))
+	if not demos.CreateDemo(ownername, buildingname, date, time, timestamp) then
 		api.Log:Info("WorldSatNav: Failed to create demo entry.")
 		return
 	end
@@ -654,10 +636,11 @@ function demos.RedrawDemosList()
 	local rowData = {}
 	local rowKeys = {}
 	for sextantKey, demosDataEntry in pairs(demosData) do
+		local _, rowRegionname = regionmap.GetRegionForSextant(demosDataEntry.sextent)
 		local thisRow = {
 			"»",
 			"|>",
-			string.format("%s\n in %s", demosDataEntry.buildingname or "Unknown",demosDataEntry.regionname or "Unknown"),
+			string.format("%s\n in %s", demosDataEntry.buildingname or "Unknown", rowRegionname or "Unknown"),
 			demosDataEntry.startat and helpers.TimeRemaining(demosDataEntry.startat, true) or "Unknown",
 			"×",
 		}
