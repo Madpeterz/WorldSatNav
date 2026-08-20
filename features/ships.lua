@@ -31,7 +31,7 @@ local function makeLocData(ship)
 	return sextantData;
 end
 
-function ships.SelectShipBySextant(sextant)
+function ships.SelectShipBySextant(sextant, ShowMapMarker, displayName)
 	if sextant == nil then
 		helpers.DevLog("Cannot select ship: sextant is nil")
 		return
@@ -42,7 +42,7 @@ function ships.SelectShipBySextant(sextant)
 	lastSelectedShipSextant = sextant
 	helpers.DevLog("Selecting ship with sextant: " .. helpers.SextantKey(sextant))
 	eventbus.TriggerEvent(eventtopics.topics.icons.ChangeIcon, sextant, "icons/shipactive.png", "Ship")
-	eventbus.TriggerEvent(eventtopics.topics.tracking.custom, sextant, "Ship", false)
+	eventbus.TriggerEvent(eventtopics.topics.tracking.custom, sextant, "Ship", ShowMapMarker or false, displayName)
 end
 
 

@@ -324,6 +324,10 @@ function tracking.setTargetGoto(sextant, name, ShowMapMarker, displayName)
 		tracking.AssignNextButton(nil, nil)
 	end
 	helpers.DevLog("Target set to sextant: " .. helpers.SextantKey(normalizedSextant) .. " with name: " .. tostring(name))
+	if settings.Get("ShowTargetInfoInChat") == true then
+		local _, regionName = regionmap.GetRegionForSextant(normalizedSextant)
+		api.Chat:DispatchChatMessage(4, "[WorldSatNav] Tracking target set to: " .. tostring(targetName).. " at " .. helpers.FormatSextant(normalizedSextant).." in region: " .. tostring(regionName))
+	end
 	updateTrackingData()
 end
 

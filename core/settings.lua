@@ -21,7 +21,8 @@ local defaultSettings = {
     UseTeleportHint = true,
     trackingMode = "Guide",
     OpenRealMap = true,
-    
+    ShowTargetInfoInChat = false,
+
     EnableLocationOutput = false,
     LocationOutputRateLimit = 1000, -- in milliseconds, how often to output player location
     LocationOutputFile = "location.dat",

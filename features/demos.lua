@@ -182,7 +182,7 @@ local function CreateDemoAddUI(onClickCallback)
 	overlayWnd.bg:AddAnchor("TOPLEFT", overlayWnd, "TOPLEFT", 0, 0)
 	overlayWnd.bg:SetExtent(35*settingsModule.Get("uiDrawScale"), 40*settingsModule.Get("uiDrawScale"))
 	overlayWnd.bg:Show(true)
-	overlayWnd:Show(settingsModule.Get("showDemoCreatePlus"))
+	overlayWnd:Show(false)
 	overlayWnd:Lower()
 
 	-- Drag events for overlay button
@@ -350,6 +350,12 @@ function demos.RequestDemosForRender()
 	eventbus.TriggerEvent(eventtopics.topics.icons.BulkDrawIconsAndRedraw, bulkRenderData)
 end
 
+local ranChatFilterTest = false
+local function HideDemoAddonButton()
+	if demoAddButton:IsVisible() then
+		demoAddButton:Show(false)
+	end
+end
 local function DEMO_AUTOHIDE_PLUS()
 	if demoAddButton == nil then 
 		helpers.DevLog("Demo add button not initialized yet")
@@ -362,17 +368,44 @@ local function DEMO_AUTOHIDE_PLUS()
 
 	if settingsModule.Get("showDemoCreatePlus") == false then
 		helpers.DevLog("DEMO_AUTOHIDE_PLUS abort: showDemoCreatePlus setting is false")
-		if demoAddButton:IsVisible() then
-			demoAddButton:Show(false)
-		end
+		HideDemoAddonButton()
 		return
 	end
 	local targetName = api.Unit:UnitName("target")
 	if targetName == nil or targetName == "" then
 		helpers.DevLog("DEMO_AUTOHIDE_PLUS abort: no target selected")
-		if demoAddButton:IsVisible() then
-			demoAddButton:Show(false)
-		end
+		HideDemoAddonButton()
+		return
+	end
+	local targetId = api.Unit:GetUnitId("target")
+	if targetId ~= nil then
+		helpers.DevLog("DEMO_AUTOHIDE_PLUS abort: target ID is not nil and houses do not support target ids, so this is likely a player or NPC target, not a house")
+		HideDemoAddonButton()
+		return
+	end
+	local UnitDistance = api.Unit:UnitDistance("target")
+	if UnitDistance == nil or UnitDistance > 10 then
+		HideDemoAddonButton()
+		return
+	end
+	local UnitInfo = api.Unit:UnitInfo("target")
+	if UnitInfo ~= nil then 
+		HideDemoAddonButton()
+		return
+	end
+	local UnitModifierInfo = api.Unit:UnitModifierInfo("target")
+	if UnitModifierInfo ~= nil then 
+		HideDemoAddonButton()
+		return
+	end
+	local UnitClass = api.Unit:UnitClass("target")
+	if UnitClass ~= nil then 
+		HideDemoAddonButton()
+		return
+	end
+	local TargetUnit = api.Unit:TargetUnit("target")
+	if TargetUnit ~= nil then 
+		HideDemoAddonButton()
 		return
 	end
 	if not demoAddButton:IsVisible() then
@@ -658,6 +691,7 @@ function demos.MainUIReady(MainUIWindow)
 	helpers.DevLog("Demos module loaded")
 	loadDemosData()
     demoAddButton = CreateDemoAddUI(demos.ShowDemoWindow)
+	DEMO_AUTOHIDE_PLUS()
 	createDemoWindowControls(demos.AutoFillClicked, demos.CreateDemoClicked)
 	demoControlsListMenubutton = helpers.createButton("DemoControlListShow",MainUIWindow,"List demos", MainUIWindow:GetWidth() - 85, MainUIWindow:GetHeight() - 35)
 	demoControlsListMenubutton:Show(false)

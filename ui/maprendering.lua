@@ -127,18 +127,20 @@ local function SelectActiveMapIcon(icon)
 		return
 	end
 	lastClickedIndex = icon.indexId
-	if icon.sourceType == "Ship" then
-		helpers.DevLog("Publishing ship select by sextant event")
-		eventbus.TriggerEvent(TOPICS.ships.selectBySextant, icon.sextant)
-	else
-		helpers.DevLog("Selected icon source type is not Ship")
-	end
-	helpers.DevLog("Publishing icon click event for sourceType: "..tostring(icon.sourceType))
 	local displayName = nil
 	if icon.sourceType == "Map" and icon.count ~= nil then
 		displayName = "Map (" .. icon.count .. ")"
 	end
-	eventbus.TriggerEvent(TOPICS.tracking.start, icon.sextant, icon.sourceType, true, displayName)
+	if icon.sourceType == "Ship" then
+		-- SelectShipBySextant already triggers tracking.custom for the target;
+		-- also firing tracking.start here would run setTargetGoto twice.
+		helpers.DevLog("Publishing ship select by sextant event")
+		eventbus.TriggerEvent(TOPICS.ships.selectBySextant, icon.sextant, true, displayName)
+	else
+		helpers.DevLog("Selected icon source type is not Ship")
+		helpers.DevLog("Publishing icon click event for sourceType: "..tostring(icon.sourceType))
+		eventbus.TriggerEvent(TOPICS.tracking.start, icon.sextant, icon.sourceType, true, displayName)
+	end
 	maprendering.ToggleMap()
 end
 

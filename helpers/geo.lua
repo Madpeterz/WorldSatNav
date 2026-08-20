@@ -67,4 +67,16 @@ function geo.SextantKey(sextant)
 	return returnValue
 end
 
+--- Human readable sextant, e.g. 12°34'56"N 78°09'12"W
+function geo.FormatSextant(sextant)
+	if sextant == nil then
+		return "??"
+	end
+	return string.format(
+		"%d\194\176%02d'%02d\"%s %d\194\176%02d'%02d\"%s",
+		sextant.deg_lat or 0, sextant.min_lat or 0, sextant.sec_lat or 0, sextant.latitude or "?",
+		sextant.deg_long or 0, sextant.min_long or 0, sextant.sec_long or 0, sextant.longitude or "?"
+	)
+end
+
 return geo
