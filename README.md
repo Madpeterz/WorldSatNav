@@ -85,3 +85,6 @@ Based on code / assets / ideas from:
 **Madpeterz/mapocr_aa**
 - A C# app used in retail that read map text via OCR, allowing multiple tracked maps to be added
   to a display
+
+**michaelqtz/aac-addon-dawnsdrop_map**
+- PNG location maps for items underr Dawnsdrop

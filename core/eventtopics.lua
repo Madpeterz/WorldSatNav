@@ -1,5 +1,9 @@
 local eventtopics = {
 	topics = {
+		dawnsdrop = {
+			selectTypeChanged = "dawnsdrop.selectType",
+			selectItemChanged = "dawnsdrop.selectItem",
+		},
 		tracking = {
 			start = "tracking.start",
 			stop = "tracking.stop",
@@ -51,6 +55,7 @@ local eventtopics = {
 			events = "render.events",
 			config = "render.config",
 			demoadd = "render.demoadd",
+			dawnsdrop = "render.dawnsdrop",
 			clearUiState = "render.clearUiState",
 		},
 	}
