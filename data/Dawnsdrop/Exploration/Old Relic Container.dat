@@ -1,0 +1,15 @@
+{
+    {
+        location = {
+            deg_long = 0,
+            deg_lat = 10,
+            sec_long = 2,
+            min_lat = 50,
+            longitude = "W",
+            latitude = "S",
+            sec_lat = 26,
+            min_long = 23,
+        },
+        group = 3,
+    },
+}

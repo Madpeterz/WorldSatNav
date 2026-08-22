@@ -961,6 +961,10 @@ function maprendering.GetCurrentZoomLevel()
 	return WorldSatNavState.zoomLevel
 end
 
+function maprendering.GetPlayerPosition()
+	return GetCurrentPosition()
+end
+
 
 local function UpdateMapMode(mode)
 	helpers.SetCheckBoxOverride("mapsModeButton", false)

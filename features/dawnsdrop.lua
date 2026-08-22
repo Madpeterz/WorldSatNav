@@ -117,6 +117,7 @@ local DawnsMapMode = "Select"
 local DEV_MODE_BUTTON_LABELS = { "Add", "Remove", "Select", "Ignore" }
 local DEV_MODE_BUTTON_IDS = { "dawnsAddModeButton", "dawnsRemoveModeButton", "dawnsSelectModeButton", "dawnsIgnoreModeButton" }
 local devModeButtonsBackground = nil
+local markHereButton = nil
 
 local function SetDawnsMapMode(mode)
 	DawnsMapMode = mode
@@ -420,7 +421,8 @@ local function CreateDevModeButtons(mapUI)
 	local margin = 5
 	local spacing = 115
 	local y = -30
-	local rowWidth = margin + (#DEV_MODE_BUTTON_LABELS * spacing) + 20
+	local markHereX = margin + (#DEV_MODE_BUTTON_LABELS * spacing)
+	local rowWidth = markHereX + 65
 
 	devModeButtonsBackground = mapUI:CreateImageDrawable("dawnsdropDevModeBackground", "background")
 	devModeButtonsBackground:SetExtent(rowWidth * uiScale, 26 * uiScale)
@@ -444,6 +446,24 @@ local function CreateDevModeButtons(mapUI)
 		end, nil, nil, "DawnsMapMode", nil, true)
 		helpers.ToggleCheckboxVisable(id, false)
 	end
+
+	-- createButton doesn't scale its offsets internally (unlike CreateSkinnedCheckbox), so pre-scale here to line up with the row above.
+	markHereButton = helpers.createButton("dawnsMarkHereButton", mapUI, "Mark here", markHereX * uiScale, y * uiScale)
+	markHereButton:SetHandler("OnClick", function()
+		local task = dawnsdropWindow ~= nil and helpers.getComboBoxValue(dawnsdropWindow.taskCombo) or nil
+		local itemType = dawnsdropWindow ~= nil and helpers.getComboBoxValue(dawnsdropWindow.typeCombo) or nil
+		if task == nil or itemType == nil then
+			helpers.DevLog("Cannot mark location, task or type is not selected")
+			return
+		end
+		local playerSextant = maprendering.GetPlayerPosition()
+		if playerSextant == nil then
+			helpers.DevLog("Cannot mark location, player position unavailable")
+			return
+		end
+		AddOrUpgradeLocation(task, itemType, playerSextant)
+	end)
+	markHereButton:Show(false)
 end
 
 local function ShowDevModeButtons(visible)
@@ -455,6 +475,10 @@ local function ShowDevModeButtons(visible)
 	end
 	if devModeButtonsBackground ~= nil then
 		devModeButtonsBackground:Show(visible)
+	end
+	if markHereButton ~= nil then
+		markHereButton:Show(visible)
+		markHereButton:Enable(visible)
 	end
 end
 
