@@ -148,11 +148,8 @@ local function GetDataFilePath(task, itemType)
 	return "WorldSatNav/data/Dawnsdrop/" .. task .. "/" .. itemType .. ".dat"
 end
 
-local GROUP_MIN_SIZE = 2 -- group only when more than 2 (i.e. 3+) locations cluster together
-
-local function GetArcMinuteInDegrees()
-	return settingsModule.Get("DawnsdropGroupingArcMinutes") / 60
-end
+local MIGRATION_ARC_MINUTE_IN_DEGREES = 7 / 60
+local MIGRATION_GROUP_MIN_SIZE = 2 -- a legacy cluster bigger than this (3+) earns an upgraded tier
 
 local function SextantToDecimalDegrees(sextant)
 	local longValue = sextant.deg_long + (sextant.min_long / 60) + (sextant.sec_long / 3600)
@@ -166,43 +163,14 @@ local function SextantToDecimalDegrees(sextant)
 	return longValue, latValue
 end
 
-local function DecimalDegreesToSextant(longValue, latValue)
-	local longDir = "E"
-	if longValue < 0 then
-		longDir = "W"
-		longValue = -longValue
-	end
-	local latDir = "S"
-	if latValue < 0 then
-		latDir = "N"
-		latValue = -latValue
-	end
-	local degLong = math.floor(longValue)
-	local minFloatLong = (longValue - degLong) * 60
-	local minLong = math.floor(minFloatLong)
-	local secLong = math.floor(((minFloatLong - minLong) * 60) + 0.5)
-	local degLat = math.floor(latValue)
-	local minFloatLat = (latValue - degLat) * 60
-	local minLat = math.floor(minFloatLat)
-	local secLat = math.floor(((minFloatLat - minLat) * 60) + 0.5)
-	return {
-		longitude = longDir,
-		latitude = latDir,
-		deg_long = degLong,
-		min_long = minLong,
-		sec_long = secLong,
-		deg_lat = degLat,
-		min_lat = minLat,
-		sec_lat = secLat,
-	}
-end
-
--- Chain-clusters locations that sit within 1 arc minute of another member of the
--- same cluster, then collapses any cluster bigger than GROUP_MIN_SIZE down to its center point.
-local function GroupLocations(locations)
-	local arcMinuteInDegrees = GetArcMinuteInDegrees()
+-- Chain-clusters locations (accepts either bare legacy sextants or {location=..}
+-- entries) within arcMinuteInDegrees of each other, then tags every real
+-- location in a cluster with the tier its cluster size earns, instead of
+-- collapsing the cluster down to a centroid.
+local function RegroupLocationsByDistance(entries, arcMinuteInDegrees)
 	local points = {}
-	for _, sextant in pairs(locations) do
+	for _, entry in pairs(entries) do
+		local sextant = entry.location or entry
 		local long, lat = SextantToDecimalDegrees(sextant)
 		table.insert(points, { long = long, lat = lat, sextant = sextant })
 	end
@@ -235,54 +203,66 @@ local function GroupLocations(locations)
 		end
 	end
 
-	local result = {}
+	local regrouped = {}
 	for _, cluster in ipairs(clusters) do
-		if #cluster > GROUP_MIN_SIZE then
-			local sumLong, sumLat = 0, 0
-			for _, index in ipairs(cluster) do
-				sumLong = sumLong + points[index].long
-				sumLat = sumLat + points[index].lat
-			end
-			table.insert(result, {
-				sextant = DecimalDegreesToSextant(sumLong / #cluster, sumLat / #cluster),
-				grouped = true,
-				clusterSize = #cluster,
-			})
-		else
-			for _, index in ipairs(cluster) do
-				table.insert(result, { sextant = points[index].sextant, grouped = false })
-			end
+		local group = 1
+		if #cluster > MIGRATION_GROUP_MIN_SIZE then
+			group = (#cluster >= 4) and 3 or 2
+		end
+		for _, index in ipairs(cluster) do
+			table.insert(regrouped, { location = points[index].sextant, group = group })
 		end
 	end
-	return result
+	return regrouped
+end
+
+-- One-time conversion for files saved before locations carried a group tier.
+local function MigrateLegacyLocations(legacyLocations)
+	return RegroupLocationsByDistance(legacyLocations, MIGRATION_ARC_MINUTE_IN_DEGREES)
+end
+
+-- Reads the stored locations, migrating (and re-saving) legacy plain-sextant
+-- files the first time they're encountered.
+local function LoadLocations(task, itemType)
+	local path = GetDataFilePath(task, itemType)
+	local locations = api.File:Read(path) or {}
+	if locations[1] ~= nil and locations[1].location == nil then
+		helpers.DevLog("Migrating legacy dawnsdrop data at " .. path)
+		locations = MigrateLegacyLocations(locations)
+		api.File:Write(path, locations)
+	end
+	return locations
+end
+
+-- One-off: re-cluster Mining/Iron Vein at 10 arc minutes to thin out the icons
+-- further than the 7' default gave. Guarded so it only ever runs once.
+local function RegroupIronVeinOnce()
+	if settingsModule.Get("DawnsIronVeinRegroupedAt10") == true then
+		return
+	end
+	local task, itemType = "Mining", "Iron Vein"
+	local locations = LoadLocations(task, itemType)
+	locations = RegroupLocationsByDistance(locations, 10 / 60)
+	api.File:Write(GetDataFilePath(task, itemType), locations)
+	settingsModule.Update("DawnsIronVeinRegroupedAt10", true)
+	helpers.DevLog("Re-grouped Mining/Iron Vein locations at 10 arc minutes")
 end
 
 local function RenderTypeLocations(task, itemType)
-	local locations = api.File:Read(GetDataFilePath(task, itemType)) or {}
-	local groupedLocations
-	if DawnsMapMode == "Add" or DawnsMapMode == "Remove" then
-		groupedLocations = {}
-		for _, sextant in pairs(locations) do
-			table.insert(groupedLocations, { sextant = sextant, grouped = false })
-		end
-	else
-		groupedLocations = GroupLocations(locations)
-	end
+	local locations = LoadLocations(task, itemType)
 	local iconsData = {}
-	for _, entry in ipairs(groupedLocations) do
+	for _, entry in ipairs(locations) do
 		local texture = "icons/marker1.png"
 		local iconSize = 5
-		if entry.grouped then
-			if entry.clusterSize >= 4 then
-				texture = "icons/marker3.png"
-				iconSize = 9
-			else
-				texture = "icons/marker2.png"
-				iconSize = 8
-			end
+		if entry.group == 2 then
+			texture = "icons/marker2.png"
+			iconSize = 8
+		elseif entry.group == 3 then
+			texture = "icons/marker3.png"
+			iconSize = 9
 		end
 		table.insert(iconsData, {
-			sextant = entry.sextant,
+			sextant = entry.location,
 			texture = texture,
 			sourceType = "Dawnsdrop " .. task .. " - " .. itemType,
             customIconSize = iconSize,
@@ -312,28 +292,16 @@ local function OnTypeSelected(itemType)
 	end
 end
 
-local function AddLocationToFile(task, itemType, sextant)
-	local path = GetDataFilePath(task, itemType)
-	local locations = api.File:Read(path) or {}
-	table.insert(locations, sextant)
-	api.File:Write(path, locations)
-	helpers.DevLog("Added dawnsdrop location to " .. path)
-	RenderTypeLocations(task, itemType)
-end
-
-local function RemoveClosestLocation(task, itemType, clickedSextant)
-	local path = GetDataFilePath(task, itemType)
-	local locations = api.File:Read(path) or {}
-	local mapInfo = maprendering.GetMapInfoForZoom(maprendering.GetCurrentZoomLevel())
+-- Finds the closest stored location to a click, within a 10px on-screen tolerance.
+local function FindClosestLocationIndex(locations, clickedSextant, mapInfo)
 	local clickedX, clickedY = maprendering.convertSextantToMapCoordinates(clickedSextant, mapInfo)
 	if clickedX == nil or clickedY == nil then
-		helpers.DevLog("Cannot remove dawnsdrop location, failed to convert clicked sextant to map coordinates")
-		return
+		return nil
 	end
 	local closestIndex = nil
 	local closestDistance = nil
-	for index, sextant in pairs(locations) do
-		local x, y = maprendering.convertSextantToMapCoordinates(sextant, mapInfo)
+	for index, entry in ipairs(locations) do
+		local x, y = maprendering.convertSextantToMapCoordinates(entry.location, mapInfo)
 		if x ~= nil and y ~= nil then
 			local distance = math.sqrt(((x - clickedX) ^ 2) + ((y - clickedY) ^ 2))
 			if closestDistance == nil or distance < closestDistance then
@@ -343,6 +311,36 @@ local function RemoveClosestLocation(task, itemType, clickedSextant)
 		end
 	end
 	if closestIndex == nil or closestDistance > 10 then
+		return nil
+	end
+	return closestIndex
+end
+
+-- Clicking an existing location upgrades its marker tier (1 -> 2 -> 3 -> 1);
+-- clicking empty space adds a new tier-1 location.
+local function AddOrUpgradeLocation(task, itemType, clickedSextant)
+	local path = GetDataFilePath(task, itemType)
+	local locations = LoadLocations(task, itemType)
+	local mapInfo = maprendering.GetMapInfoForZoom(maprendering.GetCurrentZoomLevel())
+	local closestIndex = FindClosestLocationIndex(locations, clickedSextant, mapInfo)
+	if closestIndex ~= nil then
+		local entry = locations[closestIndex]
+		entry.group = (entry.group >= 3) and 1 or (entry.group + 1)
+		helpers.DevLog("Upgraded dawnsdrop location to group " .. entry.group .. " at " .. path)
+	else
+		table.insert(locations, { location = clickedSextant, group = 1 })
+		helpers.DevLog("Added dawnsdrop location to " .. path)
+	end
+	api.File:Write(path, locations)
+	RenderTypeLocations(task, itemType)
+end
+
+local function RemoveClosestLocation(task, itemType, clickedSextant)
+	local path = GetDataFilePath(task, itemType)
+	local locations = LoadLocations(task, itemType)
+	local mapInfo = maprendering.GetMapInfoForZoom(maprendering.GetCurrentZoomLevel())
+	local closestIndex = FindClosestLocationIndex(locations, clickedSextant, mapInfo)
+	if closestIndex == nil then
 		helpers.DevLog("No dawnsdrop location within range to remove")
 		return
 	end
@@ -366,7 +364,7 @@ local function OnMapClicked(sextant)
 		return
 	end
 	if DawnsMapMode == "Add" then
-		AddLocationToFile(task, itemType, sextant)
+		AddOrUpgradeLocation(task, itemType, sextant)
 	elseif DawnsMapMode == "Remove" then
 		RemoveClosestLocation(task, itemType, sextant)
 	end
@@ -511,6 +509,7 @@ function dawnsdrop.OnLoad()
 	eventbus.WatchEvent(eventtopics.topics.render.dawnsdrop, dawnsdrop.RequestDawnsDropForRender, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.dawnsdrop.mapClick, OnMapClicked, "dawnsdrop")
 	maprendering.RegisterDawnsMapModeProvider(dawnsdrop.GetDawnsMapMode)
+	RegroupIronVeinOnce()
 end
 
 function dawnsdrop.OnUnload()
