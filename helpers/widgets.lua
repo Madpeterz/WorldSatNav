@@ -758,6 +758,7 @@ function widgets.CreateListTable(parent, offsetX, offsetY, Headers)
                 end
             end
             BackButton:SetHandler("OnClick", BackButton.OnClick)
+            BackButton:Enable(listTable._PageNumber > 0)
             table.insert(listTable.ButtonsInUse, BackButton)
             local PageIndicator = listTable.GetLabelFromPool()
             if PageIndicator == nil then
@@ -784,6 +785,7 @@ function widgets.CreateListTable(parent, offsetX, offsetY, Headers)
                 end
             end
             NextButton:SetHandler("OnClick", NextButton.OnClick)
+            NextButton:Enable(listTable._PageNumber < totalPages - 1)
             table.insert(listTable.ButtonsInUse, NextButton)
         end
         listTable.Show(true)
