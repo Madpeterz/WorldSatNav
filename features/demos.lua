@@ -361,8 +361,14 @@ local function DEMO_AUTOHIDE_PLUS()
 		helpers.DevLog("Demo add button not initialized yet")
 		return
 	end
-	if demoWindow == nil then 
+	if demoWindow == nil then
 		helpers.DevLog("Demo window not initialized yet")
+		return
+	end
+
+	if TableListControlForDemos ~= nil and TableListControlForDemos.IsVisible() then
+		helpers.DevLog("DEMO_AUTOHIDE_PLUS abort: demo list is open, keeping add button hidden to avoid blocking list buttons")
+		HideDemoAddonButton()
 		return
 	end
 
@@ -668,7 +674,28 @@ function demos.RedrawDemosList()
 	end
 	local rowData = {}
 	local rowKeys = {}
-	for sextantKey, demosDataEntry in pairs(demosData) do
+	local sortedDemos = {}
+	if settingsModule.Is("SortDemosByTime", true) then
+		for sextantKey, demosDataEntry in pairs(demosData) do
+			table.insert(sortedDemos, { key = sextantKey, entry = demosDataEntry })
+		end
+		table.sort(sortedDemos, function(left, right)
+			if left.entry.startat == nil then
+				return false
+			end
+			if right.entry.startat == nil then
+				return true
+			end
+			return left.entry.startat < right.entry.startat
+		end)
+	else
+		for sextantKey, demosDataEntry in pairs(demosData) do
+			table.insert(sortedDemos, { key = sextantKey, entry = demosDataEntry })
+		end
+	end
+	for _, sortedDemo in ipairs(sortedDemos) do
+		local sextantKey = sortedDemo.key
+		local demosDataEntry = sortedDemo.entry
 		local _, rowRegionname = regionmap.GetRegionForSextant(demosDataEntry.sextent)
 		local thisRow = {
 			"»",
@@ -694,8 +721,12 @@ function demos.MainUIReady(MainUIWindow)
 	DEMO_AUTOHIDE_PLUS()
 	createDemoWindowControls(demos.AutoFillClicked, demos.CreateDemoClicked)
 	demoControlsListMenubutton = helpers.createButton("DemoControlListShow",MainUIWindow,"List demos", MainUIWindow:GetWidth() - 85, MainUIWindow:GetHeight() - 35)
+	demoControlsListMenubutton:RemoveAllAnchors()
+	demoControlsListMenubutton:AddAnchor("BOTTOMRIGHT", MainUIWindow, -10, -10)
 	demoControlsListMenubutton:Show(false)
 	demoImportButton = helpers.createButton("DemoImportButton", MainUIWindow, "Import", 10, MainUIWindow:GetHeight() - 35)
+	demoImportButton:RemoveAllAnchors()
+	demoImportButton:AddAnchor("BOTTOMLEFT", MainUIWindow, 10, -10)
 	demoImportButton:Show(false)
 	demoImportButton:SetHandler("OnClick", demos.ImportShareCodeClicked)
 	demoControlsListMenubutton:SetHandler("OnClick", function(button)

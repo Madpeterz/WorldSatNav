@@ -18,6 +18,7 @@ function ToggleUIVisibleState(newState)
     helpers.ToggleCheckboxVisable("demosShowNextHour", newState)
     helpers.ToggleCheckboxVisable("demosEnableAddUI", newState)
     helpers.ToggleCheckboxVisable("demosEnableAlerts", newState)
+    helpers.ToggleCheckboxVisable("demosSortByTime", newState)
     helpers.ToggleCheckboxVisable("locationOutput", newState)
     helpers.ToggleCheckboxVisable("locationGuideRegion", newState)
     helpers.ToggleCheckboxVisable("locationOpenRealMap", newState)
@@ -41,6 +42,7 @@ local function CheckBoxUpdate(checkState, checkboxId)
     if checkboxId == "demosShowNextHour" then SettingName = "DrawDemosInNextHour"
     elseif checkboxId == "demosEnableAddUI" then SettingName = "showDemoCreatePlus"
     elseif checkboxId == "demosEnableAlerts" then SettingName = "EnableAlertDemo"
+    elseif checkboxId == "demosSortByTime" then SettingName = "SortDemosByTime"
     elseif checkboxId == "locationOutput" then SettingName = "EnableLocationOutput"
     elseif checkboxId == "locationGuideRegion" then SettingName = "UseTeleportHint"
     elseif checkboxId == "locationOpenRealMap" then SettingName = "OpenRealMap"
@@ -87,10 +89,11 @@ function configui.CreateConfigUI(MapUIWindow)
     function(checked)
         if checked == true then settingsModule.Update("trackingMode", "Compass") end
     end, nil, nil, "TrackingMode", nil, true)
-    -- Demos [Show only in the next hour, Enable UI For demo add, Enable alerts]
+    -- Demos [Show only in the next hour, Enable UI For demo add, Enable alerts, Sort demos by time]
     helpers.CreateSkinnedCheckbox("demosShowNextHour", MapUIWindow, "Show only in the next hour", 40, 105, settingsModule.Is("DrawDemosInNextHour", true), CheckBoxUpdate)
     helpers.CreateSkinnedCheckbox("demosEnableAddUI", MapUIWindow, "Enable + for add", 40, 135, settingsModule.Is("showDemoCreatePlus", true), CheckBoxUpdate)
     helpers.CreateSkinnedCheckbox("demosEnableAlerts", MapUIWindow, "Enable alerts", 40, 165, settingsModule.Is("EnableAlertDemo", true), CheckBoxUpdate)
+    helpers.CreateSkinnedCheckbox("demosSortByTime", MapUIWindow, "Sort demos by time", 40, 195, settingsModule.Is("SortDemosByTime", true), CheckBoxUpdate)
     local demosLabel = helpers.createLabel("demosLabel", MapUIWindow, "Demos:", 40, 85, 12)
     table.insert(configElements, demosLabel)
     -- Location [Output, Guide region name, Open real map] 

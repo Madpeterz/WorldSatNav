@@ -28,6 +28,7 @@ local defaultSettings = {
     LocationOutputFile = "location.dat",
     showDemoCreatePlus = false,
     EnableAlertDemo = true,
+    SortDemosByTime = true,
     OpenDemoAddButtonX = 300,
     OpenDemoAddButtonY = 300,
     DrawDemosInNextHour = true,
