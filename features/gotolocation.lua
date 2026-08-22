@@ -198,10 +198,6 @@ function gotoLocation.OpenExportSharecode(shareCode)
         helpers.DevLog("Goto window not initialized yet")
         return
     end
-    if currentMode == "export" and gotoLocationWindow:IsVisible() then
-        CLOSE_GOTO_WINDOW()
-        return
-    end
     currentMode = "export"
     importSubmitCallback = nil
     GOTO_TARGET_TEXT = shareCode or ""

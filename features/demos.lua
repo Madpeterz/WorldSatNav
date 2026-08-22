@@ -753,6 +753,7 @@ function demos.MainUIReady(MainUIWindow)
 			if TableListControlForDemos ~= nil then
 				TableListControlForDemos.Show(false)
 			end
+			eventbus.TriggerEvent(eventtopics.topics.UI.closeGoto)
 			eventbus.TriggerEvent(eventtopics.topics.UI.requestUIMode, "demos")
 		end
 	end)
