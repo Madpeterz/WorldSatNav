@@ -240,6 +240,11 @@ local function findOrCreateIcon(withTexturePath, customIconSize)
 end
 
 local configWindowVisible = false
+
+local devModeClickCount = 0
+local devModeClickResetTime = nil
+local DEV_MODE_CLICK_RESET_SECONDS = 1.5
+local DEV_MODE_CLICKS_REQUIRED = 9
 local currentMapMode = "maps"
 
 
@@ -1131,7 +1136,26 @@ local function CreateUiElements()
 			configWindowVisible = true
 		end
 	end, true, nil, "Settings", "item_enchant")
-	helpers.CreateImageButton("myPosButton", maprendering.MapUI, "ui/mypos.png", 483+25, 128+125, 25, 25,FocusOnMe,true,nil,"My location","item_enchant")
+	helpers.CreateImageButton("myPosButton", maprendering.MapUI, "ui/mypos.png", 483+25, 128+125, 25, 25, function()
+		local now = tonumber(helpers.GetCurrentTimestamp())
+		if devModeClickResetTime == nil or now == nil or (now - devModeClickResetTime) > DEV_MODE_CLICK_RESET_SECONDS then
+			devModeClickCount = 0
+		end
+		devModeClickResetTime = now
+		devModeClickCount = devModeClickCount + 1
+		local remainingClicks = DEV_MODE_CLICKS_REQUIRED - devModeClickCount
+		if devModeClickCount >= DEV_MODE_CLICKS_REQUIRED then
+			devModeClickCount = 0
+			constants.DEV_MODE = not constants.DEV_MODE
+			api.Chat:DispatchChatMessage(4, "[WorldSatNav] Dev mode " .. (constants.DEV_MODE and "enabled" or "disabled"))
+			eventbus.TriggerEvent(TOPICS.dev.modeChanged, constants.DEV_MODE)
+		elseif remainingClicks >= 1 and remainingClicks <= 3 then
+			local devModeAction = constants.DEV_MODE and "disable" or "enable"
+			local clickWord = remainingClicks == 1 and "click" or "clicks"
+			api.Chat:DispatchChatMessage(4, "[WorldSatNav] " .. remainingClicks .. " more " .. clickWord .. " to " .. devModeAction .. " dev mode")
+		end
+		FocusOnMe()
+	end,true,nil,"My location","item_enchant")
 	local openX, openY = tonumber(settingsModule.Get("OpenButtonX")), tonumber(settingsModule.Get("OpenButtonY"))
 	local screenWidth, screenHeight = api.Interface:GetScreenWidth(), api.Interface:GetScreenHeight()
 	if openX == nil or openY == nil then

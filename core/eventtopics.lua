@@ -5,6 +5,9 @@ local eventtopics = {
 			selectItemChanged = "dawnsdrop.selectItem",
 			mapClick = "dawnsdrop.mapClick",
 		},
+		dev = {
+			modeChanged = "dev.modeChanged",
+		},
 		tracking = {
 			start = "tracking.start",
 			stop = "tracking.stop",

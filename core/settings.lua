@@ -44,6 +44,11 @@ local defaultSettings = {
 
     -- timing
     DSToffset = true, -- offset in hours to apply during daylight saving time
+
+    -- Dawnsdrop
+    DawnsLastTask = "",
+    DawnsLastType = "",
+    DawnsdropGroupingArcMinutes = 7,
 }
 
 local function DevLog(message)

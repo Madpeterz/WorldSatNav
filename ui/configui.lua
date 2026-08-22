@@ -29,6 +29,9 @@ function ToggleUIVisibleState(newState)
     helpers.ToggleCheckboxVisable("eventsKeep15", newState)
     helpers.ToggleCheckboxVisable("eventsAlert", newState)
     helpers.ToggleCheckboxVisable("DSTOffset", newState)
+    helpers.ToggleCheckboxVisable("dawnsdropGrouping3", newState)
+    helpers.ToggleCheckboxVisable("dawnsdropGrouping7", newState)
+    helpers.ToggleCheckboxVisable("dawnsdropGrouping10", newState)
 end
 function configui.ShowConfigUI()
     ToggleUIVisibleState(true)
@@ -151,7 +154,36 @@ function configui.CreateConfigUI(MapUIWindow)
     table.insert(configElements, timeLabel)
     helpers.CreateSkinnedCheckbox("DSTOffset", MapUIWindow, "DST +1 hour", 40, 285*settingsModule.Get("uiDrawScale"), settingsModule.Is("DSToffset", 1), CheckBoxUpdate)
 
-    
+    -- Dawnsdrop grouping [3', 7', 10']
+    local settingPanelDiv3 = MapUIWindow:CreateImageDrawable("settingPanelDiv3", "background")
+    settingPanelDiv3:SetExtent(3*settingsModule.Get("uiDrawScale"),90*settingsModule.Get("uiDrawScale"))
+    settingPanelDiv3:AddAnchor("TOPLEFT", MapUIWindow, "TOPLEFT", 225*settingsModule.Get("uiDrawScale"), 265*settingsModule.Get("uiDrawScale")*settingsModule.Get("uiDrawScale"))
+    settingPanelDiv3:SetTexture("bg_quest")
+    settingPanelDiv3:SetColor(0,0,0,0.5)
+    settingPanelDiv3:Show(true)
+    if settingPanelDiv3.Lower then
+        settingPanelDiv3:Lower()
+    end
+    table.insert(configElements, settingPanelDiv3)
+
+    local dawnsdropGroupingLabel = helpers.createLabel("dawnsdropGroupingLabel", MapUIWindow, "Dawnsdrop grouping:", 250, 265*settingsModule.Get("uiDrawScale"), 12)
+    table.insert(configElements, dawnsdropGroupingLabel)
+    helpers.CreateSkinnedCheckbox("dawnsdropGrouping3", MapUIWindow, "3'", 250, 285*settingsModule.Get("uiDrawScale"), settingsModule.Is("DawnsdropGroupingArcMinutes", 3),
+    function(checked)
+        settingsModule.Update("DawnsdropGroupingArcMinutes", 3)
+    end, nil, nil, "DawnsdropGrouping", nil, true)
+    helpers.CreateSkinnedCheckbox("dawnsdropGrouping7", MapUIWindow, "7'", 300, 285*settingsModule.Get("uiDrawScale"), settingsModule.Is("DawnsdropGroupingArcMinutes", 7),
+    function(checked)
+        settingsModule.Update("DawnsdropGroupingArcMinutes", 7)
+    end, nil, nil, "DawnsdropGrouping", nil, true)
+    helpers.CreateSkinnedCheckbox("dawnsdropGrouping10", MapUIWindow, "10'", 350, 285*settingsModule.Get("uiDrawScale"), settingsModule.Is("DawnsdropGroupingArcMinutes", 10),
+    function(checked)
+        settingsModule.Update("DawnsdropGroupingArcMinutes", 10)
+    end, nil, nil, "DawnsdropGrouping", nil, true)
+
+    local dawnsdropGroupingWarning = helpers.createLabel("dawnsdropGroupingWarning", MapUIWindow, "Lower group values can create lag as it renders the location", 250, 305*settingsModule.Get("uiDrawScale"), 9, false, {1, 0.55, 0.2, 1}, 200, 45)
+    table.insert(configElements, dawnsdropGroupingWarning)
+
     configui.HideConfigUI()
 end
 

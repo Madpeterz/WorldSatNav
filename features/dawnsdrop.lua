@@ -148,14 +148,144 @@ local function GetDataFilePath(task, itemType)
 	return "WorldSatNav/data/Dawnsdrop/" .. task .. "/" .. itemType .. ".dat"
 end
 
+local GROUP_MIN_SIZE = 2 -- group only when more than 2 (i.e. 3+) locations cluster together
+
+local function GetArcMinuteInDegrees()
+	return settingsModule.Get("DawnsdropGroupingArcMinutes") / 60
+end
+
+local function SextantToDecimalDegrees(sextant)
+	local longValue = sextant.deg_long + (sextant.min_long / 60) + (sextant.sec_long / 3600)
+	if sextant.longitude == "W" then
+		longValue = -longValue
+	end
+	local latValue = sextant.deg_lat + (sextant.min_lat / 60) + (sextant.sec_lat / 3600)
+	if sextant.latitude == "N" then
+		latValue = -latValue
+	end
+	return longValue, latValue
+end
+
+local function DecimalDegreesToSextant(longValue, latValue)
+	local longDir = "E"
+	if longValue < 0 then
+		longDir = "W"
+		longValue = -longValue
+	end
+	local latDir = "S"
+	if latValue < 0 then
+		latDir = "N"
+		latValue = -latValue
+	end
+	local degLong = math.floor(longValue)
+	local minFloatLong = (longValue - degLong) * 60
+	local minLong = math.floor(minFloatLong)
+	local secLong = math.floor(((minFloatLong - minLong) * 60) + 0.5)
+	local degLat = math.floor(latValue)
+	local minFloatLat = (latValue - degLat) * 60
+	local minLat = math.floor(minFloatLat)
+	local secLat = math.floor(((minFloatLat - minLat) * 60) + 0.5)
+	return {
+		longitude = longDir,
+		latitude = latDir,
+		deg_long = degLong,
+		min_long = minLong,
+		sec_long = secLong,
+		deg_lat = degLat,
+		min_lat = minLat,
+		sec_lat = secLat,
+	}
+end
+
+-- Chain-clusters locations that sit within 1 arc minute of another member of the
+-- same cluster, then collapses any cluster bigger than GROUP_MIN_SIZE down to its center point.
+local function GroupLocations(locations)
+	local arcMinuteInDegrees = GetArcMinuteInDegrees()
+	local points = {}
+	for _, sextant in pairs(locations) do
+		local long, lat = SextantToDecimalDegrees(sextant)
+		table.insert(points, { long = long, lat = lat, sextant = sextant })
+	end
+
+	local assigned = {}
+	local clusters = {}
+	for i = 1, #points do
+		if not assigned[i] then
+			assigned[i] = true
+			local cluster = { i }
+			local queue = { i }
+			while #queue > 0 do
+				local currentIndex = table.remove(queue)
+				local current = points[currentIndex]
+				for j = 1, #points do
+					if not assigned[j] then
+						local other = points[j]
+						local dLong = current.long - other.long
+						local dLat = current.lat - other.lat
+						local distance = math.sqrt((dLong * dLong) + (dLat * dLat))
+						if distance <= arcMinuteInDegrees then
+							assigned[j] = true
+							table.insert(cluster, j)
+							table.insert(queue, j)
+						end
+					end
+				end
+			end
+			table.insert(clusters, cluster)
+		end
+	end
+
+	local result = {}
+	for _, cluster in ipairs(clusters) do
+		if #cluster > GROUP_MIN_SIZE then
+			local sumLong, sumLat = 0, 0
+			for _, index in ipairs(cluster) do
+				sumLong = sumLong + points[index].long
+				sumLat = sumLat + points[index].lat
+			end
+			table.insert(result, {
+				sextant = DecimalDegreesToSextant(sumLong / #cluster, sumLat / #cluster),
+				grouped = true,
+				clusterSize = #cluster,
+			})
+		else
+			for _, index in ipairs(cluster) do
+				table.insert(result, { sextant = points[index].sextant, grouped = false })
+			end
+		end
+	end
+	return result
+end
+
 local function RenderTypeLocations(task, itemType)
 	local locations = api.File:Read(GetDataFilePath(task, itemType)) or {}
+	local groupedLocations
+	if DawnsMapMode == "Add" or DawnsMapMode == "Remove" then
+		groupedLocations = {}
+		for _, sextant in pairs(locations) do
+			table.insert(groupedLocations, { sextant = sextant, grouped = false })
+		end
+	else
+		groupedLocations = GroupLocations(locations)
+	end
 	local iconsData = {}
-	for _, sextant in pairs(locations) do
+	for _, entry in ipairs(groupedLocations) do
+		local texture = "icons/marker1.png"
+		local iconSize = 5
+		if entry.grouped then
+			if entry.clusterSize >= 4 then
+				texture = "icons/marker3.png"
+				iconSize = 9
+			else
+				texture = "icons/marker2.png"
+				iconSize = 8
+			end
+		end
 		table.insert(iconsData, {
-			sextant = sextant,
-			texture = "icons/marker1.png",
+			sextant = entry.sextant,
+			texture = texture,
 			sourceType = "Dawnsdrop " .. task .. " - " .. itemType,
+            customIconSize = iconSize,
 		})
 	end
 	eventbus.TriggerEvent(eventtopics.topics.icons.BulkDrawIconsAndRedraw, iconsData)
@@ -165,6 +295,7 @@ local function OnTaskSelected(task)
 	if task == nil then
 		return
 	end
+	settingsModule.Update("DawnsLastTask", task)
 	eventbus.TriggerEvent(eventtopics.topics.dawnsdrop.selectTypeChanged, task)
 	PopulateTypeComboBox(task)
 end
@@ -174,6 +305,7 @@ local function OnTypeSelected(itemType)
 		return
 	end
 	local task = helpers.getComboBoxValue(dawnsdropWindow.taskCombo)
+	settingsModule.Update("DawnsLastType", itemType)
 	eventbus.TriggerEvent(eventtopics.topics.dawnsdrop.selectItemChanged, task, itemType)
 	if task ~= nil then
 		RenderTypeLocations(task, itemType)
@@ -285,9 +417,6 @@ local function CreateUI(parent, width, height)
 end
 
 local function CreateDevModeButtons(mapUI)
-	if constants.DEV_MODE ~= true then
-		return
-	end
 	local margin = 5
 	local spacing = 115
 	local y = 4
@@ -296,14 +425,21 @@ local function CreateDevModeButtons(mapUI)
 		local x = margin + ((index - 1) * spacing)
 		helpers.CreateSkinnedCheckbox(id, mapUI, label, x, y, label == DawnsMapMode, function()
 			SetDawnsMapMode(label)
+			if dawnsdropWindow ~= nil then
+				local task = helpers.getComboBoxValue(dawnsdropWindow.taskCombo)
+				local itemType = helpers.getComboBoxValue(dawnsdropWindow.typeCombo)
+				if task ~= nil and itemType ~= nil then
+					RenderTypeLocations(task, itemType)
+				end
+			end
 		end, nil, nil, "DawnsMapMode", nil, true)
 		helpers.ToggleCheckboxVisable(id, false)
 	end
 end
 
 local function ShowDevModeButtons(visible)
-	if constants.DEV_MODE ~= true then
-		return
+	if visible and constants.DEV_MODE ~= true then
+		visible = false
 	end
 	for _, id in ipairs(DEV_MODE_BUTTON_IDS) do
 		helpers.ToggleCheckboxVisable(id, visible)
@@ -327,8 +463,16 @@ function dawnsdrop.RequestDawnsDropForRender()
 		return
 	end
 	local taskNames = GetTaskNames()
-	if dawnsdropWindow.taskCombo ~= nil and taskNames[1] ~= nil then
-		helpers.SelectComboBoxByText(dawnsdropWindow.taskCombo, taskNames[1])
+	local savedTask = settingsModule.Get("DawnsLastTask")
+	if savedTask == nil or savedTask == "" or dawnsdropTypes[savedTask] == nil then
+		savedTask = taskNames[1]
+	end
+	if dawnsdropWindow.taskCombo ~= nil and savedTask ~= nil then
+		helpers.SelectComboBoxByText(dawnsdropWindow.taskCombo, savedTask, taskNames[1])
+	end
+	local savedType = settingsModule.Get("DawnsLastType")
+	if dawnsdropWindow.typeCombo ~= nil and savedType ~= nil and savedType ~= "" then
+		helpers.SelectComboBoxByText(dawnsdropWindow.typeCombo, savedType)
 	end
 	dawnsdropWindow:Show(true)
 	SetDawnsMapMode("Select")
@@ -351,9 +495,19 @@ function dawnsdrop.GetDawnsMapMode()
 	return DawnsMapMode
 end
 
+local function OnDevModeChanged(devModeEnabled)
+	if dawnsdropWindow == nil or not dawnsdropWindow:IsVisible() then
+		return
+	end
+	ShowDevModeButtons(devModeEnabled == true)
+end
+
 function dawnsdrop.OnLoad()
 	eventbus.WatchEvent(eventtopics.topics.UI.MainUILoaded, MainUIReady, "dawnsdrop")
+	eventbus.WatchEvent(eventtopics.topics.dev.modeChanged, OnDevModeChanged, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.render.modeChanged, dawnsdrop.HideUI, "dawnsdrop")
+	eventbus.WatchEvent(eventtopics.topics.UI.close, dawnsdrop.HideUI, "dawnsdrop")
+	eventbus.WatchEvent(eventtopics.topics.render.config, dawnsdrop.HideUI, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.render.dawnsdrop, dawnsdrop.RequestDawnsDropForRender, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.dawnsdrop.mapClick, OnMapClicked, "dawnsdrop")
 	maprendering.RegisterDawnsMapModeProvider(dawnsdrop.GetDawnsMapMode)
