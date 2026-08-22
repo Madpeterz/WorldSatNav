@@ -367,50 +367,23 @@ local function DEMO_AUTOHIDE_PLUS()
 	end
 
 	if TableListControlForDemos ~= nil and TableListControlForDemos.IsVisible() then
-		helpers.DevLog("DEMO_AUTOHIDE_PLUS abort: demo list is open, keeping add button hidden to avoid blocking list buttons")
 		HideDemoAddonButton()
 		return
 	end
 
-	if settingsModule.Get("showDemoCreatePlus") == false then
-		helpers.DevLog("DEMO_AUTOHIDE_PLUS abort: showDemoCreatePlus setting is false")
-		HideDemoAddonButton()
-		return
-	end
 	local targetName = api.Unit:UnitName("target")
-	if targetName == nil or targetName == "" then
-		helpers.DevLog("DEMO_AUTOHIDE_PLUS abort: no target selected")
-		HideDemoAddonButton()
-		return
-	end
-	local targetId = api.Unit:GetUnitId("target")
-	if targetId ~= nil then
-		helpers.DevLog("DEMO_AUTOHIDE_PLUS abort: target ID is not nil and houses do not support target ids, so this is likely a player or NPC target, not a house")
-		HideDemoAddonButton()
-		return
-	end
 	local UnitDistance = api.Unit:UnitDistance("target")
-	if UnitDistance == nil or UnitDistance > 10 then
-		HideDemoAddonButton()
-		return
-	end
-	local UnitInfo = api.Unit:UnitInfo("target")
-	if UnitInfo ~= nil then 
-		HideDemoAddonButton()
-		return
-	end
-	local UnitModifierInfo = api.Unit:UnitModifierInfo("target")
-	if UnitModifierInfo ~= nil then 
-		HideDemoAddonButton()
-		return
-	end
-	local UnitClass = api.Unit:UnitClass("target")
-	if UnitClass ~= nil then 
-		HideDemoAddonButton()
-		return
-	end
-	local TargetUnit = api.Unit:TargetUnit("target")
-	if TargetUnit ~= nil then 
+	-- A demo-add target must be an unclaimed target: an unnamed nameplate with no
+	-- unit id, class, or modifier info, and not itself targeting something.
+	local isIneligibleTarget = settingsModule.Get("showDemoCreatePlus") == false
+		or targetName == nil or targetName == ""
+		or api.Unit:GetUnitId("target") ~= nil
+		or UnitDistance == nil or UnitDistance > 10
+		or api.Unit:UnitInfo("target") ~= nil
+		or api.Unit:UnitModifierInfo("target") ~= nil
+		or api.Unit:UnitClass("target") ~= nil
+		or api.Unit:TargetUnit("target") ~= nil
+	if isIneligibleTarget then
 		HideDemoAddonButton()
 		return
 	end

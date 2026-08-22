@@ -11,6 +11,13 @@ local TOPICS = eventtopics.topics
 
 local GetCurrentPosition
 
+-- Set by dawnsdrop.lua so icon clicks know whether the active Dawns tool
+-- (Add/Remove) should consume the click instead of opening the tracker.
+local dawnsMapModeGetter = nil
+function maprendering.RegisterDawnsMapModeProvider(getterFn)
+	dawnsMapModeGetter = getterFn
+end
+
 local mapLevels = {
 	{ level = 0, texture = "zoom-0.png", width = 473, height = 507, zoomfactor = 0, zeroPointX=311,zeroPointY=122,XCordScale=14.59,YCordScale=14.40},
 	{ level = 1, texture = "zoom-1.png", width = 948, height = 1017, zoomfactor = 2, zeroPointX=622,zeroPointY=246,XCordScale=29.13,YCordScale=28.85},
@@ -207,6 +214,18 @@ local function findOrCreateIcon(withTexturePath, customIconSize)
 		if icon.indexId == 0 then
 			helpers.DevLog("Player icon clicked, ignoring")
 			return
+		end
+		if maprendering.GetCurrentMode() == "dawns" and dawnsMapModeGetter ~= nil then
+			local dawnsMapMode = dawnsMapModeGetter()
+			if dawnsMapMode == "Add" or dawnsMapMode == "Remove" then
+				if maprendering.MapUI ~= nil and maprendering.MapUI.OnClick ~= nil then
+					maprendering.MapUI:OnClick()
+				end
+				return
+			end
+			if dawnsMapMode == "Ignore" then
+				return
+			end
 		end
 		--maprendering.ToggleMap()
 		helpers.DevLog("Icon clicked, sourceType: "..tostring(icon.sourceType)..", indexId: "..tostring(icon.indexId))
@@ -572,6 +591,48 @@ function maprendering.convertSextantToMapCoordinates(sextant, renderSettings)
 	return x, y
 end
 
+function maprendering.convertMapCoordinatesToSextant(x, y, renderSettings)
+	if x == nil or y == nil or renderSettings == nil then
+		helpers.DevLog("Cannot convert map coordinates to sextant, x, y or renderSettings is nil")
+		return nil
+	end
+
+	local longValue = (x - renderSettings.zeroPointX) / renderSettings.XCordScale
+	local latValue = (y - renderSettings.zeroPointY) / renderSettings.YCordScale
+
+	local longDir = "E"
+	if longValue < 0 then
+		longDir = "W"
+		longValue = -longValue
+	end
+	local latDir = "S"
+	if latValue < 0 then
+		latDir = "N"
+		latValue = -latValue
+	end
+
+	local degLong = math.floor(longValue)
+	local minFloatLong = (longValue - degLong) * 60
+	local minLong = math.floor(minFloatLong)
+	local secLong = math.floor(((minFloatLong - minLong) * 60) + 0.5)
+
+	local degLat = math.floor(latValue)
+	local minFloatLat = (latValue - degLat) * 60
+	local minLat = math.floor(minFloatLat)
+	local secLat = math.floor(((minFloatLat - minLat) * 60) + 0.5)
+
+	return {
+		longitude = longDir,
+		latitude = latDir,
+		deg_long = degLong,
+		min_long = minLong,
+		sec_long = secLong,
+		deg_lat = degLat,
+		min_lat = minLat,
+		sec_lat = secLat,
+	}
+end
+
 
 function maprendering.TriggerMapRedraw()
 	if maprendering.MapUI == nil or maprendering.MapUI.mapImage == nil then
@@ -741,7 +802,7 @@ local function CreateWorldSatNavWindow()
 	end
 
 	local menuBackground = window:CreateImageDrawable("mapimagemenubackground", "background")
-	menuBackground:SetExtent(55*settingsModule.Get("uiDrawScale"),165*settingsModule.Get("uiDrawScale"))
+	menuBackground:SetExtent(55*settingsModule.Get("uiDrawScale"),190*settingsModule.Get("uiDrawScale"))
 	menuBackground:AddAnchor("TOPLEFT", window, "TOPLEFT", (WorldSatNavState.UIWindowWidth-5)*settingsModule.Get("uiDrawScale"), 125*settingsModule.Get("uiDrawScale"))
 	menuBackground:SetTexture(api.baseDir .. "/WorldSatNav/images/mainuibackground3.png")
 	menuBackground:Show(true)
@@ -772,6 +833,26 @@ local function CreateWorldSatNavWindow()
 		WorldSatNavState.userPanned = true
 		redrawMapIcons(maprendering.MapUI.mapImage)
 	end
+
+	-- A stationary click (no drag past the threshold) fires OnClick instead of
+	-- OnDragStart/OnDragStop, so map-placement clicks need their own handler.
+	function window:OnClick()
+		if currentMapMode ~= "dawns" then
+			return
+		end
+		local normX, normY = GetMouseFocusForZoom(mapImage, WorldSatNavState.zoomLevel)
+		if normX == nil or normY == nil then
+			return
+		end
+		local clickedMapInfo = maprendering.GetMapInfoForZoom(WorldSatNavState.zoomLevel)
+		local clickedX = normX * clickedMapInfo.width
+		local clickedY = normY * clickedMapInfo.height
+		local clickedSextant = maprendering.convertMapCoordinatesToSextant(clickedX, clickedY, clickedMapInfo)
+		if clickedSextant ~= nil then
+			eventbus.TriggerEvent(TOPICS.dawnsdrop.mapClick, clickedSextant)
+		end
+	end
+	window:SetHandler("OnClick", window.OnClick)
 
 	helpers.makeWindowDraggable(window, window.DragStart, window.DragStop, true, true, "MainWindowX", "MainWindowY",true,true)
 	function window:OnWheelUp(arg)
@@ -871,12 +952,22 @@ function maprendering.GetCurrentMode()
 	return currentMapMode
 end
 
+function maprendering.GetCurrentZoomLevel()
+	return WorldSatNavState.zoomLevel
+end
+
 
 local function UpdateMapMode(mode)
 	helpers.SetCheckBoxOverride("mapsModeButton", false)
 	helpers.SetCheckBoxOverride("shipsModeButton", false)
 	helpers.SetCheckBoxOverride("eventsModeButton", false)
 	helpers.SetCheckBoxOverride("demosModeButton", false)
+	helpers.SetCheckBoxOverride("dawnsModeButton", false)
+	helpers.SetCheckboxState("mapsModeButton", mode == "maps")
+	helpers.SetCheckboxState("shipsModeButton", mode == "ships")
+	helpers.SetCheckboxState("eventsModeButton", mode == "events")
+	helpers.SetCheckboxState("demosModeButton", mode == "demos")
+	helpers.SetCheckboxState("dawnsModeButton", mode == "dawns")
 	maprendering.ReloadUIItems()
 	maprendering.ClearUIState()
 	currentMapMode = mode
@@ -913,6 +1004,8 @@ local function UpdateMapMode(mode)
 		eventbus.TriggerEvent(TOPICS.render.events)
 	elseif mode == "demos" then
 		eventbus.TriggerEvent(TOPICS.render.demos)
+	elseif mode == "dawns" then
+		eventbus.TriggerEvent(TOPICS.render.dawnsdrop)
 	else
 		helpers.DevLog("Unknown map mode: " .. tostring(mode))
 	end
@@ -944,7 +1037,6 @@ function maprendering.OnUpdate(dt)
         local dx = mouseX - WorldSatNavState.lastMouseX
         local dy = mouseY - WorldSatNavState.lastMouseY
         if dx ~= 0 or dy ~= 0 then
-            
             local scrollFactor = mapInfo.zoomfactor + 1
             dx = dx * (scrollFactor/4)
             dy = dy * (scrollFactor/4)
@@ -1019,12 +1111,15 @@ local function CreateUiElements()
 	helpers.CreateSkinnedCheckbox("demosModeButton", maprendering.MapUI, "Demos", 470, 128+75, false, function()
 		UpdateMapMode("demos")
 	end, 62, 25, "DisplayMode", "artwork", true, "button_active.png", "button_ready.png", "mail",false)
+	helpers.CreateSkinnedCheckbox("dawnsModeButton", maprendering.MapUI, "Dawns", 470, 128+100, false, function()
+		UpdateMapMode("dawns")
+	end, 62, 25, "DisplayMode", "artwork", true, "button_active.png", "button_ready.png", "mail",false)
 
 	--helpers.createSkinnedButton("gotoLocation", maprendering.MapUI, "Goto ->", "controls/button_ready.png", 400, 450, 55, 25, nil, nil, nil, false)
-	helpers.CreateImageButton("gotoLocation", maprendering.MapUI, "ui/goto.png", 478, 128+130, 25, 25, function()
+	helpers.CreateImageButton("gotoLocation", maprendering.MapUI, "ui/goto.png", 478, 128+155, 25, 25, function()
 		eventbus.TriggerEvent(TOPICS.UI.toggleGoto)
 	end, true, nil, "Location input", "item_enchant")
-	helpers.CreateImageButton("settingsButton", maprendering.MapUI, "ui/settings.png", 478, 128+100, 25, 25, function()
+	helpers.CreateImageButton("settingsButton", maprendering.MapUI, "ui/settings.png", 478, 128+125, 25, 25, function()
 		if configWindowVisible then
 			maprendering.ReloadUIItems()
 			configWindowVisible = false
@@ -1036,7 +1131,7 @@ local function CreateUiElements()
 			configWindowVisible = true
 		end
 	end, true, nil, "Settings", "item_enchant")
-	helpers.CreateImageButton("myPosButton", maprendering.MapUI, "ui/mypos.png", 483+25, 128+100, 25, 25,FocusOnMe,true,nil,"My location","item_enchant")
+	helpers.CreateImageButton("myPosButton", maprendering.MapUI, "ui/mypos.png", 483+25, 128+125, 25, 25,FocusOnMe,true,nil,"My location","item_enchant")
 	local openX, openY = tonumber(settingsModule.Get("OpenButtonX")), tonumber(settingsModule.Get("OpenButtonY"))
 	local screenWidth, screenHeight = api.Interface:GetScreenWidth(), api.Interface:GetScreenHeight()
 	if openX == nil or openY == nil then
@@ -1127,7 +1222,7 @@ local function BulkDrawIcons(iconsData)
 end
 
 function maprendering.ForceSelectUIMode(mode)
-	if mode ~= "maps" and mode ~= "ships" and mode ~= "events" and mode ~= "demos" then
+	if mode ~= "maps" and mode ~= "ships" and mode ~= "events" and mode ~= "demos" and mode ~= "dawns" then
 		helpers.DevLog("Invalid map mode: " .. tostring(mode))
 		return
 	end
@@ -1139,10 +1234,12 @@ function maprendering.ForceSelectUIMode(mode)
 	helpers.SetCheckboxState("shipsModeButton", mode == "ships")
 	helpers.SetCheckboxState("eventsModeButton", mode == "events")
 	helpers.SetCheckboxState("demosModeButton", mode == "demos")
+	helpers.SetCheckboxState("dawnsModeButton", mode == "dawns")
 	helpers.SetCheckBoxOverride("mapsModeButton", true)
 	helpers.SetCheckBoxOverride("shipsModeButton", true)
 	helpers.SetCheckBoxOverride("eventsModeButton", true)
 	helpers.SetCheckBoxOverride("demosModeButton", true)
+	helpers.SetCheckBoxOverride("dawnsModeButton", true)
 	eventbus.TriggerEvent(TOPICS.UI.forcedUIModeReady, mode)
 end
 -- Addon initialization

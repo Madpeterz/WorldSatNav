@@ -3,6 +3,7 @@ local eventtopics = {
 		dawnsdrop = {
 			selectTypeChanged = "dawnsdrop.selectType",
 			selectItemChanged = "dawnsdrop.selectItem",
+			mapClick = "dawnsdrop.mapClick",
 		},
 		tracking = {
 			start = "tracking.start",
