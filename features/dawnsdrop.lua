@@ -116,6 +116,7 @@ local TYPE_LABEL = ">"
 local DawnsMapMode = "Select"
 local DEV_MODE_BUTTON_LABELS = { "Add", "Remove", "Select", "Ignore" }
 local DEV_MODE_BUTTON_IDS = { "dawnsAddModeButton", "dawnsRemoveModeButton", "dawnsSelectModeButton", "dawnsIgnoreModeButton" }
+local devModeButtonsBackground = nil
 
 local function SetDawnsMapMode(mode)
 	DawnsMapMode = mode
@@ -415,9 +416,19 @@ local function CreateUI(parent, width, height)
 end
 
 local function CreateDevModeButtons(mapUI)
+	local uiScale = settingsModule.Get("uiDrawScale")
 	local margin = 5
 	local spacing = 115
-	local y = 4
+	local y = -30
+	local rowWidth = margin + (#DEV_MODE_BUTTON_LABELS * spacing) + 20
+
+	devModeButtonsBackground = mapUI:CreateImageDrawable("dawnsdropDevModeBackground", "background")
+	devModeButtonsBackground:SetExtent(rowWidth * uiScale, 26 * uiScale)
+	devModeButtonsBackground:AddAnchor("TOPLEFT", mapUI, "TOPLEFT", (margin - 5) * uiScale, (y - 3) * uiScale)
+	devModeButtonsBackground:SetTexture(api.baseDir .. "/WorldSatNav/images/mainuibackground3.png")
+	devModeButtonsBackground:SetColor(1, 1, 1, 0.9)
+	devModeButtonsBackground:Show(false)
+
 	for index, label in ipairs(DEV_MODE_BUTTON_LABELS) do
 		local id = DEV_MODE_BUTTON_IDS[index]
 		local x = margin + ((index - 1) * spacing)
@@ -441,6 +452,9 @@ local function ShowDevModeButtons(visible)
 	end
 	for _, id in ipairs(DEV_MODE_BUTTON_IDS) do
 		helpers.ToggleCheckboxVisable(id, visible)
+	end
+	if devModeButtonsBackground ~= nil then
+		devModeButtonsBackground:Show(visible)
 	end
 end
 
