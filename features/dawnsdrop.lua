@@ -150,104 +150,9 @@ local function GetDataFilePath(task, itemType)
 	return "WorldSatNav/data/Dawnsdrop/" .. task .. "/" .. itemType .. ".dat"
 end
 
-local MIGRATION_ARC_MINUTE_IN_DEGREES = 7 / 60
-local MIGRATION_GROUP_MIN_SIZE = 2 -- a legacy cluster bigger than this (3+) earns an upgraded tier
-
-local function SextantToDecimalDegrees(sextant)
-	local longValue = sextant.deg_long + (sextant.min_long / 60) + (sextant.sec_long / 3600)
-	if sextant.longitude == "W" then
-		longValue = -longValue
-	end
-	local latValue = sextant.deg_lat + (sextant.min_lat / 60) + (sextant.sec_lat / 3600)
-	if sextant.latitude == "N" then
-		latValue = -latValue
-	end
-	return longValue, latValue
-end
-
--- Chain-clusters locations (accepts either bare legacy sextants or {location=..}
--- entries) within arcMinuteInDegrees of each other, then tags every real
--- location in a cluster with the tier its cluster size earns, instead of
--- collapsing the cluster down to a centroid.
-local function RegroupLocationsByDistance(entries, arcMinuteInDegrees)
-	local points = {}
-	for _, entry in pairs(entries) do
-		local sextant = entry.location or entry
-		local long, lat = SextantToDecimalDegrees(sextant)
-		table.insert(points, { long = long, lat = lat, sextant = sextant })
-	end
-
-	local assigned = {}
-	local clusters = {}
-	for i = 1, #points do
-		if not assigned[i] then
-			assigned[i] = true
-			local cluster = { i }
-			local queue = { i }
-			while #queue > 0 do
-				local currentIndex = table.remove(queue)
-				local current = points[currentIndex]
-				for j = 1, #points do
-					if not assigned[j] then
-						local other = points[j]
-						local dLong = current.long - other.long
-						local dLat = current.lat - other.lat
-						local distance = math.sqrt((dLong * dLong) + (dLat * dLat))
-						if distance <= arcMinuteInDegrees then
-							assigned[j] = true
-							table.insert(cluster, j)
-							table.insert(queue, j)
-						end
-					end
-				end
-			end
-			table.insert(clusters, cluster)
-		end
-	end
-
-	local regrouped = {}
-	for _, cluster in ipairs(clusters) do
-		local group = 1
-		if #cluster > MIGRATION_GROUP_MIN_SIZE then
-			group = (#cluster >= 4) and 3 or 2
-		end
-		for _, index in ipairs(cluster) do
-			table.insert(regrouped, { location = points[index].sextant, group = group })
-		end
-	end
-	return regrouped
-end
-
--- One-time conversion for files saved before locations carried a group tier.
-local function MigrateLegacyLocations(legacyLocations)
-	return RegroupLocationsByDistance(legacyLocations, MIGRATION_ARC_MINUTE_IN_DEGREES)
-end
-
--- Reads the stored locations, migrating (and re-saving) legacy plain-sextant
--- files the first time they're encountered.
 local function LoadLocations(task, itemType)
 	local path = GetDataFilePath(task, itemType)
-	local locations = api.File:Read(path) or {}
-	if locations[1] ~= nil and locations[1].location == nil then
-		helpers.DevLog("Migrating legacy dawnsdrop data at " .. path)
-		locations = MigrateLegacyLocations(locations)
-		api.File:Write(path, locations)
-	end
-	return locations
-end
-
--- One-off: re-cluster Mining/Iron Vein at 10 arc minutes to thin out the icons
--- further than the 7' default gave. Guarded so it only ever runs once.
-local function RegroupIronVeinOnce()
-	if settingsModule.Get("DawnsIronVeinRegroupedAt10") == true then
-		return
-	end
-	local task, itemType = "Mining", "Iron Vein"
-	local locations = LoadLocations(task, itemType)
-	locations = RegroupLocationsByDistance(locations, 10 / 60)
-	api.File:Write(GetDataFilePath(task, itemType), locations)
-	settingsModule.Update("DawnsIronVeinRegroupedAt10", true)
-	helpers.DevLog("Re-grouped Mining/Iron Vein locations at 10 arc minutes")
+	return api.File:Read(path) or {}
 end
 
 local function RenderTypeLocations(task, itemType)
@@ -536,7 +441,6 @@ function dawnsdrop.OnLoad()
 	eventbus.WatchEvent(eventtopics.topics.render.dawnsdrop, dawnsdrop.RequestDawnsDropForRender, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.dawnsdrop.mapClick, OnMapClicked, "dawnsdrop")
 	maprendering.RegisterDawnsMapModeProvider(dawnsdrop.GetDawnsMapMode)
-	RegroupIronVeinOnce()
 end
 
 function dawnsdrop.OnUnload()

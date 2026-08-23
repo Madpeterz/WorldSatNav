@@ -48,7 +48,6 @@ local defaultSettings = {
     -- Dawnsdrop
     DawnsLastTask = "",
     DawnsLastType = "",
-    DawnsIronVeinRegroupedAt10 = false,
 }
 
 local function DevLog(message)
