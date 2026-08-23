@@ -22,14 +22,19 @@ local mapLevels = {
 	{ level = 0, texture = "zoom-0.png", width = 473, height = 507, zoomfactor = 0, zeroPointX=311,zeroPointY=122,XCordScale=14.59,YCordScale=14.40},
 	{ level = 1, texture = "zoom-1.png", width = 948, height = 1017, zoomfactor = 2, zeroPointX=622,zeroPointY=246,XCordScale=29.13,YCordScale=28.85},
 	{ level = 2, texture = "zoom-2.png", width = 1897, height = 2023, zoomfactor = 4, zeroPointX=1246,zeroPointY=494,XCordScale=58.27,YCordScale=57.65},
-	{ level = 3, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 8, zeroPointX=2515,zeroPointY=989,XCordScale=116.35,YCordScale=115.21}
+	{ level = 3, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 8, zeroPointX=2515,zeroPointY=989,XCordScale=116.35,YCordScale=115.21},
+	-- Reuses the level-3 texture (same real pixel dimensions and coordinate
+	-- mapping, so width/height/zeroPoint/XYCordScale are unchanged) but crops
+	-- a tighter region of it: (zoomfactor+1) is 1.5x level 3's, giving a 1.5x
+	-- more zoomed-in view of the same art instead of a higher-res image.
+	{ level = 4, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 12.5, zeroPointX=2515,zeroPointY=989,XCordScale=116.35,YCordScale=115.21}
 }
 
 -- Module state
 local WorldSatNavState = {
 	zoom = 0,
 	minZoom = 0,
-	maxZoom = 3,
+	maxZoom = 4,
 	mapWindowWidth = 473,
 	mapWindowHeight = 509,
 	UIWindowWidth = 484,
