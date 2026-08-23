@@ -114,8 +114,8 @@ local dawnsdropWindow = nil
 local TYPE_LABEL = ">"
 
 local DawnsMapMode = "Select"
-local DEV_MODE_BUTTON_LABELS = { "Add", "Remove", "Select", "Ignore" }
-local DEV_MODE_BUTTON_IDS = { "dawnsAddModeButton", "dawnsRemoveModeButton", "dawnsSelectModeButton", "dawnsIgnoreModeButton" }
+local DEV_MODE_BUTTON_LABELS = { "Add", "Select", "Ignore" }
+local DEV_MODE_BUTTON_IDS = { "dawnsAddModeButton", "dawnsSelectModeButton", "dawnsIgnoreModeButton" }
 local devModeButtonsBackground = nil
 local markHereButton = nil
 
@@ -318,8 +318,9 @@ local function FindClosestLocationIndex(locations, clickedSextant, mapInfo)
 	return closestIndex
 end
 
--- Clicking an existing location upgrades its marker tier (1 -> 2 -> 3 -> 1);
--- clicking empty space adds a new tier-1 location.
+-- Clicking an existing location upgrades its marker tier (1 -> 2 -> 3), and
+-- clicking it again at tier 3 removes it entirely (next click there starts
+-- fresh at tier 1). Clicking empty space adds a new tier-1 location.
 local function AddOrUpgradeLocation(task, itemType, clickedSextant)
 	local path = GetDataFilePath(task, itemType)
 	local locations = LoadLocations(task, itemType)
@@ -327,8 +328,13 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant)
 	local closestIndex = FindClosestLocationIndex(locations, clickedSextant, mapInfo)
 	if closestIndex ~= nil then
 		local entry = locations[closestIndex]
-		entry.group = (entry.group >= 3) and 1 or (entry.group + 1)
-		helpers.DevLog("Upgraded dawnsdrop location to group " .. entry.group .. " at " .. path)
+		if entry.group >= 3 then
+			table.remove(locations, closestIndex)
+			helpers.DevLog("Removed dawnsdrop location at " .. path)
+		else
+			entry.group = entry.group + 1
+			helpers.DevLog("Upgraded dawnsdrop location to group " .. entry.group .. " at " .. path)
+		end
 	else
 		table.insert(locations, { location = clickedSextant, group = 1 })
 		helpers.DevLog("Added dawnsdrop location to " .. path)
@@ -337,26 +343,11 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant)
 	RenderTypeLocations(task, itemType)
 end
 
-local function RemoveClosestLocation(task, itemType, clickedSextant)
-	local path = GetDataFilePath(task, itemType)
-	local locations = LoadLocations(task, itemType)
-	local mapInfo = maprendering.GetMapInfoForZoom(maprendering.GetCurrentZoomLevel())
-	local closestIndex = FindClosestLocationIndex(locations, clickedSextant, mapInfo)
-	if closestIndex == nil then
-		helpers.DevLog("No dawnsdrop location within range to remove")
-		return
-	end
-	table.remove(locations, closestIndex)
-	api.File:Write(path, locations)
-	helpers.DevLog("Removed dawnsdrop location from " .. path)
-	RenderTypeLocations(task, itemType)
-end
-
 local function OnMapClicked(sextant)
 	if sextant == nil or dawnsdropWindow == nil then
 		return
 	end
-	if DawnsMapMode ~= "Add" and DawnsMapMode ~= "Remove" then
+	if DawnsMapMode ~= "Add" then
 		return
 	end
 	local task = helpers.getComboBoxValue(dawnsdropWindow.taskCombo)
@@ -365,11 +356,7 @@ local function OnMapClicked(sextant)
 		helpers.DevLog("Cannot modify dawnsdrop location, task or type is not selected")
 		return
 	end
-	if DawnsMapMode == "Add" then
-		AddOrUpgradeLocation(task, itemType, sextant)
-	elseif DawnsMapMode == "Remove" then
-		RemoveClosestLocation(task, itemType, sextant)
-	end
+	AddOrUpgradeLocation(task, itemType, sextant)
 end
 
 local function CreateUI(parent, width, height)
@@ -503,10 +490,13 @@ function dawnsdrop.RequestDawnsDropForRender()
 	if savedTask == nil or savedTask == "" or dawnsdropTypes[savedTask] == nil then
 		savedTask = taskNames[1]
 	end
+	-- Cache the saved type before selecting the task: selecting a task
+	-- repopulates and auto-selects the type combo, which overwrites
+	-- DawnsLastType with that default before we get a chance to restore it.
+	local savedType = settingsModule.Get("DawnsLastType")
 	if dawnsdropWindow.taskCombo ~= nil and savedTask ~= nil then
 		helpers.SelectComboBoxByText(dawnsdropWindow.taskCombo, savedTask, taskNames[1])
 	end
-	local savedType = settingsModule.Get("DawnsLastType")
 	if dawnsdropWindow.typeCombo ~= nil and savedType ~= nil and savedType ~= "" then
 		helpers.SelectComboBoxByText(dawnsdropWindow.typeCombo, savedType)
 	end
@@ -514,7 +504,6 @@ function dawnsdrop.RequestDawnsDropForRender()
 	SetDawnsMapMode("Select")
 	helpers.SetCheckboxState("dawnsSelectModeButton", true)
 	helpers.SetCheckboxState("dawnsAddModeButton", false)
-	helpers.SetCheckboxState("dawnsRemoveModeButton", false)
 	helpers.SetCheckboxState("dawnsIgnoreModeButton", false)
 	ShowDevModeButtons(true)
 end

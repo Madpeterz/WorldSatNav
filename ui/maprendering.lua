@@ -12,7 +12,7 @@ local TOPICS = eventtopics.topics
 local GetCurrentPosition
 
 -- Set by dawnsdrop.lua so icon clicks know whether the active Dawns tool
--- (Add/Remove) should consume the click instead of opening the tracker.
+-- (Add) should consume the click instead of opening the tracker.
 local dawnsMapModeGetter = nil
 function maprendering.RegisterDawnsMapModeProvider(getterFn)
 	dawnsMapModeGetter = getterFn
@@ -217,7 +217,7 @@ local function findOrCreateIcon(withTexturePath, customIconSize)
 		end
 		if maprendering.GetCurrentMode() == "dawns" and dawnsMapModeGetter ~= nil then
 			local dawnsMapMode = dawnsMapModeGetter()
-			if dawnsMapMode == "Add" or dawnsMapMode == "Remove" then
+			if dawnsMapMode == "Add" then
 				if maprendering.MapUI ~= nil and maprendering.MapUI.OnClick ~= nil then
 					maprendering.MapUI:OnClick()
 				end

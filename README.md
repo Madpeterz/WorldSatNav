@@ -87,4 +87,4 @@ Based on code / assets / ideas from:
   to a display
 
 **michaelqtz/aac-addon-dawnsdrop_map**
-- PNG location maps for items underr Dawnsdrop
+- PNG location maps for items under Dawnsdrop
