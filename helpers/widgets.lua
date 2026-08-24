@@ -522,7 +522,7 @@ function widgets.createTextInput(id, parent, offsetX, offsetY, width, height, pl
     editBox:RemoveAllAnchors()
     editBox:AddAnchor("TOPLEFT", parent, scaledOffsetX, scaledInputOffsetY)
     editBox:SetMaxTextLength(maxLength)
-    editBox:SetCursorColor({0, 0, 0, 1})
+    editBox:SetCursorColor(0, 0, 0, 1)
     if editBox.SetInset ~= nil then
         editBox:SetInset(textLeftInset, 0, 0, 0)
     end
