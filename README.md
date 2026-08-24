@@ -1,8 +1,6 @@
 # WorldSatNav
 
-Version 1.2.0
-
-World map navigation addon — treasure map tracking, sea box routing, world events, live location tracking, and shared location output for external tools.
+Even now im still lost
 
 ## Using the map / addon
 
