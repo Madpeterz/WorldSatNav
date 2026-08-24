@@ -4,87 +4,119 @@ Version 1.2.0
 
 World map navigation addon — treasure map tracking, sea box routing, world events, live location tracking, and shared location output for external tools.
 
+## Using the map / addon
+
+### Zoom
+
+to zoom in CTRL + mouse wheel up/down to zoom in and out, 3 real zoom levels plus a virtual 4th level 
+
+### Pan
+
+when not in the full map view click and drag on the map to pan around the world, you can also click on the my location button
+from the right hand side menu to goto your current location (looks like a crosshair)
+
+### Move it around
+
+all on screen elements can be moved by holding left shift and holding left mouse button 
+
+
 ## Features
 
 ### Treasure Maps
 
-- Click and hold a map from your bag to show only its location on the map
-- Click on a X from the map view to start navigation to it
-- When your bag is open, shows you what region each map is in
+Placing Treasure maps with coordinates into your back and opening the main UI will label the region they are in
+you can then click on the X marker to be guided to its location.
 
 ### Lost Sea Boxes
 
-- Click on a ship to start going to each node
-- Shows a list of known good locations for sea boxes provided by Zelight
-- After switching to show ships, use the next button to go to the next location
+Time to get recover what has been lost, selecting "Ships" from the UI right side menu will give you
+a map of ship locations and you can normally find 1 to 3 lost treasure boxs, float them back up
+to recover them with recovery pouches
 
-> **Note:** Traveling salesman problem — the sea is split into multiple vertical groups and route
-> planning is used to find the shortest paths within each group. While not perfect, it works well.
+- Shows a list of known good locations for sea boxes provided by Zelight
 
 ### Events
 
-- If "Enable world events" is checked, world events like Crates, Delphinad Ghostships, Perdita,
-  Leviathan, Sunfish, Warehouse Raids and Warehouse Unlocks show on the map
-- Events remain on the map for 5 mins; clicking one navigates to it
+if enabled world events like 
+- swarm of Sunfish
+- Perdita Statue Torso
+- Leviathan carcass
+- Warehouse (unlock and raid)
+- mysterious crates being found
+- Delphinad Ghostships being destroyed
 
-### Tracking a Location (Guide mode)
+will show on the map and give an alert allow you to attempt to get a cut of the profit
 
-Player rotation is not exposed by the API, so a makeshift direction indicator based on multiple
-location reads is used instead. Start moving to get a direction indicator.
+### Demos
 
-### Shared Data
+Looking to get some land, then recording land that is due to be destroyed will allow you to get
+alerts before it happens and view a table of upcoming demos.
+you can also use the share code system to import/export with friends and guild members
 
-If `LocationOutput` is enabled, your sextant coordinates are written to file, letting tools
-outside the game read your current location — e.g. an external heatmap/wandering tracker.
 
-### Zoom
+### Dawnsdrop 
 
-Hold CTRL and click on the map to zoom in.
+Had too much PVP today? then switching to dawnsdrop and selecting a type and target 
+will allow to find items from the world like Iron Veins, Trees for logging,
+Plants for food and potions, and points of interest for Exploration.
 
-### Move It
+- Location data based on the aac-addon-dawnsdrop_map
 
-Hold shift and drag any element to reposition it. Positions are saved.
+for locations with lots of that type you will get a bigger X
 
-## Project Structure
+starting with a smaller yellow, then green and finally blue
 
-```
-main.lua        addon entry point (OnLoad/OnUnload, update loop)
-helpers.lua     facade re-exporting helpers/* as a single `helpers` table
 
-core/           foundational modules: api stub, constants, settings, coordinates, eventbus, eventtopics
-ui/             rendering/config windows: maprendering, regionmap, configui, alertwindow
-features/       gameplay logic: tracking, gps, ships, treasuremaps, gotolocation, worldevents, demos
-helpers/        UI widget builders, date/time utils, geo/distance math, building name lookups, misc utils
-```
+### Customize your settings
 
-Modules `require` each other via `WorldSatNav/<folder>/<module>` paths (e.g.
-`require("WorldSatNav/core/settings")`), except `helpers`, which stays at the addon root so its
-public API (`helpers.X`) doesn't need updating across call sites when its internals change.
+clicking the cog icon will give you the setting menu
+
+- Tracking mode
+  - Guide (will attempt to point the direction of travel you need to move in) up is forwards
+  - Compass (will show you the direction to move in based on fixed world direction) up is north
+
+- Demos
+  - Show only in the next hour (Demos happening more than 60 mins from now will not be rendered on the map)
+  - Enable + for add (the UI when targeting buildings to add a demo will be enabled if checked)
+  - Enable alerts (a red alert window will show 5 mins before the demo window starts)
+  - Sort demos by type (when viewing the list of demos the ones happening sooner will be at the top)
+
+- Events
+  - Track events (world events will be captured for X mins and rendered on the map)
+  - Enable alerts for events (a red alert window will open when a world event happens so you can track it)
+  - Keep events for [X] mins (How long to keep world events before removing them from the map)
+
+- Location
+  - Output location to file (your sextant coordinates are written to file, letting tools outside the game read your current location — e.g. an external heatmap/wandering tracker.)
+  - Open real map on click (When starting tracking by clicking on an icon or clicking the track button from alert the in game map opens and marks the location with a pointer if enabled)
+  - Tracking use region name (When you are too far away from a location it will tell you to teleport to a region otherwise it will just give distance)
+  - Show target info in chat (When you start tracking it gives the details of where you're going in chat for just you)
+
+- Time
+  - DST +1 hour forces the clock used to add 60 mins
+
 
 ## Credits
 
 Based on code / assets / ideas from:
 
-**AA-Clissic/Map**
-- World map for the game version this addon targets
-
-**IvanLeviathan/Navigate**
-- First version of the tracking code; also the plugin used to create stage 1 of data
-- Used for node-based route finding
-
-**michaelqtz/aac-addon-dawnsdrop_map**
-- Used to get up to speed with the addon library for rendering windows
-
-**FungusMungus/Treasure Track**
-- Didn't do what I had hoped, which led to a new version of my old OCR app — liked the map
-  labeling but not having to type it all in yourself
-
-**michaelqtz/aac-addon-tier_2_sextant**
-- Showed how to hook up world events so they could be included in this addon
-
 **Madpeterz/mapocr_aa**
 - A C# app used in retail that read map text via OCR, allowing multiple tracked maps to be added
   to a display
 
+**AA-Clissic/Map**
+- World map for the game version this addon targets
+
+**IvanLeviathan/Navigate**
+- First version of the tracking code
+
 **michaelqtz/aac-addon-dawnsdrop_map**
-- PNG location maps for items under Dawnsdrop
+- Used to get up to speed with the addon library for rendering windows
+- PNG location maps for items under Dawnsdrop that have been converted into locations
+
+**michaelqtz/aac-addon-tier_2_sextant**
+- Showed how to hook up world events so they could be included in this addon
+
+**FungusMungus/Treasure Track**
+- Didn't do what I had hoped, which led to a new version of my old OCR app — liked the map
+  labeling but not having to type it all in yourself
