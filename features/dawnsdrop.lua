@@ -341,6 +341,7 @@ local function CreateDevModeButtons(mapUI)
 
 	-- createButton doesn't scale its offsets internally (unlike CreateSkinnedCheckbox), so pre-scale here to line up with the row above.
 	markHereButton = helpers.createButton("dawnsMarkHereButton", mapUI, "Mark here", markHereX * uiScale, y * uiScale)
+	markHereButton:Raise()
 	markHereButton:SetHandler("OnClick", function()
 		local task = dawnsdropWindow ~= nil and helpers.getComboBoxValue(dawnsdropWindow.taskCombo) or nil
 		local itemType = dawnsdropWindow ~= nil and helpers.getComboBoxValue(dawnsdropWindow.typeCombo) or nil

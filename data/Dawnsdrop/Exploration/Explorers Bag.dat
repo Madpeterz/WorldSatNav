@@ -1873,19 +1873,6 @@
     },
     {
         location = {
-            deg_long = 11,
-            deg_lat = 13,
-            sec_long = 46,
-            min_lat = 35,
-            longitude = "W",
-            latitude = "S",
-            sec_lat = 55,
-            min_long = 6,
-        },
-        group = 1,
-    },
-    {
-        location = {
             deg_long = 9,
             deg_lat = 17,
             longitude = "W",
@@ -3259,6 +3246,19 @@
             latitude = "S",
             sec_lat = 32,
             min_long = 3,
+        },
+        group = 1,
+    },
+    {
+        location = {
+            deg_long = 11,
+            deg_lat = 13,
+            sec_long = 6,
+            min_lat = 36,
+            longitude = "W",
+            latitude = "S",
+            sec_lat = 7,
+            min_long = 7,
         },
         group = 1,
     },
