@@ -22,7 +22,9 @@ function ToggleUIVisibleState(newState)
     helpers.ToggleCheckboxVisable("locationOutput", newState)
     helpers.ToggleCheckboxVisable("locationGuideRegion", newState)
     helpers.ToggleCheckboxVisable("locationOpenRealMap", newState)
+    helpers.ToggleCheckboxVisable("locationEnableShowOnTracking", newState)
     helpers.ToggleCheckboxVisable("locationShowTargetInfoInChat", newState)
+    helpers.ToggleCheckboxVisable("locationAutoGotoNextMap", newState)
     helpers.ToggleCheckboxVisable("eventsTrack", newState)
     helpers.ToggleCheckboxVisable("eventsKeep5", newState)
     helpers.ToggleCheckboxVisable("eventsKeep10", newState)
@@ -46,7 +48,9 @@ local function CheckBoxUpdate(checkState, checkboxId)
     elseif checkboxId == "locationOutput" then SettingName = "EnableLocationOutput"
     elseif checkboxId == "locationGuideRegion" then SettingName = "UseTeleportHint"
     elseif checkboxId == "locationOpenRealMap" then SettingName = "OpenRealMap"
+    elseif checkboxId == "locationEnableShowOnTracking" then SettingName = "EnableShowOnTracking"
     elseif checkboxId == "locationShowTargetInfoInChat" then SettingName = "ShowTargetInfoInChat"
+    elseif checkboxId == "locationAutoGotoNextMap" then SettingName = "AutoGotoNextMap"
     elseif checkboxId == "eventsTrack" then SettingName = "EnableWorldEvents"
     elseif checkboxId == "eventsAlert" then SettingName = "EnableEventAlerts"
     elseif checkboxId == "DSTOffset" then SettingName = "DSToffset"
@@ -100,7 +104,9 @@ function configui.CreateConfigUI(MapUIWindow)
     helpers.CreateSkinnedCheckbox("locationOutput", MapUIWindow, "Output location to file", 40, 245, settingsModule.Is("EnableLocationOutput", true), CheckBoxUpdate)
     helpers.CreateSkinnedCheckbox("locationGuideRegion", MapUIWindow, "Tracking use region name", 250, 245, settingsModule.Is("UseTeleportHint", true), CheckBoxUpdate)
     helpers.CreateSkinnedCheckbox("locationOpenRealMap", MapUIWindow, "Open real map on click", 40, 275, settingsModule.Is("OpenRealMap", true), CheckBoxUpdate)
+    helpers.CreateSkinnedCheckbox("locationEnableShowOnTracking", MapUIWindow, "Enable show on tracking", 40, 305, settingsModule.Is("EnableShowOnTracking", true), CheckBoxUpdate)
     helpers.CreateSkinnedCheckbox("locationShowTargetInfoInChat", MapUIWindow, "Show target info in chat", 250, 275, settingsModule.Is("ShowTargetInfoInChat", true), CheckBoxUpdate)
+    helpers.CreateSkinnedCheckbox("locationAutoGotoNextMap", MapUIWindow, "Auto goto next map", 250, 305, settingsModule.Is("AutoGotoNextMap", true), CheckBoxUpdate)
     local locationLabel = helpers.createLabel("locationLabel", MapUIWindow, "Location:", 40, 220, 12)
     table.insert(configElements, locationLabel)
     -- Events [Track events, Keep Events for [5min, 10min, 15mins], alert for events]
@@ -138,7 +144,7 @@ function configui.CreateConfigUI(MapUIWindow)
     table.insert(configElements, settingPanelDiv)
     local settingPanelDiv2 = MapUIWindow:CreateImageDrawable("settingPanelDiv", "background")
 	settingPanelDiv2:SetExtent(400*settingsModule.Get("uiDrawScale"),3*settingsModule.Get("uiDrawScale"))
-	settingPanelDiv2:AddAnchor("TOPLEFT", MapUIWindow, "TOPLEFT", 40*settingsModule.Get("uiDrawScale"), 325*settingsModule.Get("uiDrawScale"))
+	settingPanelDiv2:AddAnchor("TOPLEFT", MapUIWindow, "TOPLEFT", 40*settingsModule.Get("uiDrawScale"), 355*settingsModule.Get("uiDrawScale"))
 	settingPanelDiv2:SetTexture("bg_quest")
     settingPanelDiv2:SetColor(0,0,0,0.5)
 	settingPanelDiv2:Show(true)
@@ -147,9 +153,9 @@ function configui.CreateConfigUI(MapUIWindow)
 	end
     table.insert(configElements, settingPanelDiv2)
 
-    local timeLabel = helpers.createLabel("timeLabel", MapUIWindow, "Time:", 40, 265*settingsModule.Get("uiDrawScale"), 12)
+    local timeLabel = helpers.createLabel("timeLabel", MapUIWindow, "Time:", 40, 295*settingsModule.Get("uiDrawScale"), 12)
     table.insert(configElements, timeLabel)
-    helpers.CreateSkinnedCheckbox("DSTOffset", MapUIWindow, "DST +1 hour", 40, 285*settingsModule.Get("uiDrawScale"), settingsModule.Is("DSToffset", 1), CheckBoxUpdate)
+    helpers.CreateSkinnedCheckbox("DSTOffset", MapUIWindow, "DST +1 hour", 40, 315*settingsModule.Get("uiDrawScale"), settingsModule.Is("DSToffset", 1), CheckBoxUpdate)
 
     configui.HideConfigUI()
 end

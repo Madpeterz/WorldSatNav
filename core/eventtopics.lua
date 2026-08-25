@@ -25,6 +25,10 @@ local eventtopics = {
 			hide = "alert.hide",
 			track = "alert.track",
 		},
+		bag = {
+			itemRemoved = "bag.itemRemoved",
+			updated = "bag.updated",
+		},
 		UI = {
 			open = "ui.open",
 			close = "ui.close",

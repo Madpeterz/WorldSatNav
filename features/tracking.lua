@@ -15,6 +15,9 @@ local lastArrowDir = ""
 
 local targetSextant = nil
 local targetName = nil
+local targetXMap = nil
+local targetYMap = nil
+local currentTrackedType = nil
 
 local currentNextButtonCallback = nil
 local EVENT_NEXT_MAP = eventtopics.topics.tracking.nextMap
@@ -41,6 +44,19 @@ local function NormalizeSextant(sextant)
 	return normalized
 end
 
+local function SextantFromInfo(info)
+	local sextant = {}
+	sextant.longitude = info.longitudeDir
+	sextant.latitude = info.latitudeDir
+	sextant.deg_long = info.longitudeDeg
+	sextant.min_long = info.longitudeMin
+	sextant.sec_long = info.longitudeSec
+	sextant.deg_lat =   info.latitudeDeg
+	sextant.min_lat =  info.latitudeMin
+	sextant.sec_lat = info.latitudeSec
+	return sextant
+end
+
 local function InvokeNextMapCallback()
 	helpers.DevLog("Publishing next map event")
 	eventbus.TriggerEvent(EVENT_NEXT_MAP)
@@ -62,7 +78,7 @@ local function CreateNextButton()
 		return
 	end
 	TRACK_WINDOW.nextBtn = TRACK_WINDOW:CreateChildWidget("button", "nextBtn", 0, true)
-	TRACK_WINDOW.nextBtn:AddAnchor("TOPLEFT", TRACK_WINDOW, 0, TRACK_WINDOW:GetHeight()+5)
+	TRACK_WINDOW.nextBtn:AddAnchor("TOPLEFT", TRACK_WINDOW, 15*settings.Get("uiDrawScale"), TRACK_WINDOW:GetHeight()+5)
 	TRACK_WINDOW.nextBtn:SetExtent(90*settings.Get("uiDrawScale"), 30*settings.Get("uiDrawScale"))
 	api.Interface:ApplyButtonSkin(TRACK_WINDOW.nextBtn, BUTTON_BASIC.DEFAULT)
 	TRACK_WINDOW.nextBtn:Show(true)
@@ -150,7 +166,14 @@ local function updateTrackingData()
 	if TRACK_WINDOW == nil or not TRACK_WINDOW:IsVisible() or targetSextant == nil then
 		return
 	end
-	
+
+	if TRACK_WINDOW.showBtn ~= nil then
+		local showEnabled = settings.Get("EnableShowOnTracking")
+		if TRACK_WINDOW.showBtn:IsVisible() ~= showEnabled then
+			TRACK_WINDOW.showBtn:Show(showEnabled)
+		end
+	end
+
 	local _, regionNameTarget = regionmap.GetRegionForSextant(targetSextant)
 	local _, regionNamePlayer = regionmap.GetRegionForSextant(api.Map:GetPlayerSextants())
 
@@ -243,6 +266,25 @@ local function createTrackUI(onCloseCallback)
 
 	TRACK_WINDOW.closeBtn:SetHandler("OnClick", TRACK_WINDOW.OnClose)
 
+	-- Show button (opens the real map at the tracked location)
+	TRACK_WINDOW.showBtn = TRACK_WINDOW:CreateChildWidget("button", "showBtn", 0, true)
+	TRACK_WINDOW.showBtn:AddAnchor("TOPLEFT", TRACK_WINDOW, 190*settings.Get("uiDrawScale"), TRACK_WINDOW:GetHeight()+5)
+	TRACK_WINDOW.showBtn:SetExtent(90*settings.Get("uiDrawScale"), 30*settings.Get("uiDrawScale"))
+	api.Interface:ApplyButtonSkin(TRACK_WINDOW.showBtn, BUTTON_BASIC.DEFAULT)
+	TRACK_WINDOW.showBtn:SetText("Show")
+	TRACK_WINDOW.showBtn:Show(true)
+	TRACK_WINDOW.showBtn:Enable(true)
+	TRACK_WINDOW.showBtn:Raise()
+	function TRACK_WINDOW.showBtn:OnClick()
+		if targetXMap == nil or targetYMap == nil then
+			helpers.DevLog("Show button clicked but no tracked target coordinates available")
+			return
+		end
+		helpers.DevLog("Show button clicked, opening real map at tracked location")
+		api.Map:ToggleMapWithPortal(constants.game.portalZoneId, targetXMap, targetYMap, constants.game.portalZoomLevel)
+	end
+	TRACK_WINDOW.showBtn:SetHandler("OnClick", TRACK_WINDOW.showBtn.OnClick)
+
 	-- Labels
 	local trackingLabel = helpers.createLabel('trackingLabel', TRACK_WINDOW, 'Tracking:', 0, 0)
 	if trackingLabel == nil then
@@ -288,6 +330,7 @@ function tracking.setTargetGoto(sextant, name, ShowMapMarker, displayName)
 	end
 	targetSextant = normalizedSextant
 	targetName = displayName or name
+	currentTrackedType = name
 	ShowMapMarker = ShowMapMarker or false
 	if TRACK_WINDOW == nil then
 		helpers.DevLog("tracking window not initialized, cannot set target")
@@ -308,6 +351,8 @@ function tracking.setTargetGoto(sextant, name, ShowMapMarker, displayName)
 		normalizedSextant.min_lat or 0,
 		normalizedSextant.sec_lat or 0
 	)
+	targetXMap = xMap
+	targetYMap = yMap
 	if (ShowMapMarker == true) and (settings.Get("OpenRealMap") == true) then
 		helpers.DevLog("Showing map marker for target sextant at coordinates: " .. xMap .. ", " .. yMap)
 		api.Map:ToggleMapWithPortal(constants.game.portalZoneId, xMap, yMap, constants.game.portalZoomLevel)
@@ -331,6 +376,45 @@ function tracking.setTargetGoto(sextant, name, ShowMapMarker, displayName)
 	updateTrackingData()
 end
 
+function tracking.forceInventoryUpdateForTracking(args)
+	helpers.DevLog("Forcing inventory update for tracking")
+	if currentTrackedType ~= "Map" then
+		return
+	end
+	local removedItemName = nil
+	if type(args) == "table" then
+		removedItemName = args.name
+	elseif type(args) == "string" then
+		removedItemName = args
+	end
+	if removedItemName ~= nil and removedItemName ~= constants.game.treasureMapItemName then
+		helpers.DevLog("Removed item was not a treasure map (" .. tostring(removedItemName) .. "), ignoring")
+		return
+	end
+	if targetSextant == nil then
+		return
+	end
+	local targetKey = helpers.SextantKey(targetSextant)
+	local mapCount = 0
+	local mapGrade = nil
+	helpers.iterateTreasureMaps(function(_, _, info)
+		local mapSextant = SextantFromInfo(info)
+		if helpers.SextantKey(mapSextant) == targetKey then
+			mapCount = mapCount + 1
+			mapGrade = info.grade
+		end
+	end)
+	helpers.DevLog("Maps remaining at tracked location: " .. mapCount)
+	local newDisplayName = "Map (" .. mapCount .. ")"
+	if mapGrade ~= nil then
+		newDisplayName = newDisplayName .. " [" .. mapGrade .. "]"
+	end
+	targetName = newDisplayName
+	updateTrackingData()
+	if mapCount == 0 and settings.Get("AutoGotoNextMap") == true then
+		InvokeNextMapCallback()
+	end
+end
 
 local lastUpdate = 0
 function tracking.onUpdate(dt)
@@ -348,6 +432,8 @@ function tracking.OnLoad()
     TRACK_WINDOW = createTrackUI(nil)
 	eventbus.WatchEvent(eventtopics.topics.tracking.custom, tracking.setTargetGoto, "tracking")
 	eventbus.WatchEvent(eventtopics.topics.tracking.start, tracking.setTargetGoto, "tracking")
+	eventbus.WatchEvent(eventtopics.topics.bag.itemRemoved, tracking.forceInventoryUpdateForTracking, "tracking")
+	eventbus.WatchEvent(eventtopics.topics.bag.updated, tracking.forceInventoryUpdateForTracking, "tracking")
 end
 
 function tracking.OnUnload()

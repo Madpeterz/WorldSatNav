@@ -13,6 +13,7 @@ local dawnsdrop = require("WorldSatNav/features/dawnsdrop")
 local helpers = require("WorldSatNav/helpers")
 local configui = require("WorldSatNav/ui/configui")
 local eventbus = require("WorldSatNav/core/eventbus")
+local eventtopics = require("WorldSatNav/core/eventtopics")
 
 local WorldSatNav = {
 	name = "WorldSatNav",
@@ -55,6 +56,10 @@ local function OnLoad()
 	function WorldSatNav:EventListener(event, ...)
 		if(event == "WORLD_MESSAGE") then
 			events.WorldMessageProcessor(event, ...)
+		elseif(event == "REMOVED_ITEM") then
+			eventbus.TriggerEvent(eventtopics.topics.bag.itemRemoved, ...)
+		elseif(event == "BAG_UPDATE") then
+			eventbus.TriggerEvent(eventtopics.topics.bag.updated, ...)
 		end
 	end
 	if maprendering.MapUI == nil then
@@ -63,6 +68,8 @@ local function OnLoad()
 	end
 	maprendering.MapUI:SetHandler("OnEvent", WorldSatNav.EventListener)
     maprendering.MapUI:RegisterEvent("WORLD_MESSAGE")
+    maprendering.MapUI:RegisterEvent("REMOVED_ITEM")
+    maprendering.MapUI:RegisterEvent("BAG_UPDATE")
 end
 
 -- Addon cleanup

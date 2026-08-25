@@ -31,7 +31,7 @@ local function SextantFromInfo(info)
 	return sextant
 end
 
-local function renderMapFromStorage(sextant, count)
+local function renderMapFromStorage(sextant, count, grade)
 	local textureCount = count
 	if textureCount > 3 then
 		textureCount = 3
@@ -42,6 +42,7 @@ local function renderMapFromStorage(sextant, count)
 		sourceType = "Map",
 		customIconSize = 7,
 		count = count,
+		grade = grade,
 	}
 end
 
@@ -54,12 +55,12 @@ function treasuremaps.RequestMapsForRender()
         if grouppedMaps[key] ~= nil then
             grouppedMaps[key].count = grouppedMaps[key].count + 1
 		else
-            grouppedMaps[key] = {count = 1, sextant = mapSextant}
+            grouppedMaps[key] = {count = 1, sextant = mapSextant, grade = info.grade}
 		end
 	end)
 	local bulkRenderData = {}
 	for _, mapInfo in pairs(grouppedMaps) do
-		table.insert(bulkRenderData, renderMapFromStorage(mapInfo.sextant, mapInfo.count))
+		table.insert(bulkRenderData, renderMapFromStorage(mapInfo.sextant, mapInfo.count, mapInfo.grade))
 	end
 	eventbus.TriggerEvent(eventtopics.topics.icons.BulkDrawIconsAndRedraw, bulkRenderData)
 	lastSentSignature = treasuremaps.GetRenderCode()
@@ -91,6 +92,7 @@ function treasuremaps.GetNextMap()
 		return
 	end
 	local mapregioncounters = {}
+	local gradeBySextantKey = {}
 	helpers.iterateTreasureMaps(function(_, _, info)
 		local sextant = SextantFromInfo(info)
 		local _, mapRegionName = regionmap.GetRegionForSextant(sextant)
@@ -99,6 +101,7 @@ function treasuremaps.GetNextMap()
 			helpers.DevLog("Found map in inventory with region: " .. tostring(mapRegionName).." "..SextantKey)
 		end
 		mapregioncounters[mapRegionName] = (mapregioncounters[mapRegionName] or 0) + 1
+		gradeBySextantKey[SextantKey] = info.grade
 		if mapRegionName == playerRegionName then
 			table.insert(regionMaps, sextant)
 		end
@@ -122,8 +125,13 @@ function treasuremaps.GetNextMap()
 			mapsAtLocation = mapsAtLocation + 1
 		end
 	end
+	local targetDisplayName = "Map (" .. mapsAtLocation .. ")"
+	local targetGrade = gradeBySextantKey[targetKey]
+	if targetGrade ~= nil then
+		targetDisplayName = targetDisplayName .. " [" .. targetGrade .. "]"
+	end
 	eventbus.TriggerEvent(eventtopics.topics.tracking.custom, regionMaps[1], "Map", true,
-		"Map (" .. mapsAtLocation .. ")")
+		targetDisplayName)
 end
 
 local function GetBagIconForIndex(slotIndex, SlotBtn)
@@ -273,6 +281,12 @@ local function FlashModeTick()
 	end
 end
 
+function treasuremaps.handleBagUpdate()
+	lastBagSignature = nil
+	lastBagSignatureAge = 0
+	helpers.DevLog("Expired bag signature due to update")
+end
+
 function treasuremaps.onUpdate(dt)
     bagPollElapsed = bagPollElapsed + dt
     if bagPollElapsed < BAG_POLL_INTERVAL then
@@ -298,10 +312,10 @@ function treasuremaps.onUpdate(dt)
     end
     if currentSignature == lastBagSignature then
 		lastBagSignatureAge = lastBagSignatureAge + BAG_POLL_INTERVAL
-		if lastBagSignatureAge > (BAG_POLL_INTERVAL * 250) then
+		if lastBagSignatureAge > (BAG_POLL_INTERVAL * 500) then
 			lastBagSignature = nil
 			lastBagSignatureAge = 0
-			helpers.DevLog("Expired bag signature")
+			helpers.DevLog("Expired bag signature due to age")
 		end
         return
     end
@@ -324,6 +338,7 @@ function treasuremaps.OnLoad()
 		MainUIWindow = MainUI
 	end, "treasuremaps")
 	eventbus.WatchEvent(eventtopics.topics.tracking.nextMap, treasuremaps.GetNextMap, "treasuremaps")
+	eventbus.WatchEvent(eventtopics.topics.bag.updated, treasuremaps.handleBagUpdate, "treasuremaps")
 end
 
 function treasuremaps.OnUnload()
