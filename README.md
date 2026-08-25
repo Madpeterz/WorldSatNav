@@ -58,11 +58,11 @@ Had too much PVP today? then switching to dawnsdrop and selecting a type and tar
 will allow to find items from the world like Iron Veins, Trees for logging,
 Plants for food and potions, and points of interest for Exploration.
 
-- Location data based on the aac-addon-dawnsdrop_map
-
 for locations with lots of that type you will get a bigger X
 
 starting with a smaller yellow, then green and finally blue
+
+The location data is an guide not a 100% sextant track, but will get you close
 
 
 ### Customize your settings
