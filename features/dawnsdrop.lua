@@ -171,7 +171,7 @@ local function RenderTypeLocations(task, itemType)
 		table.insert(iconsData, {
 			sextant = entry.location,
 			texture = texture,
-			sourceType = "Dawnsdrop " .. task .. " - " .. itemType,
+			sourceType = itemType,
             customIconSize = iconSize,
 		})
 	end
