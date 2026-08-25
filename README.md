@@ -31,7 +31,7 @@ Time to get recover what has been lost, selecting "Ships" from the UI right side
 a map of ship locations and you can normally find 1 to 3 lost treasure boxs, float them back up
 to recover them with recovery pouches
 
-- Shows a list of known good locations for sea boxes provided by Zelight
+- Shows a list of known good locations for sea boxes provided by Zelight and Kargor
 
 ### Events
 
