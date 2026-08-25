@@ -376,22 +376,16 @@ function tracking.setTargetGoto(sextant, name, ShowMapMarker, displayName)
 	updateTrackingData()
 end
 
-function tracking.forceInventoryUpdateForTracking(args)
-	helpers.DevLog("Forcing inventory update for tracking")
+function tracking.forceInventoryUpdateForTracking(...)
 	if currentTrackedType ~= "Map" then
 		return
 	end
-	local removedItemName = nil
-	if type(args) == "table" then
-		removedItemName = args.name
-	elseif type(args) == "string" then
-		removedItemName = args
-	end
-	if removedItemName ~= nil and removedItemName ~= constants.game.treasureMapItemName then
-		helpers.DevLog("Removed item was not a treasure map (" .. tostring(removedItemName) .. "), ignoring")
+	if targetSextant == nil then
 		return
 	end
-	if targetSextant == nil then
+	local removedItemName, arg2, arg3, arg4, arg5 = ...
+	if removedItemName ~= nil and removedItemName ~= constants.game.treasureMapItemName then
+		helpers.DevLog("Removed item was not a treasure map (" .. tostring(removedItemName) .. "), ignoring")
 		return
 	end
 	local targetKey = helpers.SextantKey(targetSextant)
@@ -432,8 +426,7 @@ function tracking.OnLoad()
     TRACK_WINDOW = createTrackUI(nil)
 	eventbus.WatchEvent(eventtopics.topics.tracking.custom, tracking.setTargetGoto, "tracking")
 	eventbus.WatchEvent(eventtopics.topics.tracking.start, tracking.setTargetGoto, "tracking")
-	eventbus.WatchEvent(eventtopics.topics.bag.itemRemoved, tracking.forceInventoryUpdateForTracking, "tracking")
-	eventbus.WatchEvent(eventtopics.topics.bag.updated, tracking.forceInventoryUpdateForTracking, "tracking")
+	eventbus.WatchEvent(eventtopics.topics.bag.itemRemoved, tracking.forceInventoryUpdateForTrackingRemove, "tracking")
 end
 
 function tracking.OnUnload()

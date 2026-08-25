@@ -14,6 +14,9 @@ local bagIsVisible = false
 local bagPollElapsed = 0
 local lastBagSignature = nil
 local lastBagSignatureAge = 0
+local bagUpdatePending = false
+local bagUpdateDebounceElapsed = 0
+local BAG_UPDATE_DEBOUNCE = 300
 
 local BagIconStorage = {}
 local MainUIWindow = nil
@@ -174,6 +177,12 @@ local function showBagOverlay()
 			regionGroup = "Haranya"
 		elseif code == "Sea" then
 			regionGroup = name
+			if regionGroup ~= nil then
+				local spaceIndex = string.find(regionGroup, " ")
+				if spaceIndex ~= nil then
+					regionGroup = string.sub(regionGroup, 1, spaceIndex - 1)
+				end
+			end
 		else
 			regionGroup = "?"
 		end
@@ -282,12 +291,23 @@ local function FlashModeTick()
 end
 
 function treasuremaps.handleBagUpdate()
-	lastBagSignature = nil
-	lastBagSignatureAge = 0
-	helpers.DevLog("Expired bag signature due to update")
+	-- debounced: each event resets the timer, so a burst of BAG_UPDATE events
+	-- only triggers a signature refresh once activity settles for BAG_UPDATE_DEBOUNCE ms
+	bagUpdatePending = true
+	bagUpdateDebounceElapsed = 0
 end
 
 function treasuremaps.onUpdate(dt)
+	if bagUpdatePending then
+		bagUpdateDebounceElapsed = bagUpdateDebounceElapsed + dt
+		if bagUpdateDebounceElapsed >= BAG_UPDATE_DEBOUNCE then
+			bagUpdatePending = false
+			bagUpdateDebounceElapsed = 0
+			lastBagSignature = nil
+			lastBagSignatureAge = 0
+			helpers.DevLog("Expired bag signature due to update (debounced)")
+		end
+	end
     bagPollElapsed = bagPollElapsed + dt
     if bagPollElapsed < BAG_POLL_INTERVAL then
         return
@@ -339,6 +359,7 @@ function treasuremaps.OnLoad()
 	end, "treasuremaps")
 	eventbus.WatchEvent(eventtopics.topics.tracking.nextMap, treasuremaps.GetNextMap, "treasuremaps")
 	eventbus.WatchEvent(eventtopics.topics.bag.updated, treasuremaps.handleBagUpdate, "treasuremaps")
+	eventbus.WatchEvent(eventtopics.topics.bag.itemRemoved, treasuremaps.handleBagUpdate, "treasuremaps")
 end
 
 function treasuremaps.OnUnload()
