@@ -298,16 +298,6 @@ function treasuremaps.handleBagUpdate()
 end
 
 function treasuremaps.onUpdate(dt)
-	if bagUpdatePending then
-		bagUpdateDebounceElapsed = bagUpdateDebounceElapsed + dt
-		if bagUpdateDebounceElapsed >= BAG_UPDATE_DEBOUNCE then
-			bagUpdatePending = false
-			bagUpdateDebounceElapsed = 0
-			lastBagSignature = nil
-			lastBagSignatureAge = 0
-			helpers.DevLog("Expired bag signature due to update (debounced)")
-		end
-	end
     bagPollElapsed = bagPollElapsed + dt
     if bagPollElapsed < BAG_POLL_INTERVAL then
         return
@@ -318,6 +308,16 @@ function treasuremaps.onUpdate(dt)
 		hideBagOverlay()
 		lastBagSignature = nil
 		return
+	end
+	if bagUpdatePending then
+		bagUpdateDebounceElapsed = bagUpdateDebounceElapsed + dt
+		if bagUpdateDebounceElapsed >= BAG_UPDATE_DEBOUNCE then
+			bagUpdatePending = false
+			bagUpdateDebounceElapsed = 0
+			lastBagSignature = nil
+			lastBagSignatureAge = 0
+			helpers.DevLog("Expired bag signature due to update (debounced)")
+		end
 	end
 	if maprendering.MapUI:IsVisible() == false then
 		hideBagOverlay()

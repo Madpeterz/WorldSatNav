@@ -167,15 +167,31 @@ local function updateTrackingData()
 		return
 	end
 
+	local _, regionNameTarget = regionmap.GetRegionForSextant(targetSextant)
+	local _, regionNamePlayer = regionmap.GetRegionForSextant(api.Map:GetPlayerSextants())
+
 	if TRACK_WINDOW.showBtn ~= nil then
 		local showEnabled = settings.Get("EnableShowOnTracking")
+		if showEnabled and currentTrackedType == "Map" then
+			local hasMapsRemaining = false
+			helpers.iterateTreasureMaps(function(_, _, info)
+				if hasMapsRemaining then
+					return
+				end
+				local mapSextant = SextantFromInfo(info)
+				local _, mapRegionName = regionmap.GetRegionForSextant(mapSextant)
+				if mapRegionName == regionNameTarget then
+					hasMapsRemaining = true
+				end
+			end)
+			if not hasMapsRemaining then
+				showEnabled = false
+			end
+		end
 		if TRACK_WINDOW.showBtn:IsVisible() ~= showEnabled then
 			TRACK_WINDOW.showBtn:Show(showEnabled)
 		end
 	end
-
-	local _, regionNameTarget = regionmap.GetRegionForSextant(targetSextant)
-	local _, regionNamePlayer = regionmap.GetRegionForSextant(api.Map:GetPlayerSextants())
 
 	local useTeleport = false
 	if regionNamePlayer ~= "?" and regionNameTarget ~= "?" then
@@ -383,8 +399,16 @@ function tracking.forceInventoryUpdateForTracking(...)
 	if targetSextant == nil then
 		return
 	end
-	local removedItemName, arg2, arg3, arg4, arg5 = ...
-	if removedItemName ~= nil and removedItemName ~= constants.game.treasureMapItemName then
+	local removedItemName, arg2, actionType, arg4, arg5 = ...
+	if type(removedItemName) ~= "string" then
+		return
+	end
+	if actionType ~= "destroy" then
+		helpers.DevLog("not a removal ignoring, ignoring")
+		return
+	end
+	local trimmedItemName = string.sub(removedItemName, 2)
+	if string.match(trimmedItemName, "^i24581") == nil then
 		helpers.DevLog("Removed item was not a treasure map (" .. tostring(removedItemName) .. "), ignoring")
 		return
 	end
@@ -426,7 +450,7 @@ function tracking.OnLoad()
     TRACK_WINDOW = createTrackUI(nil)
 	eventbus.WatchEvent(eventtopics.topics.tracking.custom, tracking.setTargetGoto, "tracking")
 	eventbus.WatchEvent(eventtopics.topics.tracking.start, tracking.setTargetGoto, "tracking")
-	eventbus.WatchEvent(eventtopics.topics.bag.itemRemoved, tracking.forceInventoryUpdateForTrackingRemove, "tracking")
+	eventbus.WatchEvent(eventtopics.topics.bag.itemRemoved, tracking.forceInventoryUpdateForTracking, "tracking")
 end
 
 function tracking.OnUnload()
