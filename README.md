@@ -91,6 +91,10 @@ clicking the cog icon will give you the setting menu
   - Show target info in chat (When you start tracking it gives the details of where you're going in chat for just you)
   - Enable Show on trackking (when enabled a show button will appear when tracking to allow you to reopen the map)
   - Auto goto next map (after you pickup a map at that location if there are none left then it will auto click next)
+  - Next map behavior (which map "Next" / auto goto picks)
+    - [A] Nearest (in region) (default - only maps in the region you are standing in, closest first)
+    - [B] Nearest (closest map in your bag, ignoring region)
+    - [C] A then B (prefer maps in your current region, fall back to the closest anywhere once none are left in region)
 
 - Time
   - DST +1 hour forces the clock used to add 60 mins

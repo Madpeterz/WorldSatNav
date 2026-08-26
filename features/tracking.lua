@@ -403,8 +403,11 @@ function tracking.forceInventoryUpdateForTracking(...)
 	if type(removedItemName) ~= "string" then
 		return
 	end
+	if type(actionType) ~= "string" then
+		return
+	end
 	if actionType ~= "destroy" then
-		helpers.DevLog("not a removal ignoring, ignoring")
+		helpers.DevLog("not a removal ignoring")
 		return
 	end
 	local trimmedItemName = string.sub(removedItemName, 2)

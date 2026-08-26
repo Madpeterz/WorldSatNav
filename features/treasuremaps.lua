@@ -7,6 +7,7 @@ local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
 local maprendering = require("WorldSatNav/ui/maprendering")
 local tracking = require("WorldSatNav/features/tracking")
+local settings = require("WorldSatNav/core/settings")
 local treasuremaps = {}
 
 local BAG_POLL_INTERVAL = 100
@@ -78,22 +79,20 @@ function treasuremaps.GetNextMap()
         tracking.AssignNextButton(nil, nil)
         return
     end
+	-- Next map behavior: 1 = nearest in my region only, 2 = nearest anywhere, 3 = my region first then anywhere
+	local nextMapMode = settings.Get("NextMapMode") or 1
 	local playerRegionCode, playerRegionName = regionmap.GetRegionForSextant(curCoords)
-    if playerRegionCode == nil or playerRegionName == nil then
-		helpers.DevLog("GetNextMap abort: player region unknown")
-        api.Log:Info("WorldSatNav: Cannot determine player region")
-        tracking.AssignNextButton(nil, nil)
-        return
-    end
-
-    -- Collect all inventory maps that belong to the player's region
-    local regionMaps = {}
-    if playerRegionCode == "?" then
-		helpers.DevLog("GetNextMap abort: player region code '?' ")
-		api.Log:Info("WorldSatNav: Player region unknown, showing all maps in inventory, open map and select next map")
+	local haveRegion = playerRegionCode ~= nil and playerRegionName ~= nil and playerRegionCode ~= "?"
+	if nextMapMode == 1 and not haveRegion then
+		helpers.DevLog("GetNextMap abort: player region unknown (mode 1)")
+		api.Log:Info("WorldSatNav: Cannot determine player region, open map and select next map")
 		tracking.AssignNextButton(nil, nil)
 		return
 	end
+
+	-- Collect inventory maps, split into those in the player's region and all of them
+	local regionMaps = {}
+	local allMaps = {}
 	local mapregioncounters = {}
 	local gradeBySextantKey = {}
 	helpers.iterateTreasureMaps(function(_, _, info)
@@ -105,25 +104,37 @@ function treasuremaps.GetNextMap()
 		end
 		mapregioncounters[mapRegionName] = (mapregioncounters[mapRegionName] or 0) + 1
 		gradeBySextantKey[SextantKey] = info.grade
-		if mapRegionName == playerRegionName then
+		table.insert(allMaps, sextant)
+		if haveRegion and mapRegionName == playerRegionName then
 			table.insert(regionMaps, sextant)
 		end
 	end)
 	helpers.DebugDumpValue("Treasure maps found in inventory by region", mapregioncounters)
-    if #regionMaps == 0 then
-		helpers.DevLog("GetNextMap abort: no maps found in region " .. tostring(playerRegionName))
-        api.Log:Info("WorldSatNav: No maps found in player region " .. playerRegionName .." open map and select next")
-        tracking.AssignNextButton(nil, nil)
-        return
-    end
 
-    -- Sort ascending by distance from the player
-    table.sort(regionMaps, function(a, b)
-        return helpers.distSqToPlayer(a, curCoords) < helpers.distSqToPlayer(b, curCoords)
-    end)
-	local targetKey = helpers.SextantKey(regionMaps[1])
+	-- Pick the candidate pool based on the configured behavior
+	local candidateMaps
+	if nextMapMode == 2 then
+		candidateMaps = allMaps
+	elseif nextMapMode == 3 then
+		candidateMaps = (#regionMaps > 0) and regionMaps or allMaps
+	else
+		candidateMaps = regionMaps
+	end
+
+	if #candidateMaps == 0 then
+		helpers.DevLog("GetNextMap abort: no candidate maps for mode " .. tostring(nextMapMode))
+		api.Log:Info("WorldSatNav: No treasure maps to track, open map and select next")
+		tracking.AssignNextButton(nil, nil)
+		return
+	end
+
+	-- Sort ascending by distance from the player
+	table.sort(candidateMaps, function(a, b)
+		return helpers.distSqToPlayer(a, curCoords) < helpers.distSqToPlayer(b, curCoords)
+	end)
+	local targetKey = helpers.SextantKey(candidateMaps[1])
 	local mapsAtLocation = 0
-	for _, sextant in ipairs(regionMaps) do
+	for _, sextant in ipairs(candidateMaps) do
 		if helpers.SextantKey(sextant) == targetKey then
 			mapsAtLocation = mapsAtLocation + 1
 		end
@@ -133,7 +144,7 @@ function treasuremaps.GetNextMap()
 	if targetGrade ~= nil then
 		targetDisplayName = targetDisplayName .. " [" .. targetGrade .. "]"
 	end
-	eventbus.TriggerEvent(eventtopics.topics.tracking.custom, regionMaps[1], "Map", true,
+	eventbus.TriggerEvent(eventtopics.topics.tracking.custom, candidateMaps[1], "Map", true,
 		targetDisplayName)
 end
 
