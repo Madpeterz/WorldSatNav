@@ -314,14 +314,12 @@ function treasuremaps.onUpdate(dt)
         return
     end
 	bagPollElapsed = 0
-	bagIsVisible = CheckBagDisplayStatus()
-	if bagIsVisible == false then
-		hideBagOverlay()
-		lastBagSignature = nil
-		return
-	end
+
+	-- Resolve pending bag-change events (debounced). This runs regardless of
+	-- whether the bag window is open, so consuming a treasure map while only the
+	-- world map is visible still refreshes the map icons.
 	if bagUpdatePending then
-		bagUpdateDebounceElapsed = bagUpdateDebounceElapsed + dt
+		bagUpdateDebounceElapsed = bagUpdateDebounceElapsed + BAG_POLL_INTERVAL
 		if bagUpdateDebounceElapsed >= BAG_UPDATE_DEBOUNCE then
 			bagUpdatePending = false
 			bagUpdateDebounceElapsed = 0
@@ -330,37 +328,44 @@ function treasuremaps.onUpdate(dt)
 			helpers.DevLog("Expired bag signature due to update (debounced)")
 		end
 	end
-	if maprendering.MapUI:IsVisible() == false then
+
+	local mapVisible = maprendering.MapUI:IsVisible()
+
+	-- Keep treasure-map icons on the world map in sync with inventory even when
+	-- the bag window itself is closed.
+	if mapVisible then
+		local currentSignature = BuildBagSignature()
+		if currentSignature ~= nil then
+			if currentSignature == lastBagSignature then
+				lastBagSignatureAge = lastBagSignatureAge + BAG_POLL_INTERVAL
+				if lastBagSignatureAge > (BAG_POLL_INTERVAL * 500) then
+					lastBagSignature = nil
+					lastBagSignatureAge = 0
+					helpers.DevLog("Expired bag signature due to age")
+				end
+			else
+				lastBagSignature = currentSignature
+				lastBagSignatureAge = 0
+				helpers.DevLog("Bag content changed, new signature: " .. currentSignature)
+				if lastSentSignature ~= nil and currentSignature ~= lastSentSignature then
+					helpers.DevLog("Bag signature differs from last sent map render signature, triggering map redraw")
+					if maprendering.GetCurrentMode() == "maps" then
+						helpers.DevLog("Current map mode is 'maps', triggering map redraw to update treasure map icons")
+						maprendering.RequestModeRedraw()
+					end
+				end
+			end
+		end
+	end
+
+	-- The bag-slot region overlay only makes sense while the bag window is open.
+	bagIsVisible = CheckBagDisplayStatus()
+	if bagIsVisible == false or mapVisible == false then
 		hideBagOverlay()
-		lastBagSignature = nil
 		return
 	end
 	FlashModeTick()
-
-    local currentSignature = BuildBagSignature()
-    if currentSignature == nil then
-        return
-    end
-    if currentSignature == lastBagSignature then
-		lastBagSignatureAge = lastBagSignatureAge + BAG_POLL_INTERVAL
-		if lastBagSignatureAge > (BAG_POLL_INTERVAL * 500) then
-			lastBagSignature = nil
-			lastBagSignatureAge = 0
-			helpers.DevLog("Expired bag signature due to age")
-		end
-        return
-    end
-    lastBagSignature = currentSignature
-	lastBagSignatureAge = 0
-	helpers.DevLog("Bag content changed, new signature: " .. currentSignature)
-	if lastSentSignature ~= nil and currentSignature ~= lastSentSignature then
-		helpers.DevLog("Bag signature differs from last sent map render signature, triggering map redraw")
-		if maprendering.GetCurrentMode() == "maps" then
-			helpers.DevLog("Current map mode is 'maps', triggering map redraw to update treasure map icons")
-			maprendering.RequestModeRedraw()
-		end
-	end
-    showBagOverlay()
+	showBagOverlay()
 end
 
 function treasuremaps.OnLoad()
