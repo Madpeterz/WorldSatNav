@@ -73,6 +73,30 @@ function tracking.IsActive()
 	return TRACK_WINDOW:IsVisible()
 end
 
+-- Fully stop tracking: clear the tracked point and hide the window entirely,
+-- rather than leaving a stale target with dead Next/Show buttons.
+function tracking.Stop()
+	targetSextant = nil
+	targetName = nil
+	targetXMap = nil
+	targetYMap = nil
+	currentTrackedType = nil
+	currentNextButtonCallback = nil
+	lastArrowDir = ""
+	if TRACK_WINDOW == nil then
+		return
+	end
+	if TRACK_WINDOW.nextBtn ~= nil then
+		TRACK_WINDOW.nextBtn:Show(false)
+	end
+	if TRACK_WINDOW.showBtn ~= nil then
+		TRACK_WINDOW.showBtn:Show(false)
+	end
+	if TRACK_WINDOW:IsVisible() then
+		TRACK_WINDOW:Show(false)
+	end
+end
+
 local function CreateNextButton()
 	if TRACK_WINDOW == nil then
 		return

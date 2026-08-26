@@ -76,7 +76,7 @@ function treasuremaps.GetNextMap()
     if curCoords == nil then
 		helpers.DevLog("GetNextMap abort: player sextants nil")
         api.Log:Info("WorldSatNav: Cannot get player position")
-        tracking.AssignNextButton(nil, nil)
+        tracking.Stop()
         return
     end
 	-- Next map behavior: 1 = nearest in my region only, 2 = nearest anywhere, 3 = my region first then anywhere
@@ -86,7 +86,7 @@ function treasuremaps.GetNextMap()
 	if nextMapMode == 1 and not haveRegion then
 		helpers.DevLog("GetNextMap abort: player region unknown (mode 1)")
 		api.Log:Info("WorldSatNav: Cannot determine player region, open map and select next map")
-		tracking.AssignNextButton(nil, nil)
+		tracking.Stop()
 		return
 	end
 
@@ -123,8 +123,8 @@ function treasuremaps.GetNextMap()
 
 	if #candidateMaps == 0 then
 		helpers.DevLog("GetNextMap abort: no candidate maps for mode " .. tostring(nextMapMode))
-		api.Log:Info("WorldSatNav: No treasure maps to track, open map and select next")
-		tracking.AssignNextButton(nil, nil)
+		api.Log:Info("WorldSatNav: No more treasure maps to track, closing tracker")
+		tracking.Stop()
 		return
 	end
 
