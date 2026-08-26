@@ -93,6 +93,21 @@ clicking the cog icon will give you the setting menu
 - Time
   - DST +1 hour forces the clock used to add 60 mins
 
+### I want to help fix the dawnsdrop data 
+
+please create a fork of this repo, empty the addons folder for SatNav and then 
+clone to that folder.
+
+then enable dev tools by clicking on the my location repeatedly (about 9 times)
+please note your console will get very spammy with this turned on, repeat the action to turn it off
+then on the dawnsdrop page you can select "Add" to add a new icon, clicking it again will increase the size
+going past stage 3 will remove the entry.
+
+you can also click "Mark here" to create a icon at your current sextent location.
+
+once your done commit your changes and create a pull request to merge the changes to the addon
+after its been reviewed.
+
 
 ## Credits
 
