@@ -89,6 +89,8 @@ clicking the cog icon will give you the setting menu
   - Open real map on click (When starting tracking by clicking on an icon or clicking the track button from alert the in game map opens and marks the location with a pointer if enabled)
   - Tracking use region name (When you are too far away from a location it will tell you to teleport to a region otherwise it will just give distance)
   - Show target info in chat (When you start tracking it gives the details of where you're going in chat for just you)
+  - Enable Show on trackking (when enabled a show button will appear when tracking to allow you to reopen the map)
+  - Auto goto next map (after you pickup a map at that location if there are none left then it will auto click next)
 
 - Time
   - DST +1 hour forces the clock used to add 60 mins
