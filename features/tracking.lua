@@ -418,14 +418,25 @@ function tracking.forceInventoryUpdateForTracking(...)
 	local targetKey = helpers.SextantKey(targetSextant)
 	local mapCount = 0
 	local mapGrade = nil
+	local mapsInRegion = 0
+	local _, playerRegionName = regionmap.GetRegionForSextant(api.Map:GetPlayerSextants())
 	helpers.iterateTreasureMaps(function(_, _, info)
 		local mapSextant = SextantFromInfo(info)
 		if helpers.SextantKey(mapSextant) == targetKey then
 			mapCount = mapCount + 1
 			mapGrade = info.grade
 		end
+		local _, mapRegionName = regionmap.GetRegionForSextant(mapSextant)
+		if playerRegionName ~= nil and playerRegionName ~= "?" and mapRegionName == playerRegionName then
+			mapsInRegion = mapsInRegion + 1
+		end
 	end)
 	helpers.DevLog("Maps remaining at tracked location: " .. mapCount)
+	local nextMapMode = settings.Get("NextMapMode") or 1
+	if nextMapMode ~= 2 and mapsInRegion > 0  and settings.Get("ShowTargetInfoInChat") == true then
+		api.Chat:DispatchChatMessage(4, "[WorldSatNav] You have " .. mapsInRegion .. " more map(s) in your current region.")
+	end
+	helpers.DevLog("Maps in player region: " .. mapsInRegion)
 	local newDisplayName = "Map (" .. mapCount .. ")"
 	if mapGrade ~= nil then
 		newDisplayName = newDisplayName .. " [" .. mapGrade .. "]"
