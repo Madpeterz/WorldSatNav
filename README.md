@@ -139,3 +139,9 @@ Based on code / assets / ideas from:
 **FungusMungus/Treasure Track**
 - Didn't do what I had hoped, which led to a new version of my old OCR app — liked the map
   labeling but not having to type it all in yourself
+
+
+## AI usage
+
+Claud - used all over the place to add new features
+co-pilot - Adds itself when i auto gen commit messages (not used for anything worthwhile)
