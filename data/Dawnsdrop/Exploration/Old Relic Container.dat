@@ -1,2 +1,41 @@
 {
+    {
+        location = {
+            deg_long = 0,
+            deg_lat = 11,
+            sec_long = 16,
+            min_lat = 13,
+            longitude = "W",
+            latitude = "S",
+            sec_lat = 11,
+            min_long = 8,
+        },
+        group = 1,
+    },
+    {
+        location = {
+            deg_long = 0,
+            deg_lat = 11,
+            longitude = "E",
+            latitude = "S",
+            sec_long = 48,
+            min_lat = 20,
+            sec_lat = 27,
+            min_long = 5,
+        },
+        group = 1,
+    },
+    {
+        location = {
+            deg_long = 0,
+            deg_lat = 11,
+            sec_long = 55,
+            min_lat = 30,
+            longitude = "W",
+            latitude = "S",
+            sec_lat = 15,
+            min_long = 21,
+        },
+        group = 1,
+    },
 }
