@@ -226,11 +226,16 @@ end
 -- Clicking an existing location upgrades its marker tier (1 -> 2 -> 3), and
 -- clicking it again at tier 3 removes it entirely (next click there starts
 -- fresh at tier 1). Clicking empty space adds a new tier-1 location.
-local function AddOrUpgradeLocation(task, itemType, clickedSextant)
+-- When alwaysAdd is true (e.g. "Mark here"), always insert a fresh tier-1
+-- location and never merge into or upgrade a nearby one.
+local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd)
 	local path = GetDataFilePath(task, itemType)
 	local locations = LoadLocations(task, itemType)
 	local mapInfo = maprendering.GetMapInfoForZoom(maprendering.GetCurrentZoomLevel())
-	local closestIndex = FindClosestLocationIndex(locations, clickedSextant, mapInfo)
+	local closestIndex = nil
+	if not alwaysAdd then
+		closestIndex = FindClosestLocationIndex(locations, clickedSextant, mapInfo)
+	end
 	if closestIndex ~= nil then
 		local entry = locations[closestIndex]
 		if entry.group >= 3 then
@@ -354,7 +359,7 @@ local function CreateDevModeButtons(mapUI)
 			helpers.DevLog("Cannot mark location, player position unavailable")
 			return
 		end
-		AddOrUpgradeLocation(task, itemType, playerSextant)
+		AddOrUpgradeLocation(task, itemType, playerSextant, true)
 	end)
 	markHereButton:Show(false)
 end

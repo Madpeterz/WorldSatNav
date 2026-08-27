@@ -318,7 +318,7 @@ function treasuremaps.onUpdate(dt)
 	-- Resolve pending bag-change events (debounced). This runs regardless of
 	-- whether the bag window is open, so consuming a treasure map while only the
 	-- world map is visible still refreshes the map icons.
-	if bagUpdatePending then
+	if bagUpdatePending and lastBagSignature ~= nil then
 		bagUpdateDebounceElapsed = bagUpdateDebounceElapsed + BAG_POLL_INTERVAL
 		if bagUpdateDebounceElapsed >= BAG_UPDATE_DEBOUNCE then
 			bagUpdatePending = false
@@ -348,7 +348,6 @@ function treasuremaps.onUpdate(dt)
 				lastBagSignatureAge = 0
 				helpers.DevLog("Bag content changed, new signature: " .. currentSignature)
 				if lastSentSignature ~= nil and currentSignature ~= lastSentSignature then
-					helpers.DevLog("Bag signature differs from last sent map render signature, triggering map redraw")
 					if maprendering.GetCurrentMode() == "maps" then
 						helpers.DevLog("Current map mode is 'maps', triggering map redraw to update treasure map icons")
 						maprendering.RequestModeRedraw()
@@ -359,7 +358,7 @@ function treasuremaps.onUpdate(dt)
 	end
 
 	-- The bag-slot region overlay only makes sense while the bag window is open.
-	bagIsVisible = CheckBagDisplayStatus()
+	
 	if bagIsVisible == false or mapVisible == false then
 		hideBagOverlay()
 		return
