@@ -56,27 +56,22 @@ function ships.GetNextShip()
 	local lastVisitedShipKey = helpers.SextantKey(lastSelectedShipSextant)
 	vistitedShips[lastVisitedShipKey] = true -- mark the current ship as visited
 	helpers.DevLog("Last visited ship marked as visited with key: " .. tostring(lastVisitedShipKey).." in region: "..tostring(regionName))
-	local nextShipMap = {}
+	local lowestDistance = nil
+	local nextShip = nil
 	for _, ship in pairs(shipsData) do
 		local shipKey = helpers.SextantKey(ship.sextant)
 		if not vistitedShips[shipKey] then
-			local _, shipRegionName = regionmap.GetRegionForSextant(ship.sextant)
 			local distance = Coordinates.CalculateDistance(lastSelectedShipSextant, ship.sextant)
-			if (shipRegionName == regionName) or (distance < 1250) then
-				local shipEntry = {
-					ship = ship,
-					distance = distance
-				}
-				table.insert(nextShipMap, shipEntry)
+			if distance < 2250 and (lowestDistance == nil or distance < lowestDistance) then
+				lowestDistance = distance
+				nextShip = ship
 			end
 		end
 	end
-	if #nextShipMap == 0 then
-		api.Log:Info("No more unvisited ships found in region " .. tostring(regionName) .. " or nearby please open the map and select next")
+	if nextShip == nil then
+		helpers.DevLog("No unvisited ships found within 2250 units of distance")
 		return
 	end
-	table.sort(nextShipMap, function(a, b) return a.distance < b.distance end)
-	local nextShip = nextShipMap[1].ship
 	local nextSextant = nextShip.sextant
 	ships.SelectShipBySextant(nextSextant)
 end
