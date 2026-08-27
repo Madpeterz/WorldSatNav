@@ -27,14 +27,18 @@ local mapLevels = {
 	-- mapping, so width/height/zeroPoint/XYCordScale are unchanged) but crops
 	-- a tighter region of it: (zoomfactor+1) is 1.5x level 3's, giving a 1.5x
 	-- more zoomed-in view of the same art instead of a higher-res image.
-	{ level = 4, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 12.5, zeroPointX=2515,zeroPointY=989,XCordScale=116.35,YCordScale=115.21}
+	{ level = 4, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 12.5, zeroPointX=2515,zeroPointY=989,XCordScale=116.35,YCordScale=115.21},
+	-- Second virtual level on the same level-3 texture: crops twice as tight as
+	-- level 4. (zoomfactor+1) = 27 = 2 * level 4's 13.5, so a 2x more zoomed-in
+	-- view of the same art. width/height/zeroPoint/XYCordScale unchanged.
+	{ level = 5, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 26, zeroPointX=2515,zeroPointY=989,XCordScale=116.35,YCordScale=115.21}
 }
 
 -- Module state
 local WorldSatNavState = {
 	zoom = 0,
 	minZoom = 0,
-	maxZoom = 4,
+	maxZoom = 5,
 	mapWindowWidth = 473,
 	mapWindowHeight = 509,
 	UIWindowWidth = 484,
