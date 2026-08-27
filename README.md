@@ -144,4 +144,5 @@ Based on code / assets / ideas from:
 ## AI usage
 
 Claud - used all over the place to help add new features
+
 co-pilot - Adds itself when i auto gen commit messages (not used for anything worthwhile)
