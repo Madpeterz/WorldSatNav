@@ -6,7 +6,7 @@ Even now im still lost
 
 ### Zoom
 
-to zoom in CTRL + mouse wheel up/down to zoom in and out, 3 real zoom levels plus a virtual 4th level 
+to zoom in CTRL + mouse wheel up/down to zoom in and out, 4 real zoom textures plus 4 virtual crop levels (8 steps, 0-7) 
 
 ### Pan
 
