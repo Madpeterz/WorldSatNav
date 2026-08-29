@@ -330,6 +330,7 @@ function treasuremaps.onUpdate(dt)
 	end
 
 	local mapVisible = maprendering.MapUI:IsVisible()
+	bagIsVisible = CheckBagDisplayStatus()
 
 	-- Keep treasure-map icons on the world map in sync with inventory even when
 	-- the bag window itself is closed.
