@@ -18,6 +18,8 @@ local lastBagSignatureAge = 0
 local bagUpdatePending = false
 local bagUpdateDebounceElapsed = 0
 local BAG_UPDATE_DEBOUNCE = 300
+local lastOverlaySignature = nil
+local bagWasVisible = false
 
 local BagIconStorage = {}
 local MainUIWindow = nil
@@ -334,8 +336,9 @@ function treasuremaps.onUpdate(dt)
 
 	-- Keep treasure-map icons on the world map in sync with inventory even when
 	-- the bag window itself is closed.
+	local currentSignature = nil
 	if mapVisible then
-		local currentSignature = BuildBagSignature()
+		currentSignature = BuildBagSignature()
 		if currentSignature ~= nil then
 			if currentSignature == lastBagSignature then
 				lastBagSignatureAge = lastBagSignatureAge + BAG_POLL_INTERVAL
@@ -362,10 +365,19 @@ function treasuremaps.onUpdate(dt)
 	
 	if bagIsVisible == false or mapVisible == false then
 		hideBagOverlay()
+		bagWasVisible = false
+		lastOverlaySignature = nil
 		return
 	end
 	FlashModeTick()
-	showBagOverlay()
+	-- Only rebuild the bag-slot overlays when the bag was just opened or its
+	-- treasure-map contents changed; rebuilding every poll tick is wasteful.
+	local overlaySignature = currentSignature or BuildBagSignature()
+	if bagWasVisible == false or overlaySignature ~= lastOverlaySignature then
+		showBagOverlay()
+		lastOverlaySignature = overlaySignature
+	end
+	bagWasVisible = true
 end
 
 function treasuremaps.OnLoad()
