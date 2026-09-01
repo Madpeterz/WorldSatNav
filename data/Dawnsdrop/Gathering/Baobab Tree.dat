@@ -1,0 +1,54 @@
+{
+    {
+        location = {
+            deg_long = 2,
+            deg_lat = 21,
+            sec_long = 37,
+            min_lat = 18,
+            longitude = "E",
+            latitude = "S",
+            sec_lat = 16,
+            min_long = 44,
+        },
+        group = 1,
+    },
+    {
+        location = {
+            deg_long = 2,
+            deg_lat = 21,
+            longitude = "E",
+            latitude = "S",
+            sec_long = 23,
+            min_lat = 40,
+            sec_lat = 32,
+            min_long = 13,
+        },
+        group = 3,
+    },
+    {
+        location = {
+            deg_long = 2,
+            deg_lat = 21,
+            sec_long = 32,
+            min_lat = 33,
+            longitude = "E",
+            latitude = "S",
+            sec_lat = 26,
+            min_long = 4,
+        },
+        group = 3,
+    },
+    {
+        location = {
+            deg_long = 2,
+            deg_lat = 21,
+            longitude = "E",
+            latitude = "S",
+            sec_long = 37,
+            min_lat = 30,
+            sec_lat = 45,
+            min_long = 14,
+        },
+        group = 2,
+    },
+}
