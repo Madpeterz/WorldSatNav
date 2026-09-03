@@ -410,6 +410,37 @@ function demos.onUpdate(dt)
 	DEMO_TRIGGER_ALERT()
 end
 
+-- Pull the owner name out of the target unit frame's tooltip text, which reads
+-- like "Owner: Cawyn\nHealth : |p2; / |p3; (|p4;%)". Returns nil if unavailable.
+local function GetTargetOwnerName()
+	local function getFrame()
+		local ok, frame = pcall(function() return ADDON:GetContent(UIC.TARGET_UNITFRAME) end)
+		if ok and type(frame) == "table" then
+			return frame
+		end
+		return nil
+	end
+
+	local frame = getFrame()
+	if frame == nil or type(frame.tooltipText) ~= "string" then
+		-- Frame not available/populated yet: force it visible, then retry once.
+		pcall(function() ADDON:ShowContent(UIC.TARGET_UNITFRAME, true) end)
+		frame = getFrame()
+	end
+	if frame == nil or type(frame.tooltipText) ~= "string" then
+		return nil
+	end
+	local owner = frame.tooltipText:match("Owner:%s*([^\r\n]+)")
+	if owner == nil then
+		return nil
+	end
+	owner = owner:gsub("%s+$", "")
+	if owner == "" then
+		return nil
+	end
+	return owner
+end
+
 function demos.AutoFillClicked()
 	if demoWindow == nil then
 		helpers.DevLog("Demo window not initialized yet")
@@ -426,7 +457,20 @@ function demos.AutoFillClicked()
 		return
 	end
 	helpers.SelectComboBoxByText(demoWindow.demo.buildingnameInput, buildingname, "Unknown")
-	api.Log:Info(string.format("Auto-filled demo info - Building: %s", buildingname))
+
+	local ownername = GetTargetOwnerName()
+	if ownername ~= nil and demoWindow.demo.ownernameInput ~= nil then
+		if demoWindow.demo.ownernameInput.SetText ~= nil then
+			demoWindow.demo.ownernameInput:SetText(ownername)
+		end
+		demoWindow.demo.ownernameInput.text = ownername
+	end
+
+	if ownername ~= nil then
+		api.Log:Info(string.format("Auto-filled demo info - Building: %s, Owner: %s", buildingname, ownername))
+	else
+		api.Log:Info(string.format("Auto-filled demo info - Building: %s", buildingname))
+	end
 end
 
 function demos.CreateDemo(ownername, buildingname, dateText, timeText, timestamp)
