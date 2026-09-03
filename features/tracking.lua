@@ -5,6 +5,7 @@ local helpers = require("WorldSatNav/helpers")
 local settings = require("WorldSatNav/core/settings")
 local gps = require("WorldSatNav/features/gps")
 local regionmap = require("WorldSatNav/ui/regionmap")
+local dawnsdrop = require("WorldSatNav/features/dawnsdrop")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
 
@@ -185,6 +186,46 @@ local function UpdateSharedData(dt)
 	sharedDataLastUpdate = 0
 end
 
+-- Longer than this many chars, a "teleport: Region / Place" hint is split onto a
+-- second line (distanceLabel2) at the " / " so it fits the fixed 335px window.
+local TELEPORT_HINT_WRAP_LEN = 24
+
+-- Sets the primary distance/hint line, and the optional wrapped second line.
+local function SetDistanceText(line1, line2)
+	if TRACK_WINDOW == nil or TRACK_WINDOW.distanceLabel == nil then
+		return
+	end
+	local hasSecond = line2 ~= nil and line2 ~= ""
+	-- Wrapped hints run smaller so long place names still fit the window width.
+	local fontSize = hasSecond and 16 or 20
+	TRACK_WINDOW.distanceLabel:SetText(line1 or "")
+	TRACK_WINDOW.distanceLabel.style:SetFontSize(fontSize)
+	if TRACK_WINDOW.distanceLabel2 ~= nil then
+		TRACK_WINDOW.distanceLabel2:SetText(hasSecond and line2 or "")
+		TRACK_WINDOW.distanceLabel2.style:SetFontSize(fontSize)
+		TRACK_WINDOW.distanceLabel2:Show(hasSecond)
+	end
+end
+
+-- Cache for the nearest-teleport lookup: updateTrackingData runs every tick, but
+-- the result only changes when the target sextant or the filter setting change.
+-- Without this, dawnsdrop.FindNearestTeleport (and the POI faction filter it calls)
+-- re-runs every frame.
+local teleportHintCache = { key = nil, name = nil }
+
+-- Builds the (line1, line2) pair for a teleport hint, wrapping at " / " when long.
+local function TeleportHintLines(name)
+	local hint = "teleport: " .. name
+	if string.len(hint) <= TELEPORT_HINT_WRAP_LEN then
+		return hint, nil
+	end
+	local region, place = string.match(name, "^(.-) / (.+)$")
+	if region == nil then
+		return hint, nil
+	end
+	return "teleport: " .. region .. " /", place
+end
+
 local function updateTrackingData()
 
 	if TRACK_WINDOW == nil or not TRACK_WINDOW:IsVisible() or targetSextant == nil then
@@ -249,21 +290,31 @@ local function updateTrackingData()
 	local navDir, navDistance, navDistanceScale, bearing, relativeDir = gps.getNavigationText(targetSextant)
 	
 	if useTeleport and settings.Get("UseTeleportHint") and navDistanceScale ~= "m" then
-		TRACK_WINDOW.distanceLabel:SetText("teleport to " .. regionNameTarget)
+		local filtered = settings.Get("TeleportHintFiltered") ~= false
+		local cacheKey = helpers.SextantKey(targetSextant) .. (filtered and "|f" or "|a")
+		if teleportHintCache.key ~= cacheKey then
+			local teleport = dawnsdrop.FindNearestTeleport(targetSextant, filtered)
+			teleportHintCache.key = cacheKey
+			teleportHintCache.name = (teleport ~= nil and teleport.name) or nil
+		end
+		if teleportHintCache.name ~= nil and teleportHintCache.name ~= "" then
+			SetDistanceText(TeleportHintLines(teleportHintCache.name))
+		else
+			SetDistanceText("teleport to " .. regionNameTarget)
+		end
 		updateNavArrow("portal2")
 	else
-		TRACK_WINDOW.distanceLabel:SetText(string.format("%.1f %s", navDistance, navDistanceScale))
+		SetDistanceText(string.format("%.1f %s", navDistance, navDistanceScale))
 		if settings.Get("trackingMode") == "Compass" then
 			updateNavArrow(navDir)
-		elseif settings.Get("trackingMode") == "Guide" then	
+		elseif settings.Get("trackingMode") == "Guide" then
 			if navDir == "here" then
 				updateNavArrow(navDir)
-			else			
+			else
 				updateNavArrow(relativeDir)
 			end
 		end
 	end
-	TRACK_WINDOW.distanceLabel.style:SetFontSize(20)
 end
 
 local function createTrackUI(onCloseCallback)
@@ -277,10 +328,10 @@ local function createTrackUI(onCloseCallback)
 	TRACK_WINDOW.bg:SetTexture(constants.folderPath.."images/trackerbackground.png")
 	local bg = constants.tracking.backgroundColor
 	TRACK_WINDOW.bg:SetColor(0.5, 0.5, 0.5, 0.6)
-	TRACK_WINDOW.bg:SetExtent(275*settings.Get("uiDrawScale"), 115*settings.Get("uiDrawScale"))
+	TRACK_WINDOW.bg:SetExtent(335*settings.Get("uiDrawScale"), 125*settings.Get("uiDrawScale"))
 	TRACK_WINDOW.bg:AddAnchor("TOPLEFT", TRACK_WINDOW, 0, 0)
 	TRACK_WINDOW.bg:Show(true)
-	TRACK_WINDOW:SetExtent(275*settings.Get("uiDrawScale"), 115*settings.Get("uiDrawScale"))
+	TRACK_WINDOW:SetExtent(335*settings.Get("uiDrawScale"), 125*settings.Get("uiDrawScale"))
 	TRACK_WINDOW:Show(false)
 
 	TRACK_WINDOW.arrow = TRACK_WINDOW:CreateImageDrawable("trackarrow", "overlay")
@@ -293,7 +344,7 @@ local function createTrackUI(onCloseCallback)
 
 	-- Close button
 	TRACK_WINDOW.closeBtn = TRACK_WINDOW:CreateChildWidget("button", "closeBtn", 0, true)
-	TRACK_WINDOW.closeBtn:AddAnchor("TOPLEFT", TRACK_WINDOW, (275*settings.Get("uiDrawScale"))-(20*settings.Get("uiDrawScale")), 3*settings.Get("uiDrawScale"))
+	TRACK_WINDOW.closeBtn:AddAnchor("TOPLEFT", TRACK_WINDOW, (335*settings.Get("uiDrawScale"))-(20*settings.Get("uiDrawScale")), 3*settings.Get("uiDrawScale"))
 	api.Interface:ApplyButtonSkin(TRACK_WINDOW.closeBtn, BUTTON_BASIC.WINDOW_SMALL_CLOSE)
 	TRACK_WINDOW.closeBtn:Show(true)
 
@@ -353,10 +404,20 @@ local function createTrackUI(onCloseCallback)
 		return TRACK_WINDOW
 	end
 	distanceLabel:RemoveAllAnchors()
-	distanceLabel:AddAnchor('TOPLEFT', TRACK_WINDOW, 95*settings.Get("uiDrawScale"), 70*settings.Get("uiDrawScale"))
+	distanceLabel:AddAnchor('TOPLEFT', TRACK_WINDOW, 95*settings.Get("uiDrawScale"), 66*settings.Get("uiDrawScale"))
 	ApplyTextColor(distanceLabel, FONT_COLOR.WHITE)
 	TRACK_WINDOW.distanceLabel = distanceLabel
-	
+
+	-- Second distance line: only shown when a teleport hint wraps (see SetDistanceText).
+	local distanceLabel2 = helpers.createLabel('distanceLabel2', TRACK_WINDOW, '', 0, 0)
+	if distanceLabel2 ~= nil then
+		distanceLabel2:RemoveAllAnchors()
+		distanceLabel2:AddAnchor('TOPLEFT', TRACK_WINDOW, 95*settings.Get("uiDrawScale"), 88*settings.Get("uiDrawScale"))
+		ApplyTextColor(distanceLabel2, FONT_COLOR.WHITE)
+		distanceLabel2:Show(false)
+		TRACK_WINDOW.distanceLabel2 = distanceLabel2
+	end
+
 	return TRACK_WINDOW
 end
 

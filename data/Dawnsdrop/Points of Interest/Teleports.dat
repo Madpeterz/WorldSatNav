@@ -1,7 +1,8 @@
 {
     {
         group = 1,
-        locationName = "White arden / (CC) Birchkeep",
+        regionName = "White arden",
+        locationName = "(CC) Birchkeep",
         side = "shared",
         location = {
             deg_long = 11,
@@ -16,7 +17,8 @@
     },
     {
         group = 1,
-        locationName = "Two Crowns / Warscorched Scar Trade Outlet",
+        regionName = "Two Crowns",
+        locationName = "Warscorched Scar Trade Outlet",
         side = "shared",
         location = {
             deg_long = 8,
@@ -31,7 +33,8 @@
     },
     {
         group = 1,
-        locationName = "Solzreed Peninsula / Wardton",
+        regionName = "Solzreed Peninsula",
+        locationName = "Wardton",
         side = "west",
         location = {
             deg_long = 6,
@@ -46,7 +49,8 @@
     },
     {
         group = 1,
-        locationName = "Two Crowns / (CC) Sundowne",
+        regionName = "Two Crowns",
+        locationName = "(CC) Sundowne",
         side = "shared",
         location = {
             deg_long = 8,
@@ -61,7 +65,8 @@
     },
     {
         group = 1,
-        locationName = "Swirling Meadow / Twirling Plateu",
+        regionName = "Swirling Meadow",
+        locationName = "Twirling Plateu",
         side = "shared",
         location = {
             deg_long = 13,
@@ -76,7 +81,8 @@
     },
     {
         group = 1,
-        locationName = "Hellswamp / Trieste Thespians",
+        regionName = "Hellswamp",
+        locationName = "Trieste Thespians",
         side = "shared",
         location = {
             deg_long = 13,
@@ -91,7 +97,8 @@
     },
     {
         group = 1,
-        locationName = "Ahnimar / Tadpole Head Field",
+        regionName = "Ahnimar",
+        locationName = "Tadpole Head Field",
         side = "shared",
         location = {
             deg_long = 15,
@@ -106,7 +113,8 @@
     },
     {
         group = 1,
-        locationName = "Gweonid Forest / Sylvan Devi",
+        regionName = "Gweonid Forest",
+        locationName = "Sylvan Devi",
         side = "west",
         location = {
             deg_long = 11,
@@ -121,7 +129,8 @@
     },
     {
         group = 1,
-        locationName = "Gweonid Forest / Spywatch Camp",
+        regionName = "Gweonid Forest",
+        locationName = "Spywatch Camp",
         side = "west",
         location = {
             deg_long = 9,
@@ -136,7 +145,8 @@
     },
     {
         group = 1,
-        locationName = "Solzreed Peninsula / (CC) East of Wardton",
+        regionName = "Solzreed Peninsula",
+        locationName = "(CC) East of Wardton",
         side = "shared",
         location = {
             deg_long = 6,
@@ -151,7 +161,8 @@
     },
     {
         group = 1,
-        locationName = "Halcyona / Solisa",
+        regionName = "Halcyona",
+        locationName = "Solisa",
         side = "shared",
         location = {
             deg_long = 9,
@@ -166,7 +177,8 @@
     },
     {
         group = 1,
-        locationName = "Cinderstone Moor / Seachild Wharf Trade Outlet",
+        regionName = "Cinderstone Moor",
+        locationName = "Seachild Wharf Trade Outlet",
         side = "shared",
         location = {
             deg_long = 5,
@@ -181,7 +193,8 @@
     },
     {
         group = 1,
-        locationName = "Sanddeep / (CC) Starsand Haven",
+        regionName = "Sanddeep",
+        locationName = "(CC) Starsand Haven",
         side = "shared",
         location = {
             deg_long = 10,
@@ -196,7 +209,8 @@
     },
     {
         group = 1,
-        locationName = "Dewstone Plains / Royster's Camp",
+        regionName = "Dewstone Plains",
+        locationName = "Royster's Camp",
         side = "west",
         location = {
             deg_long = 8,
@@ -211,7 +225,8 @@
     },
     {
         group = 1,
-        locationName = "Lilyut Hills / Rockmar Barrow",
+        regionName = "Lilyut Hills",
+        locationName = "Rockmar Barrow",
         side = "west",
         location = {
             deg_long = 8,
@@ -226,7 +241,8 @@
     },
     {
         group = 1,
-        locationName = "Dewstone Plains / Roadsend Post",
+        regionName = "Dewstone Plains",
+        locationName = "Roadsend Post",
         side = "west",
         location = {
             deg_long = 9,
@@ -241,7 +257,8 @@
     },
     {
         group = 1,
-        locationName = "Lilyut Hills / Riverspan",
+        regionName = "Lilyut Hills",
+        locationName = "Riverspan",
         side = "west",
         location = {
             deg_long = 7,
@@ -256,7 +273,8 @@
     },
     {
         group = 1,
-        locationName = "Solzreed Peninsula / Nuian Starting Zone",
+        regionName = "Solzreed Peninsula",
+        locationName = "Nuian Starting Zone",
         side = "west",
         location = {
             deg_long = 5,
@@ -271,7 +289,8 @@
     },
     {
         group = 1,
-        locationName = "Swirling Meadow / Northern Meadow Housing",
+        regionName = "Swirling Meadow",
+        locationName = "Northern Meadow Housing",
         side = "shared",
         location = {
             deg_long = 12,
@@ -286,7 +305,8 @@
     },
     {
         group = 1,
-        locationName = "Two Crowns / Moonswept Homes",
+        regionName = "Two Crowns",
+        locationName = "Moonswept Homes",
         side = "shared",
         location = {
             deg_long = 8,
@@ -301,7 +321,8 @@
     },
     {
         group = 1,
-        locationName = "Gweonid Forest / Memoria",
+        regionName = "Gweonid Forest",
+        locationName = "Memoria",
         side = "west",
         location = {
             deg_long = 10,
@@ -316,7 +337,8 @@
     },
     {
         group = 1,
-        locationName = "Swirling Meadow / Meadow Outpost",
+        regionName = "Swirling Meadow",
+        locationName = "Meadow Outpost",
         side = "shared",
         location = {
             deg_long = 13,
@@ -331,7 +353,8 @@
     },
     {
         group = 1,
-        locationName = "Marianople / (CC) Dawnsliver",
+        regionName = "Marianople",
+        locationName = "(CC) Dawnsliver",
         side = "shared",
         location = {
             deg_long = 10,
@@ -346,7 +369,8 @@
     },
     {
         group = 1,
-        locationName = "Marianople / Marianople - main hall",
+        regionName = "Marianople",
+        locationName = "Marianople - main hall",
         side = "west",
         location = {
             deg_long = 10,
@@ -361,7 +385,8 @@
     },
     {
         group = 1,
-        locationName = "Lilyut Hills / (CC) Windshade",
+        regionName = "Lilyut Hills",
+        locationName = "(CC) Windshade",
         side = "west",
         location = {
             deg_long = 8,
@@ -376,7 +401,8 @@
     },
     {
         group = 1,
-        locationName = "Gweonid Forest / Lakeside",
+        regionName = "Gweonid Forest",
+        locationName = "Lakeside",
         side = "west",
         location = {
             deg_long = 10,
@@ -391,7 +417,8 @@
     },
     {
         group = 1,
-        locationName = "Solzreed Peninsula / Lacton",
+        regionName = "Solzreed Peninsula",
+        locationName = "Lacton",
         side = "west",
         location = {
             deg_long = 7,
@@ -406,7 +433,8 @@
     },
     {
         group = 1,
-        locationName = "Karkasse Ridgelands / (CC) Lavis",
+        regionName = "Karkasse Ridgelands",
+        locationName = "(CC) Lavis",
         side = "shared",
         location = {
             deg_long = 10,
@@ -421,7 +449,8 @@
     },
     {
         group = 1,
-        locationName = "Hellswamp / (CC) Anarchi",
+        regionName = "Hellswamp",
+        locationName = "(CC) Anarchi",
         side = "shared",
         location = {
             deg_long = 13,
@@ -436,7 +465,8 @@
     },
     {
         group = 1,
-        locationName = "Hellswamp / Haven",
+        regionName = "Hellswamp",
+        locationName = "Haven",
         side = "shared",
         location = {
             deg_long = 13,
@@ -451,7 +481,8 @@
     },
     {
         group = 1,
-        locationName = "Gweonid Forest / Harpa's Camp",
+        regionName = "Gweonid Forest",
+        locationName = "Harpa's Camp",
         side = "west",
         location = {
             deg_long = 10,
@@ -466,7 +497,8 @@
     },
     {
         group = 1,
-        locationName = "Halcyona / (CC) Suns End",
+        regionName = "Halcyona",
+        locationName = "(CC) Suns End",
         side = "shared",
         location = {
             deg_long = 11,
@@ -481,7 +513,8 @@
     },
     {
         group = 1,
-        locationName = "Gweonid Forest / (CC) South of Seer's Cottage",
+        regionName = "Gweonid Forest",
+        locationName = "(CC) South of Seer's Cottage",
         side = "shared",
         location = {
             deg_long = 10,
@@ -496,7 +529,8 @@
     },
     {
         group = 1,
-        locationName = "Sanddeep / Grenwolf",
+        regionName = "Sanddeep",
+        locationName = "Grenwolf",
         side = "shared",
         location = {
             deg_long = 12,
@@ -511,7 +545,8 @@
     },
     {
         group = 1,
-        locationName = "Halcyona / Farmhouse",
+        regionName = "Halcyona",
+        locationName = "Farmhouse",
         side = "shared",
         location = {
             deg_long = 11,
@@ -526,7 +561,8 @@
     },
     {
         group = 1,
-        locationName = "Two Crowns / Ezna",
+        regionName = "Two Crowns",
+        locationName = "Ezna",
         side = "west",
         location = {
             deg_long = 7,
@@ -541,7 +577,8 @@
     },
     {
         group = 1,
-        locationName = "Two Crowns / Ezi's Light",
+        regionName = "Two Crowns",
+        locationName = "Ezi's Light",
         side = "west",
         location = {
             deg_long = 8,
@@ -556,7 +593,8 @@
     },
     {
         group = 1,
-        locationName = "Gweonid Forest / Elf Starting Zone",
+        regionName = "Gweonid Forest",
+        locationName = "Elf Starting Zone",
         side = "west",
         location = {
             deg_long = 10,
@@ -571,7 +609,8 @@
     },
     {
         group = 1,
-        locationName = "Karkkasse Ridgelands / Dry Reservoir Camp",
+        regionName = "Karkkasse Ridgelands",
+        locationName = "Dry Reservoir Camp",
         side = "shared",
         location = {
             deg_long = 12,
@@ -586,7 +625,8 @@
     },
     {
         group = 1,
-        locationName = "Dewstone Plains / (CC) Sandcloud",
+        regionName = "Dewstone Plains",
+        locationName = "(CC) Sandcloud",
         side = "west",
         location = {
             deg_long = 9,
@@ -601,7 +641,8 @@
     },
     {
         group = 1,
-        locationName = "Solzreed Peninsula / Desireen",
+        regionName = "Solzreed Peninsula",
+        locationName = "Desireen",
         side = "west",
         location = {
             deg_long = 5,
@@ -616,7 +657,8 @@
     },
     {
         group = 1,
-        locationName = "Solzreed Peninsula / Crescent Throne",
+        regionName = "Solzreed Peninsula",
+        locationName = "Crescent Throne",
         side = "west",
         location = {
             deg_long = 6,
@@ -631,7 +673,8 @@
     },
     {
         group = 1,
-        locationName = "Cinderstone Moor / (CC) Seachild Wharf",
+        regionName = "Cinderstone Moor",
+        locationName = "(CC) Seachild Wharf",
         side = "shared",
         location = {
             deg_long = 5,
@@ -646,7 +689,8 @@
     },
     {
         group = 1,
-        locationName = "Cinderstone Moor / Burnt Castle Camp",
+        regionName = "Cinderstone Moor",
+        locationName = "Burnt Castle Camp",
         side = "shared",
         location = {
             deg_long = 7,
@@ -661,7 +705,8 @@
     },
     {
         group = 1,
-        locationName = "Karkasse Ridgelands / Brownscale Wyrmkin",
+        regionName = "Karkasse Ridgelands",
+        locationName = "Brownscale Wyrmkin",
         side = "shared",
         location = {
             deg_long = 11,
@@ -676,7 +721,8 @@
     },
     {
         group = 1,
-        locationName = "Karkasse Ridgelands / Bonefence Hutment",
+        regionName = "Karkasse Ridgelands",
+        locationName = "Bonefence Hutment",
         side = "shared",
         location = {
             deg_long = 10,
@@ -691,7 +737,8 @@
     },
     {
         group = 1,
-        locationName = "Sanddeep / Blueglass",
+        regionName = "Sanddeep",
+        locationName = "Blueglass",
         side = "shared",
         location = {
             deg_long = 11,
@@ -706,7 +753,8 @@
     },
     {
         group = 1,
-        locationName = "Aubre Cradle / (CC) Ironwrought",
+        regionName = "Aubre Cradle",
+        locationName = "(CC) Ironwrought",
         side = "shared",
         location = {
             deg_long = 13,
@@ -721,7 +769,8 @@
     },
     {
         group = 1,
-        locationName = "Two Crowns / Arena",
+        regionName = "Two Crowns",
+        locationName = "Arena",
         side = "west",
         location = {
             deg_long = 8,
@@ -736,7 +785,8 @@
     },
     {
         group = 1,
-        locationName = "Two Crowns / Arena",
+        regionName = "Two Crowns",
+        locationName = "Arena",
         side = "west",
         location = {
             deg_long = 6,
@@ -751,7 +801,8 @@
     },
     {
         group = 1,
-        locationName = "White Arden / Ardenia",
+        regionName = "White Arden",
+        locationName = "Ardenia",
         side = "west",
         location = {
             deg_long = 10,
@@ -766,7 +817,8 @@
     },
     {
         group = 1,
-        locationName = "Airain Rock / Andelph",
+        regionName = "Airain Rock",
+        locationName = "Andelph",
         side = "west",
         location = {
             deg_long = 14,
@@ -781,7 +833,8 @@
     },
     {
         group = 1,
-        locationName = "Airain Rock / (CC) West of Ice Grial",
+        regionName = "Airain Rock",
+        locationName = "(CC) West of Ice Grial",
         side = "west",
         location = {
             deg_long = 14,
@@ -796,7 +849,8 @@
     },
     {
         group = 1,
-        locationName = "Ahnimar / (CC) Tadpole Tail field",
+        regionName = "Ahnimar",
+        locationName = "(CC) Tadpole Tail field",
         side = "shared",
         location = {
             deg_long = 14,
@@ -811,7 +865,8 @@
     },
     {
         group = 1,
-        locationName = "Rookborne Basin / [Dungeon] KC",
+        regionName = "Rookborne Basin",
+        locationName = "[Dungeon] KC",
         side = "shared",
         location = {
             deg_long = 5,
@@ -826,7 +881,8 @@
     },
     {
         group = 1,
-        locationName = "Rookborne Basin / [Dungeon] Hadir farm",
+        regionName = "Rookborne Basin",
+        locationName = "[Dungeon] Hadir farm",
         side = "shared",
         location = {
             deg_long = 1,
@@ -841,7 +897,8 @@
     },
     {
         group = 1,
-        locationName = "Ynystere / (CC) Glitterstone Mine",
+        regionName = "Ynystere",
+        locationName = "(CC) Glitterstone Mine",
         side = "shared",
         location = {
             deg_long = 0,
@@ -856,7 +913,8 @@
     },
     {
         group = 1,
-        locationName = "Windscour Savannah / (CC) Conqueror's Champaign",
+        regionName = "Windscour Savannah",
+        locationName = "(CC) Conqueror's Champaign",
         side = "shared",
         location = {
             deg_long = 4,
@@ -871,7 +929,8 @@
     },
     {
         group = 1,
-        locationName = "Villanelle / (CC) Winebalm",
+        regionName = "Villanelle",
+        locationName = "(CC) Winebalm",
         side = "east",
         location = {
             deg_long = 0,
@@ -886,7 +945,8 @@
     },
     {
         group = 1,
-        locationName = "Ynystere / Village of Nui's Way",
+        regionName = "Ynystere",
+        locationName = "Village of Nui's Way",
         side = "shared",
         location = {
             deg_long = 1,
@@ -901,7 +961,8 @@
     },
     {
         group = 1,
-        locationName = "Hasla / Veroe",
+        regionName = "Hasla",
+        locationName = "Veroe",
         side = "shared",
         location = {
             deg_long = 8,
@@ -916,7 +977,8 @@
     },
     {
         group = 1,
-        locationName = "Tigerspine Mountains / (CC) Anvilton",
+        regionName = "Tigerspine Mountains",
+        locationName = "(CC) Anvilton",
         side = "shared",
         location = {
             deg_long = 0,
@@ -931,7 +993,8 @@
     },
     {
         group = 1,
-        locationName = "Hasla / Tehmika Tribe",
+        regionName = "Hasla",
+        locationName = "Tehmika Tribe",
         side = "shared",
         location = {
             deg_long = 8,
@@ -946,7 +1009,8 @@
     },
     {
         group = 1,
-        locationName = "Rookborne Basin / Solongos Camp",
+        regionName = "Rookborne Basin",
+        locationName = "Solongos Camp",
         side = "shared",
         location = {
             deg_long = 4,
@@ -961,7 +1025,8 @@
     },
     {
         group = 1,
-        locationName = "Solis Headlands / (CC) East of Traveler's Spring",
+        regionName = "Solis Headlands",
+        locationName = "(CC) East of Traveler's Spring",
         side = "shared",
         location = {
             deg_long = 4,
@@ -976,7 +1041,8 @@
     },
     {
         group = 1,
-        locationName = "Windscour Savannah / Snowlion Rock Camp",
+        regionName = "Windscour Savannah",
+        locationName = "Snowlion Rock Camp",
         side = "shared",
         location = {
             deg_long = 3,
@@ -991,7 +1057,8 @@
     },
     {
         group = 1,
-        locationName = "Rookborne Basin / (CC) Loka's Checkmate",
+        regionName = "Rookborne Basin",
+        locationName = "(CC) Loka's Checkmate",
         side = "shared",
         location = {
             deg_long = 3,
@@ -1006,7 +1073,8 @@
     },
     {
         group = 1,
-        locationName = "Rokhala Mountains / (CC) Cloud Bridge",
+        regionName = "Rokhala Mountains",
+        locationName = "(CC) Cloud Bridge",
         side = "shared",
         location = {
             deg_long = 6,
@@ -1021,7 +1089,8 @@
     },
     {
         group = 1,
-        locationName = "Ynystere / Requiem Cape Trade Outlet",
+        regionName = "Ynystere",
+        locationName = "Requiem Cape Trade Outlet",
         side = "shared",
         location = {
             deg_long = 0,
@@ -1036,7 +1105,8 @@
     },
     {
         group = 1,
-        locationName = "Perinoor Ruins / (CC) Stonehew",
+        regionName = "Perinoor Ruins",
+        locationName = "(CC) Stonehew",
         side = "shared",
         location = {
             deg_long = 6,
@@ -1051,7 +1121,8 @@
     },
     {
         group = 1,
-        locationName = "Mahadevi / (CC) Traveler's Rest",
+        regionName = "Mahadevi",
+        locationName = "(CC) Traveler's Rest",
         side = "shared",
         location = {
             deg_long = 2,
@@ -1066,7 +1137,8 @@
     },
     {
         group = 1,
-        locationName = "Rokhala Mountains / Loka's Nose",
+        regionName = "Rokhala Mountains",
+        locationName = "Loka's Nose",
         side = "shared",
         location = {
             deg_long = 5,
@@ -1081,7 +1153,8 @@
     },
     {
         group = 1,
-        locationName = "Perinoor Ruins / Herbalist Camp",
+        regionName = "Perinoor Ruins",
+        locationName = "Herbalist Camp",
         side = "shared",
         location = {
             deg_long = 5,
@@ -1096,7 +1169,8 @@
     },
     {
         group = 1,
-        locationName = "Hasla / (CC) Veroe",
+        regionName = "Hasla",
+        locationName = "(CC) Veroe",
         side = "shared",
         location = {
             deg_long = 8,
@@ -1111,7 +1185,8 @@
     },
     {
         group = 1,
-        locationName = "Hasla / Galegarden",
+        regionName = "Hasla",
+        locationName = "Galegarden",
         side = "shared",
         location = {
             deg_long = 7,
@@ -1126,7 +1201,8 @@
     },
     {
         group = 1,
-        locationName = "Windscour Savannah / Firetalon",
+        regionName = "Windscour Savannah",
+        locationName = "Firetalon",
         side = "shared",
         location = {
             deg_long = 2,
@@ -1141,7 +1217,8 @@
     },
     {
         group = 1,
-        locationName = "Windscour Savannah / Firesnarl",
+        regionName = "Windscour Savannah",
+        locationName = "Firesnarl",
         side = "shared",
         location = {
             deg_long = 3,
@@ -1156,7 +1233,8 @@
     },
     {
         group = 1,
-        locationName = "Rookborne Basin / Duskgleam",
+        regionName = "Rookborne Basin",
+        locationName = "Duskgleam",
         side = "shared",
         location = {
             deg_long = 3,
@@ -1171,7 +1249,8 @@
     },
     {
         group = 1,
-        locationName = "Rookborne Basin / Cloistera",
+        regionName = "Rookborne Basin",
+        locationName = "Cloistera",
         side = "shared",
         location = {
             deg_long = 4,
@@ -1186,7 +1265,8 @@
     },
     {
         group = 1,
-        locationName = "Ynystere / Caernord",
+        regionName = "Ynystere",
+        locationName = "Caernord",
         side = "shared",
         location = {
             deg_long = 0,
@@ -1201,7 +1281,8 @@
     },
     {
         group = 1,
-        locationName = "Arcum Iris / (CC) West of Parchsun",
+        regionName = "Arcum Iris",
+        locationName = "(CC) West of Parchsun",
         side = "shared",
         location = {
             deg_long = 1,
@@ -1216,7 +1297,8 @@
     },
     {
         group = 1,
-        locationName = "Perinoor Ruins / Archeology Base Camp",
+        regionName = "Perinoor Ruins",
+        locationName = "Archeology Base Camp",
         side = "shared",
         location = {
             deg_long = 6,
@@ -1231,7 +1313,8 @@
     },
     {
         group = 1,
-        locationName = "Hasla / Abandoned Drill Camp",
+        regionName = "Hasla",
+        locationName = "Abandoned Drill Camp",
         side = "shared",
         location = {
             deg_long = 8,
@@ -1246,7 +1329,8 @@
     },
     {
         group = 1,
-        locationName = "Aegis Island / Western Seal",
+        regionName = "Aegis Island",
+        locationName = "Western Seal",
         side = "west",
         location = {
             deg_long = 7,
@@ -1261,7 +1345,8 @@
     },
     {
         group = 1,
-        locationName = "Sungold Fields / Sungold Fields",
+        regionName = "Sungold Fields",
+        locationName = "Sungold Fields",
         side = "shared",
         location = {
             deg_long = 0,
@@ -1276,7 +1361,8 @@
     },
     {
         group = 1,
-        locationName = "Exelock / [Dungeon] Serpentis",
+        regionName = "Exelock",
+        locationName = "[Dungeon] Serpentis",
         side = "shared",
         location = {
             deg_long = 1,
@@ -1291,7 +1377,8 @@
     },
     {
         group = 1,
-        locationName = "Reedwind / Crimson Watch Camp",
+        regionName = "Reedwind",
+        locationName = "Crimson Watch Camp",
         side = "shared",
         location = {
             deg_long = 1,
@@ -1306,7 +1393,8 @@
     },
     {
         group = 1,
-        locationName = "Nuimari / Nuimari",
+        regionName = "Nuimari",
+        locationName = "Nuimari",
         side = "shared",
         location = {
             deg_long = 0,
@@ -1321,7 +1409,8 @@
     },
     {
         group = 1,
-        locationName = "Diamond Shores / Nuian Trade Outlet",
+        regionName = "Diamond Shores",
+        locationName = "Nuian Trade Outlet",
         side = "west",
         location = {
             deg_long = 2,
@@ -1336,7 +1425,8 @@
     },
     {
         group = 1,
-        locationName = "Diamond Shores / Nuia Rally Point",
+        regionName = "Diamond Shores",
+        locationName = "Nuia Rally Point",
         side = "west",
         location = {
             deg_long = 8,
@@ -1351,7 +1441,8 @@
     },
     {
         group = 1,
-        locationName = "Whalesong Harbor / Nuia Defense Base",
+        regionName = "Whalesong Harbor",
+        locationName = "Nuia Defense Base",
         side = "west",
         location = {
             deg_long = 4,
@@ -1366,7 +1457,8 @@
     },
     {
         group = 1,
-        locationName = "Mistmerrow / Mistsong Summit",
+        regionName = "Mistmerrow",
+        locationName = "Mistsong Summit",
         side = "shared",
         location = {
             deg_long = 1,
@@ -1381,7 +1473,8 @@
     },
     {
         group = 1,
-        locationName = "Marcala / Marcala",
+        regionName = "Marcala",
+        locationName = "Marcala",
         side = "shared",
         location = {
             deg_long = 1,
@@ -1396,7 +1489,8 @@
     },
     {
         group = 1,
-        locationName = "Heedmar / Heedmar",
+        regionName = "Heedmar",
+        locationName = "Heedmar",
         side = "shared",
         location = {
             deg_long = 1,
@@ -1411,7 +1505,8 @@
     },
     {
         group = 1,
-        locationName = "Golden Ruins / Golden Ruins",
+        regionName = "Golden Ruins",
+        locationName = "Golden Ruins",
         side = "shared",
         location = {
             deg_long = 4,
@@ -1426,7 +1521,8 @@
     },
     {
         group = 1,
-        locationName = "Exeloch / Exeloch",
+        regionName = "Exeloch",
+        locationName = "Exeloch",
         side = "shared",
         location = {
             deg_long = 0,
@@ -1441,7 +1537,8 @@
     },
     {
         group = 1,
-        locationName = "Diamond Shores / West housing",
+        regionName = "Diamond Shores",
+        locationName = "West housing",
         side = "west",
         location = {
             deg_long = 2,
@@ -1456,7 +1553,8 @@
     },
     {
         group = 1,
-        locationName = "Diamond Shores / Nuia Rally Point",
+        regionName = "Diamond Shores",
+        locationName = "Nuia Rally Point",
         side = "west",
         location = {
             deg_long = 2,
@@ -1471,7 +1569,8 @@
     },
     {
         group = 1,
-        locationName = "Whalesong Harbor / Crimson Watch Supply Depot",
+        regionName = "Whalesong Harbor",
+        locationName = "Crimson Watch Supply Depot",
         side = "shared",
         location = {
             deg_long = 4,
@@ -1486,7 +1585,8 @@
     },
     {
         group = 1,
-        locationName = "Aegis Island / Crimson Watch Camp",
+        regionName = "Aegis Island",
+        locationName = "Crimson Watch Camp",
         side = "shared",
         location = {
             deg_long = 6,
@@ -1501,7 +1601,8 @@
     },
     {
         group = 1,
-        locationName = "Calmlands / Calmlands",
+        regionName = "Calmlands",
+        locationName = "Calmlands",
         side = "shared",
         location = {
             deg_long = 0,

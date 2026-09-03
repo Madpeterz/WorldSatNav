@@ -5,6 +5,7 @@ local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
 local constants = require("WorldSatNav/core/constants")
 local maprendering = require("WorldSatNav/ui/maprendering")
+local regionmap = require("WorldSatNav/ui/regionmap")
 
 local dawnsdropTypes = {
     ["Logging"] = {
@@ -231,6 +232,79 @@ local function GetPlayerSideKey()
 	return side
 end
 
+-- Returns true when a POI/Teleport entry is reachable by the player, given the
+-- faction filter side ("west"/"east"/nil). "shared" entries and untagged legacy
+-- entries (treated as "west") follow the same rules as RenderTypeLocations.
+local function PoiEntryAllowed(entry, filterSide)
+	if filterSide == nil then
+		return true
+	end
+	local entrySide = entry.side or "west"
+	return entrySide == "shared" or entrySide == filterSide
+end
+
+-- Finds the Teleport POI nearest to targetSextant that sits in the same region as
+-- the target. When applyFilter is true, teleports the player's faction cannot use
+-- are skipped. Returns { regionName, locationName, name (both joined for display),
+-- location = sextant } or nil.
+function dawnsdrop.FindNearestTeleport(targetSextant, applyFilter)
+	if targetSextant == nil then
+		return nil
+	end
+	local _, targetRegion = regionmap.GetRegionForSextant(targetSextant)
+	if targetRegion == nil or targetRegion == "?" then
+		return nil
+	end
+
+	local filterSide = nil
+	if applyFilter then
+		filterSide = GetPlayerSideKey()
+	end
+
+	local targetRegionLower = targetRegion:lower()
+	local locations = LoadLocations(POI_TASK, "Teleports")
+
+	-- Same-region test: trust the entry's stored regionName first (cheap string
+	-- compare), and only fall back to deriving the region from the entry's sextant
+	-- when regionName is missing or doesn't line up (legacy / mistyped entries).
+	local function entryInTargetRegion(entry)
+		local rn = entry.regionName
+		if rn ~= nil and rn ~= "" and rn:lower() == targetRegionLower then
+			return true
+		end
+		local _, entryRegion = regionmap.GetRegionForSextant(entry.location)
+		return entryRegion == targetRegion
+	end
+
+	local best, bestDistSq = nil, math.huge
+	for _, entry in ipairs(locations) do
+		if entry.location ~= nil and PoiEntryAllowed(entry, filterSide) and entryInTargetRegion(entry) then
+			local distSq = helpers.distSqToPlayer(entry.location, targetSextant)
+			if distSq < bestDistSq then
+				best, bestDistSq = entry, distSq
+			end
+		end
+	end
+
+	if best == nil then
+		return nil
+	end
+	local regionName = best.regionName
+	local locationName = best.locationName
+	local name = locationName
+	if regionName ~= nil and regionName ~= "" then
+		name = (locationName ~= nil and locationName ~= "")
+			and (regionName .. " / " .. locationName)
+			or regionName
+	end
+	return {
+		regionName = regionName,
+		locationName = locationName,
+		name = name,
+		location = best.location,
+	}
+end
+
 local function RenderTypeLocations(task, itemType)
 	local locations = LoadLocations(task, itemType)
 	local iconsData = {}
@@ -256,15 +330,13 @@ local function RenderTypeLocations(task, itemType)
 			local texture = "icons/marker1.png"
 			local iconSize = 5
 			if task == POI_TASK then
-				-- Points of Interest markers are tiered by side tag, not by group.
+				-- Points of Interest markers use per-side object icons, not group tiers.
 				iconSize = 8
-				if entrySide == "east" then
-					texture = "icons/marker2.png"
-				elseif entrySide == "shared" then
-					texture = "icons/marker3.png"
-				else
-					texture = "icons/marker1.png" -- west / untagged
+				local objType = entrySide
+				if objType ~= "east" and objType ~= "shared" then
+					objType = "west" -- west / untagged
 				end
+				texture = "icons/tp_orb_" .. objType .. ".png"
 			elseif entry.group == 2 then
 				texture = "icons/marker2.png"
 				iconSize = 8
@@ -373,6 +445,10 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd)
 		if task == POI_TASK then
 			entry.side = DawnsPoiSide
 			entry.locationName = GetPoiLocationName()
+			local _, regionName = regionmap.GetRegionForSextant(clickedSextant)
+			if regionName ~= nil and regionName ~= "?" then
+				entry.regionName = regionName
+			end
 		end
 		table.insert(locations, entry)
 		helpers.DevLog("Added dawnsdrop location to " .. path
