@@ -25,6 +25,7 @@ local defaultSettings = {
     ShowTargetInfoInChat = false,
     AutoGotoNextMap = false,
     NextMapMode = 1, -- 1 = nearest in my region only, 2 = nearest anywhere, 3 = my region first then anywhere
+    TeleportHintFiltered = true, -- Points of Interest hints only show for the player's faction (West=Nuia, East=Haranya, Shared=both)
 
     EnableLocationOutput = false,
     LocationOutputRateLimit = 1000, -- in milliseconds, how often to output player location

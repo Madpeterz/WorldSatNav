@@ -105,7 +105,10 @@ local dawnsdropTypes = {
     },
     ["Mining"] = {
         "Iron Vein",
-    }
+    },
+    ["Points of Interest"] = {
+        "Teleports",
+    },
 }
 
 local dawnsdrop = {}
@@ -119,8 +122,22 @@ local DEV_MODE_BUTTON_IDS = { "dawnsAddModeButton", "dawnsSelectModeButton", "da
 local devModeButtonsBackground = nil
 local markHereButton = nil
 
+-- Points of Interest / Teleports: always selectable, but new entries can only be
+-- added in DEV_MODE. The side-tag row (west / east / shared) tags newly added markers.
+local POI_TASK = "Points of Interest"
+local POI_SIDE_BUTTON_LABELS = { "West only", "East only", "Shared" }
+local POI_SIDE_BUTTON_IDS = { "dawnsPoiWestButton", "dawnsPoiEastButton", "dawnsPoiSharedButton" }
+local POI_SIDE_VALUES = { "west", "east", "shared" }
+local DawnsPoiSide = "shared"
+local poiSideButtonsBackground = nil
+local ShowPoiSideButtons -- forward declaration; assigned below
+
 local function SetDawnsMapMode(mode)
 	DawnsMapMode = mode
+end
+
+local function SetDawnsPoiSide(value)
+	DawnsPoiSide = value
 end
 
 local function GetTaskNames()
@@ -155,27 +172,111 @@ local function LoadLocations(task, itemType)
 	return api.File:Read(path) or {}
 end
 
+-- Player factions on each continent. api.Unit:GetFactionName returns one of these
+-- quoted names, not "Nuia" / "Haranya".
+local FACTION_SIDE = {
+	-- Nuia (West)
+	["dreamwaker exiles"]  = "west", -- Elves (in-game spelling)
+	["dreamwalker exiles"] = "west", -- Elves (alt spelling)
+	["queen's crown"]      = "west", -- Nuians
+	["andelph"]            = "west", -- Dwarves
+	-- Haranya (East)
+	["west ishvaran"]      = "east", -- Harani
+	["wandering winds"]    = "east", -- Firran
+	["repentant shadows"]  = "east", -- Warborn
+}
+
+-- Substring fallbacks, in case GetFactionName returns a variant spelling.
+local FACTION_SIDE_HINTS = {
+	{ "exile", "west" }, { "queen", "west" }, { "andelph", "west" }, { "nuia", "west" },
+	{ "ishvaran", "east" }, { "wandering wind", "east" }, { "repentant", "east" }, { "haranya", "east" },
+}
+
+-- Maps the player's faction to a POI side key: "west" (Nuia) or "east" (Haranya).
+-- Returns nil when the faction is unrecognised (e.g. pirate / player nation) so
+-- filtering fails open rather than hiding every hint.
+local function GetPlayerSideKey()
+	local ok, faction = pcall(function() return api.Unit:GetFactionName("player") end)
+	if not ok or type(faction) ~= "string" then
+		return nil
+	end
+	local f = faction:lower()
+	local side = FACTION_SIDE[f]
+	if side == nil then
+		for _, hint in ipairs(FACTION_SIDE_HINTS) do
+			if f:find(hint[1], 1, true) then
+				side = hint[2]
+				break
+			end
+		end
+	end
+	api.Log:Info("[WorldSatNav] POI faction filter: GetFactionName='" .. tostring(faction) .. "' -> side=" .. tostring(side))
+	return side
+end
+
 local function RenderTypeLocations(task, itemType)
 	local locations = LoadLocations(task, itemType)
 	local iconsData = {}
+
+	-- Points of Interest can be limited to the player's faction:
+	-- West = Nuia, East = Haranya, Shared = both. nil filter = show all.
+	local poiSideFilter = nil
+	if task == POI_TASK and settingsModule.Get("TeleportHintFiltered") ~= false then
+		poiSideFilter = GetPlayerSideKey()
+	end
+	if task == POI_TASK then
+		api.Log:Info("[WorldSatNav] RenderTypeLocations POI: setting="
+			.. tostring(settingsModule.Get("TeleportHintFiltered"))
+			.. " poiSideFilter=" .. tostring(poiSideFilter)
+			.. " entries=" .. tostring(#locations))
+	end
+
 	for _, entry in ipairs(locations) do
-		local texture = "icons/marker1.png"
-		local iconSize = 5
-		if entry.group == 2 then
-			texture = "icons/marker2.png"
-			iconSize = 8
-		elseif entry.group == 3 then
-			texture = "icons/marker3.png"
-			iconSize = 9
+		local entrySide = entry.side or "west" -- untagged legacy entries treated as west
+		local hidden = task == POI_TASK and poiSideFilter ~= nil
+			and entrySide ~= "shared" and entrySide ~= poiSideFilter
+		if not hidden then
+			local texture = "icons/marker1.png"
+			local iconSize = 5
+			if task == POI_TASK then
+				-- Points of Interest markers are tiered by side tag, not by group.
+				iconSize = 8
+				if entrySide == "east" then
+					texture = "icons/marker2.png"
+				elseif entrySide == "shared" then
+					texture = "icons/marker3.png"
+				else
+					texture = "icons/marker1.png" -- west / untagged
+				end
+			elseif entry.group == 2 then
+				texture = "icons/marker2.png"
+				iconSize = 8
+			elseif entry.group == 3 then
+				texture = "icons/marker3.png"
+				iconSize = 9
+			end
+			table.insert(iconsData, {
+				sextant = entry.location,
+				texture = texture,
+				sourceType = itemType,
+	            customIconSize = iconSize,
+			})
 		end
-		table.insert(iconsData, {
-			sextant = entry.location,
-			texture = texture,
-			sourceType = itemType,
-            customIconSize = iconSize,
-		})
 	end
 	eventbus.TriggerEvent(eventtopics.topics.icons.BulkDrawIconsAndRedraw, iconsData)
+end
+
+-- Re-render the icons for whatever task/type is currently selected. Used when an
+-- external change (e.g. the "Teleport hint filtered" setting) affects visibility.
+local function RerenderCurrentSelection()
+	if dawnsdropWindow == nil or not dawnsdropWindow:IsVisible() then
+		return
+	end
+	local task = helpers.getComboBoxValue(dawnsdropWindow.taskCombo)
+	local itemType = helpers.getComboBoxValue(dawnsdropWindow.typeCombo)
+	if task ~= nil and itemType ~= nil then
+		RenderTypeLocations(task, itemType)
+	end
 end
 
 local function OnTaskSelected(task)
@@ -185,6 +286,9 @@ local function OnTaskSelected(task)
 	settingsModule.Update("DawnsLastTask", task)
 	eventbus.TriggerEvent(eventtopics.topics.dawnsdrop.selectTypeChanged, task)
 	PopulateTypeComboBox(task)
+	if ShowPoiSideButtons ~= nil and dawnsdropWindow ~= nil and dawnsdropWindow:IsVisible() then
+		ShowPoiSideButtons(true)
+	end
 end
 
 local function OnTypeSelected(itemType)
@@ -226,6 +330,7 @@ end
 -- Clicking an existing location upgrades its marker tier (1 -> 2 -> 3), and
 -- clicking it again at tier 3 removes it entirely (next click there starts
 -- fresh at tier 1). Clicking empty space adds a new tier-1 location.
+-- Points of Interest have no tiers: clicking an existing one removes it outright.
 -- When alwaysAdd is true (e.g. "Mark here"), always insert a fresh tier-1
 -- location and never merge into or upgrade a nearby one.
 local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd)
@@ -238,7 +343,8 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd)
 	end
 	if closestIndex ~= nil then
 		local entry = locations[closestIndex]
-		if entry.group >= 3 then
+		if task == POI_TASK or entry.group >= 3 then
+			-- Points of Interest have no tier steps: clicking an existing one removes it.
 			table.remove(locations, closestIndex)
 			helpers.DevLog("Removed dawnsdrop location at " .. path)
 		else
@@ -246,8 +352,12 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd)
 			helpers.DevLog("Upgraded dawnsdrop location to group " .. entry.group .. " at " .. path)
 		end
 	else
-		table.insert(locations, { location = clickedSextant, group = 1 })
-		helpers.DevLog("Added dawnsdrop location to " .. path)
+		local entry = { location = clickedSextant, group = 1 }
+		if task == POI_TASK then
+			entry.side = DawnsPoiSide
+		end
+		table.insert(locations, entry)
+		helpers.DevLog("Added dawnsdrop location to " .. path .. (entry.side ~= nil and (" [" .. entry.side .. "]") or ""))
 	end
 	api.File:Write(path, locations)
 	RenderTypeLocations(task, itemType)
@@ -362,6 +472,49 @@ local function CreateDevModeButtons(mapUI)
 		AddOrUpgradeLocation(task, itemType, playerSextant, true)
 	end)
 	markHereButton:Show(false)
+
+	-- Second dev row: side tag for Points of Interest markers. Only shown when
+	-- DEV_MODE is on and the POI task is selected (see ShowPoiSideButtons).
+	local poiRowY = y - 28
+	local poiRowWidth = (#POI_SIDE_BUTTON_LABELS * spacing) + margin + 10
+
+	poiSideButtonsBackground = mapUI:CreateImageDrawable("dawnsdropPoiSideBackground", "background")
+	poiSideButtonsBackground:SetExtent(poiRowWidth * uiScale, 26 * uiScale)
+	poiSideButtonsBackground:AddAnchor("TOPLEFT", mapUI, "TOPLEFT", (margin - 5) * uiScale, (poiRowY - 3) * uiScale)
+	poiSideButtonsBackground:SetTexture(api.baseDir .. "/WorldSatNav/images/mainuibackground3.png")
+	poiSideButtonsBackground:SetColor(1, 1, 1, 0.9)
+	poiSideButtonsBackground:Show(false)
+
+	for index, label in ipairs(POI_SIDE_BUTTON_LABELS) do
+		local id = POI_SIDE_BUTTON_IDS[index]
+		local value = POI_SIDE_VALUES[index]
+		local x = margin + ((index - 1) * spacing)
+		helpers.CreateSkinnedCheckbox(id, mapUI, label, x, poiRowY, value == DawnsPoiSide, function()
+			SetDawnsPoiSide(value)
+		end, nil, nil, "DawnsPoiSide", nil, true)
+		helpers.ToggleCheckboxVisable(id, false)
+	end
+end
+
+local function IsPoiTaskSelected()
+	if dawnsdropWindow == nil or dawnsdropWindow.taskCombo == nil then
+		return false
+	end
+	return helpers.getComboBoxValue(dawnsdropWindow.taskCombo) == POI_TASK
+end
+
+-- Assigns the forward-declared upvalue so callers defined earlier (OnTaskSelected)
+-- can reach it.
+ShowPoiSideButtons = function(visible)
+	if visible and (constants.DEV_MODE ~= true or not IsPoiTaskSelected()) then
+		visible = false
+	end
+	for _, id in ipairs(POI_SIDE_BUTTON_IDS) do
+		helpers.ToggleCheckboxVisable(id, visible)
+	end
+	if poiSideButtonsBackground ~= nil then
+		poiSideButtonsBackground:Show(visible)
+	end
 end
 
 local function ShowDevModeButtons(visible)
@@ -378,6 +531,7 @@ local function ShowDevModeButtons(visible)
 		markHereButton:Show(visible)
 		markHereButton:Enable(visible)
 	end
+	ShowPoiSideButtons(visible)
 end
 
 local function MainUIReady(MainUI)
@@ -416,6 +570,9 @@ function dawnsdrop.RequestDawnsDropForRender()
 	helpers.SetCheckboxState("dawnsSelectModeButton", true)
 	helpers.SetCheckboxState("dawnsAddModeButton", false)
 	helpers.SetCheckboxState("dawnsIgnoreModeButton", false)
+	for index, id in ipairs(POI_SIDE_BUTTON_IDS) do
+		helpers.SetCheckboxState(id, POI_SIDE_VALUES[index] == DawnsPoiSide)
+	end
 	ShowDevModeButtons(true)
 end
 
@@ -446,6 +603,7 @@ function dawnsdrop.OnLoad()
 	eventbus.WatchEvent(eventtopics.topics.render.config, dawnsdrop.HideUI, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.render.dawnsdrop, dawnsdrop.RequestDawnsDropForRender, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.dawnsdrop.mapClick, OnMapClicked, "dawnsdrop")
+	eventbus.WatchEvent(eventtopics.topics.dawnsdrop.refresh, RerenderCurrentSelection, "dawnsdrop")
 	maprendering.RegisterDawnsMapModeProvider(dawnsdrop.GetDawnsMapMode)
 end
 

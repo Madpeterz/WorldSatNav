@@ -28,6 +28,7 @@ function ToggleUIVisibleState(newState)
     helpers.ToggleCheckboxVisable("nextMapModeRegionOnly", newState)
     helpers.ToggleCheckboxVisable("nextMapModeAnywhere", newState)
     helpers.ToggleCheckboxVisable("nextMapModeRegionThenAnywhere", newState)
+    helpers.ToggleCheckboxVisable("teleportHintFiltered", newState)
     helpers.ToggleCheckboxVisable("eventsTrack", newState)
     helpers.ToggleCheckboxVisable("eventsKeep5", newState)
     helpers.ToggleCheckboxVisable("eventsKeep10", newState)
@@ -54,12 +55,16 @@ local function CheckBoxUpdate(checkState, checkboxId)
     elseif checkboxId == "locationEnableShowOnTracking" then SettingName = "EnableShowOnTracking"
     elseif checkboxId == "locationShowTargetInfoInChat" then SettingName = "ShowTargetInfoInChat"
     elseif checkboxId == "locationAutoGotoNextMap" then SettingName = "AutoGotoNextMap"
+    elseif checkboxId == "teleportHintFiltered" then SettingName = "TeleportHintFiltered"
     elseif checkboxId == "eventsTrack" then SettingName = "EnableWorldEvents"
     elseif checkboxId == "eventsAlert" then SettingName = "EnableEventAlerts"
     elseif checkboxId == "DSTOffset" then SettingName = "DSToffset"
     end
     if SettingName ~= nil then
         settingsModule.Update(SettingName, checkState)
+        if checkboxId == "teleportHintFiltered" then
+            eventbus.TriggerEvent(eventtopics.topics.dawnsdrop.refresh)
+        end
     else
         helpers.DevLog("Unknown checkboxId: "..checkboxId)
     end
@@ -127,6 +132,7 @@ function configui.CreateConfigUI(MapUIWindow)
     function(checked)
         if checked == true then settingsModule.Update("NextMapMode", 3) end
     end, nil, nil, "nextMapMode", nil, true)
+    helpers.CreateSkinnedCheckbox("teleportHintFiltered", MapUIWindow, "Teleport hint filtered", 40, 372, settingsModule.Is("TeleportHintFiltered", true), CheckBoxUpdate)
     -- Events [Track events, Keep Events for [5min, 10min, 15mins], alert for events]
     helpers.CreateSkinnedCheckbox("eventsTrack", MapUIWindow, "Track events", 250, 60, settingsModule.Is("EnableWorldEvents", true), CheckBoxUpdate)
 

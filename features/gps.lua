@@ -149,41 +149,41 @@ local function getRelativeDirection(targetBearing, movementBearing)
 	return lastRelativeDirection or newDir
 end
 
--- Update player movement direction from position changes
-local function updateMovementDirection(newPos)
-	if newPos == nil then
+-- Update player movement direction from position changes.
+-- Uses world coordinates from api.Unit:UnitWorldPosition("player"): x = East,
+-- y = North, z = Up, all in game-world meters. This is higher resolution and
+-- updates faster than sextant lon/lat, giving a more stable movement bearing.
+local function updateMovementDirection(x, y)
+	if x == nil or y == nil then
 		return
 	end
 	if prevPlayerPos == nil then
-		prevPlayerPos = newPos
+		prevPlayerPos = {x = x, y = y}
 		return
 	end
-	
-	-- Calculate position differences
-	local prevLon, prevLat = sextantToLonLat(prevPlayerPos)
-	local newLon,  newLat  = sextantToLonLat(newPos)
-	
-	local lonDiff = newLon - prevLon
-	local latDiff = newLat - prevLat
-	
-	-- Very small threshold - any detectable movement
-	local movementThreshold = 0.00001
-	local absLonDiff = math.abs(lonDiff)
-	local absLatDiff = math.abs(latDiff)
+
+	-- Calculate position differences (meters)
+	local eastDiff  = x - prevPlayerPos.x
+	local northDiff = y - prevPlayerPos.y
+
+	-- Very small threshold - any detectable movement, in meters
+	local movementThreshold = 0.05
+	local absEastDiff  = math.abs(eastDiff)
+	local absNorthDiff = math.abs(northDiff)
 
 	-- Detect teleportation: a jump this large cannot be normal movement.
 	-- Reset state instead of injecting a nonsense bearing into the smoothing buffer.
-	local teleportThreshold = 0.1  -- ~10 km in decimal degrees
-	if absLonDiff > teleportThreshold or absLatDiff > teleportThreshold then
-		prevPlayerPos = newPos
+	local teleportThreshold = 500  -- meters
+	if absEastDiff > teleportThreshold or absNorthDiff > teleportThreshold then
+		prevPlayerPos = {x = x, y = y}
 		recentBearings = {}
 		playerMovementDirection = nil
 		return
 	end
 
-	if absLonDiff > movementThreshold or absLatDiff > movementThreshold then
+	if absEastDiff > movementThreshold or absNorthDiff > movementThreshold then
 		-- Calculate bearing of movement
-		local bearing = bearingDeg(lonDiff, latDiff)
+		local bearing = bearingDeg(eastDiff, northDiff)
 
 		-- Add to recent bearings for smoothing
 		table.insert(recentBearings, bearing)
@@ -201,7 +201,7 @@ local function updateMovementDirection(newPos)
 		end
 		playerMovementDirection = bearingDeg(sinSum, cosSum)
 
-		prevPlayerPos = newPos
+		prevPlayerPos = {x = x, y = y}
 	end
 	-- If no significant movement, keep previous direction
 end
@@ -281,7 +281,8 @@ end
 
 --- Update player movement direction (should be called regularly)
 function GPS.updateMovementTracking()
-	updateMovementDirection(api.Map:GetPlayerSextants())
+	local x, y = api.Unit:UnitWorldPosition("player")
+	updateMovementDirection(x, y)
 end
 
 --- Get formatted navigation text showing direction and distance to target

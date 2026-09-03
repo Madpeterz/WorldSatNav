@@ -4,6 +4,7 @@ local eventtopics = {
 			selectTypeChanged = "dawnsdrop.selectType",
 			selectItemChanged = "dawnsdrop.selectItem",
 			mapClick = "dawnsdrop.mapClick",
+			refresh = "dawnsdrop.refresh",
 		},
 		dev = {
 			modeChanged = "dev.modeChanged",
