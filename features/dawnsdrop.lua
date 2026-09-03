@@ -130,7 +130,24 @@ local POI_SIDE_BUTTON_IDS = { "dawnsPoiWestButton", "dawnsPoiEastButton", "dawns
 local POI_SIDE_VALUES = { "west", "east", "shared" }
 local DawnsPoiSide = "shared"
 local poiSideButtonsBackground = nil
+local poiLocationNameInput = nil -- text box on the POI dev row; value stored as entry.locationName
 local ShowPoiSideButtons -- forward declaration; assigned below
+
+-- Current text of the POI location-name box, trimmed; nil when empty/unavailable.
+local function GetPoiLocationName()
+	if poiLocationNameInput == nil or poiLocationNameInput.GetText == nil then
+		return nil
+	end
+	local text = poiLocationNameInput:GetText()
+	if type(text) ~= "string" then
+		return nil
+	end
+	text = text:gsub("^%s+", ""):gsub("%s+$", "")
+	if text == "" then
+		return nil
+	end
+	return text
+end
 
 local function SetDawnsMapMode(mode)
 	DawnsMapMode = mode
@@ -355,9 +372,12 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd)
 		local entry = { location = clickedSextant, group = 1 }
 		if task == POI_TASK then
 			entry.side = DawnsPoiSide
+			entry.locationName = GetPoiLocationName()
 		end
 		table.insert(locations, entry)
-		helpers.DevLog("Added dawnsdrop location to " .. path .. (entry.side ~= nil and (" [" .. entry.side .. "]") or ""))
+		helpers.DevLog("Added dawnsdrop location to " .. path
+			.. (entry.side ~= nil and (" [" .. entry.side .. "]") or "")
+			.. (entry.locationName ~= nil and (" '" .. entry.locationName .. "'") or ""))
 	end
 	api.File:Write(path, locations)
 	RenderTypeLocations(task, itemType)
@@ -473,10 +493,12 @@ local function CreateDevModeButtons(mapUI)
 	end)
 	markHereButton:Show(false)
 
-	-- Second dev row: side tag for Points of Interest markers. Only shown when
-	-- DEV_MODE is on and the POI task is selected (see ShowPoiSideButtons).
+	-- Second dev row: side tag + location-name box for Points of Interest markers.
+	-- Only shown when DEV_MODE is on and the POI task is selected (see ShowPoiSideButtons).
 	local poiRowY = y - 28
-	local poiRowWidth = (#POI_SIDE_BUTTON_LABELS * spacing) + margin + 10
+	local poiNameX = margin + (#POI_SIDE_BUTTON_LABELS * spacing)
+	local poiNameWidth = 200
+	local poiRowWidth = poiNameX + poiNameWidth + 10
 
 	poiSideButtonsBackground = mapUI:CreateImageDrawable("dawnsdropPoiSideBackground", "background")
 	poiSideButtonsBackground:SetExtent(poiRowWidth * uiScale, 26 * uiScale)
@@ -493,6 +515,12 @@ local function CreateDevModeButtons(mapUI)
 			SetDawnsPoiSide(value)
 		end, nil, nil, "DawnsPoiSide", nil, true)
 		helpers.ToggleCheckboxVisable(id, false)
+	end
+
+	poiLocationNameInput = helpers.createTextInput("dawnsPoiLocationNameInput", mapUI, poiNameX, poiRowY,
+		poiNameWidth, 22, "Location name", 60, nil, nil, false, FONT_COLOR.BLACK)
+	if poiLocationNameInput ~= nil then
+		poiLocationNameInput:Show(false)
 	end
 end
 
@@ -514,6 +542,9 @@ ShowPoiSideButtons = function(visible)
 	end
 	if poiSideButtonsBackground ~= nil then
 		poiSideButtonsBackground:Show(visible)
+	end
+	if poiLocationNameInput ~= nil then
+		poiLocationNameInput:Show(visible)
 	end
 end
 
