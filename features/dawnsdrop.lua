@@ -210,7 +210,7 @@ local function GetPlayerSideKey()
 			end
 		end
 	end
-	api.Log:Info("[WorldSatNav] POI faction filter: GetFactionName='" .. tostring(faction) .. "' -> side=" .. tostring(side))
+	helpers.DevLog("POI faction filter: GetFactionName='" .. tostring(faction) .. "' -> side=" .. tostring(side))
 	return side
 end
 
@@ -225,7 +225,7 @@ local function RenderTypeLocations(task, itemType)
 		poiSideFilter = GetPlayerSideKey()
 	end
 	if task == POI_TASK then
-		api.Log:Info("[WorldSatNav] RenderTypeLocations POI: setting="
+		helpers.DevLog("RenderTypeLocations POI: setting="
 			.. tostring(settingsModule.Get("TeleportHintFiltered"))
 			.. " poiSideFilter=" .. tostring(poiSideFilter)
 			.. " entries=" .. tostring(#locations))
