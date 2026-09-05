@@ -931,7 +931,7 @@ local function convertSextantToMapCoordinates(sextant)
 		helpers.DevLog("Cannot convert sextant to map coordinates, sextant is nil")
 		return nil, nil
 	end
-  local renderSettings = { zeroPointX=2514,zeroPointY=979,XCordScale=116.25,YCordScale=116.04}
+  local renderSettings = { zeroPointX=2513,zeroPointY=991,XCordScale=116.44,YCordScale=115.17}
 
 	local long = sextant.longitude
 	local lat = sextant.latitude

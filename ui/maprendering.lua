@@ -19,10 +19,10 @@ function maprendering.RegisterDawnsMapModeProvider(getterFn)
 end
 
 local mapLevels = {
-	{ level = 0, texture = "zoom-0.png", width = 473, height = 507, zoomfactor = 0, zeroPointX=311,zeroPointY=121,XCordScale=14.58,YCordScale=14.50},
-	{ level = 1, texture = "zoom-1.png", width = 948, height = 1017, zoomfactor = 2, zeroPointX=622,zeroPointY=244,XCordScale=29.10,YCordScale=29.06},
-	{ level = 2, texture = "zoom-2.png", width = 1897, height = 2023, zoomfactor = 4, zeroPointX=1246,zeroPointY=489,XCordScale=58.22,YCordScale=58.06},
-	{ level = 3, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 8, zeroPointX=2514,zeroPointY=979,XCordScale=116.25,YCordScale=116.04}
+	{ level = 0, texture = "zoom-0.png", width = 473, height = 507, zoomfactor = 0, zeroPointX=311,zeroPointY=122,XCordScale=14.60,YCordScale=14.40},
+	{ level = 1, texture = "zoom-1.png", width = 948, height = 1017, zoomfactor = 2, zeroPointX=622,zeroPointY=246,XCordScale=29.15,YCordScale=28.84},
+	{ level = 2, texture = "zoom-2.png", width = 1897, height = 2023, zoomfactor = 4, zeroPointX=1245,zeroPointY=495,XCordScale=58.32,YCordScale=57.63},
+	{ level = 3, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 8, zeroPointX=2513,zeroPointY=991,XCordScale=116.44,YCordScale=115.17}
 }
 
 -- Module state
