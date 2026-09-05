@@ -19,34 +19,17 @@ function maprendering.RegisterDawnsMapModeProvider(getterFn)
 end
 
 local mapLevels = {
-	{ level = 0, texture = "zoom-0.png", width = 473, height = 507, zoomfactor = 0, zeroPointX=311,zeroPointY=122,XCordScale=14.59,YCordScale=14.40},
-	-- Virtual level on the level-0 texture: crops it to (zoomfactor+1) = 2,
-	-- half the real level-1 step, giving an intermediate zoom of the same art.
-	-- width/height/zeroPoint/XYCordScale match level 0 (same texture).
-	{ level = 1, texture = "zoom-0.png", width = 473, height = 507, zoomfactor = 1, zeroPointX=311,zeroPointY=122,XCordScale=14.59,YCordScale=14.40},
-	{ level = 2, texture = "zoom-1.png", width = 948, height = 1017, zoomfactor = 2, zeroPointX=622,zeroPointY=246,XCordScale=29.13,YCordScale=28.85},
-	-- Virtual level on the level-2 texture: (zoomfactor+1) = 4, half the real
-	-- 2->4 step, giving an intermediate zoom of the same art.
-	-- width/height/zeroPoint/XYCordScale match level 2 (same texture).
-	{ level = 3, texture = "zoom-1.png", width = 948, height = 1017, zoomfactor = 3, zeroPointX=622,zeroPointY=246,XCordScale=29.13,YCordScale=28.85},
-	{ level = 4, texture = "zoom-2.png", width = 1897, height = 2023, zoomfactor = 4, zeroPointX=1246,zeroPointY=494,XCordScale=58.27,YCordScale=57.65},
-	{ level = 5, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 8, zeroPointX=2515,zeroPointY=989,XCordScale=116.35,YCordScale=115.21},
-	-- Reuses the level-5 texture (same real pixel dimensions and coordinate
-	-- mapping, so width/height/zeroPoint/XYCordScale are unchanged) but crops
-	-- a tighter region of it: (zoomfactor+1) is 1.5x level 5's, giving a 1.5x
-	-- more zoomed-in view of the same art instead of a higher-res image.
-	{ level = 6, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 12.5, zeroPointX=2515,zeroPointY=989,XCordScale=116.35,YCordScale=115.21},
-	-- Second virtual level on the same level-5 texture: crops twice as tight as
-	-- level 6. (zoomfactor+1) = 27 = 2 * level 6's 13.5, so a 2x more zoomed-in
-	-- view of the same art. width/height/zeroPoint/XYCordScale unchanged.
-	{ level = 7, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 26, zeroPointX=2515,zeroPointY=989,XCordScale=116.35,YCordScale=115.21}
+	{ level = 0, texture = "zoom-0.png", width = 473, height = 507, zoomfactor = 0, zeroPointX=311,zeroPointY=121,XCordScale=14.58,YCordScale=14.50},
+	{ level = 1, texture = "zoom-1.png", width = 948, height = 1017, zoomfactor = 2, zeroPointX=622,zeroPointY=244,XCordScale=29.10,YCordScale=29.06},
+	{ level = 2, texture = "zoom-2.png", width = 1897, height = 2023, zoomfactor = 4, zeroPointX=1246,zeroPointY=489,XCordScale=58.22,YCordScale=58.06},
+	{ level = 3, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 8, zeroPointX=2514,zeroPointY=979,XCordScale=116.25,YCordScale=116.04}
 }
 
 -- Module state
 local WorldSatNavState = {
 	zoom = 0,
 	minZoom = 0,
-	maxZoom = 7,
+	maxZoom = 3,
 	mapWindowWidth = 473,
 	mapWindowHeight = 509,
 	UIWindowWidth = 484,

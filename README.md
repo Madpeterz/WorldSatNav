@@ -6,7 +6,7 @@ Even now im still lost
 
 ### Zoom
 
-to zoom in CTRL + mouse wheel up/down to zoom in and out, 4 real zoom textures plus 4 virtual crop levels (8 steps, 0-7) 
+to zoom in CTRL + mouse wheel up/down to zoom in and out, 3 zoom levels and 1 full map
 
 ### Pan
 
@@ -62,8 +62,15 @@ for locations with lots of that type you will get a bigger X
 
 starting with a smaller yellow, then green and finally blue
 
-The location data is an guide not a 100% sextant track, but will get you close
+The MOST location data is a guide not a 100% sextant track, but will get you close
 
+- Exploration
+  - Old Jar (missing some but true locations)
+  - Old relic Container (missing lots but true locations)
+
+- Points of interest
+  - Teleports (true locations, missing alot of east only)
+  
 
 ### Customize your settings
 
@@ -91,10 +98,12 @@ clicking the cog icon will give you the setting menu
   - Show target info in chat (When you start tracking it gives the details of where you're going in chat for just you)
   - Enable Show on trackking (when enabled a show button will appear when tracking to allow you to reopen the map)
   - Auto goto next map (after you pickup a map at that location if there are none left then it will auto click next)
+  - Filter teleport locations (will not suggest you use a teleport for the other side)
   - Next map behavior (which map "Next" / auto goto picks)
     - [A] Nearest (in region) (default - only maps in the region you are standing in, closest first)
     - [B] Nearest (closest map in your bag, ignoring region)
     - [C] A then B (prefer maps in your current region, fall back to the closest anywhere once none are left in region)
+
 
 - Time
   - DST +1 hour forces the clock used to add 60 mins
