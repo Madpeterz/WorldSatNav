@@ -185,7 +185,7 @@ function configui.CreateConfigUI(MapUIWindow)
 
     local timeLabel = helpers.createLabel("timeLabel", MapUIWindow, "Time:", 40, 425, 12)
     table.insert(configElements, timeLabel)
-    helpers.CreateSkinnedCheckbox("DSTOffset", MapUIWindow, "DST +1 hour", 40, 445, settingsModule.Is("DSToffset", 1), CheckBoxUpdate)
+    helpers.CreateSkinnedCheckbox("DSTOffset", MapUIWindow, "DST +1 hour", 40, 445, settingsModule.Is("DSToffset", true), CheckBoxUpdate)
 
     configui.HideConfigUI()
 end
