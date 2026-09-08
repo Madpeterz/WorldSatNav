@@ -145,15 +145,21 @@ function configui.CreateConfigUI(MapUIWindow)
     
     helpers.CreateSkinnedCheckbox("eventsKeep5", MapUIWindow, "5", 250, 135, settingsModule.Is("WorldEventsKeptFor",5), 
     function(checked)
-                    settingsModule.Update("WorldEventsKeptFor", 5)
+        if checked == true then
+            settingsModule.Update("WorldEventsKeptFor", 5)
+        end
                 end, nil, nil, "eventsKeep", nil, true)
     helpers.CreateSkinnedCheckbox("eventsKeep10", MapUIWindow, "10", 300, 135, settingsModule.Is("WorldEventsKeptFor",10), 
     function(checked)
-                    settingsModule.Update("WorldEventsKeptFor", 10)
-                end, nil, nil, "eventsKeep", nil, true)
+        if checked == true then
+            settingsModule.Update("WorldEventsKeptFor", 10)
+        end
+    end, nil, nil, "eventsKeep", nil, true)
     helpers.CreateSkinnedCheckbox("eventsKeep15", MapUIWindow, "15", 350, 135, settingsModule.Is("WorldEventsKeptFor",15), 
     function(checked)
-                    settingsModule.Update("WorldEventsKeptFor", 15)
+        if checked == true then
+            settingsModule.Update("WorldEventsKeptFor", 15)
+        end
                 end, nil, nil, "eventsKeep", nil, true)
 
     local settingPanelDiv = MapUIWindow:CreateImageDrawable("settingPanelDiv", "background")
