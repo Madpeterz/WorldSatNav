@@ -101,9 +101,6 @@ function treasuremaps.GetNextMap()
 		local sextant = SextantFromInfo(info)
 		local _, mapRegionName = regionmap.GetRegionForSextant(sextant)
 		local SextantKey = helpers.SextantKey(sextant)
-		if string.sub(SextantKey, 1, 5) == "W1217" then
-			helpers.DevLog("Found map in inventory with region: " .. tostring(mapRegionName).." "..SextantKey)
-		end
 		mapregioncounters[mapRegionName] = (mapregioncounters[mapRegionName] or 0) + 1
 		gradeBySextantKey[SextantKey] = info.grade
 		table.insert(allMaps, sextant)
