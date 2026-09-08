@@ -40,11 +40,6 @@ function eventbus.WatchEvent(topic, callback, sourceFile)
 end
 
 function eventbus.TriggerEvent(topic, arg1, arg2, arg3, arg4, arg5)
-    arg1 = arg1 or nil
-    arg2 = arg2 or nil
-    arg3 = arg3 or nil
-    arg4 = arg4 or nil
-    arg5 = arg5 or nil
     if eventtopics.HasTopic(topic) == false then
         return false
     end
