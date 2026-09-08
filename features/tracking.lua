@@ -24,6 +24,30 @@ local currentNextButtonCallback = nil
 local EVENT_NEXT_MAP = eventtopics.topics.tracking.nextMap
 local EVENT_NEXT_SHIP = eventtopics.topics.tracking.nextShip
 
+-- Teleport-vs-walk model. Walking straight to the target takes
+-- directDistance / WALK_SPEED_MPS. Teleporting to the nearest same-region
+-- Teleport POI then walking the rest takes TELEPORT_FIXED_COST_S +
+-- poiToTargetDistance / WALK_SPEED_MPS. Break-even: teleport only wins when it
+-- shaves more than TELEPORT_FIXED_COST_S * WALK_SPEED_MPS (~251m) off the walk.
+local WALK_SPEED_MPS = 13.2
+local TELEPORT_FIXED_COST_S = 19 -- 2s load + 9s portal cast + 4s location lookup + 4s buffer
+
+-- Decision computed once, when a new target starts tracking (see
+-- EvaluateTeleportPlan / setTargetGoto). nil = walking straight is at least as
+-- fast, or no usable teleport / distance data.
+local teleportPlan = nil
+
+-- Distance between two sextants in the same "metres" the tracker displays.
+-- coordinates.CalculateDistance returns raw game units; gps.getGPSGuideText
+-- applies a 3.2/3.6 correction to match observed distances, so mirror it here.
+local function MetersBetweenSextants(a, b)
+	local d = coordinates.CalculateDistance(a, b)
+	if d == nil or d == math.huge then
+		return nil
+	end
+	return d * (3.2 / 3.6)
+end
+
 local function NormalizeSextant(sextant)
 	if sextant == nil then
 		return nil
@@ -84,6 +108,7 @@ function tracking.Stop()
 	currentTrackedType = nil
 	currentNextButtonCallback = nil
 	lastArrowDir = ""
+	teleportPlan = nil
 	if TRACK_WINDOW == nil then
 		return
 	end
@@ -207,12 +232,6 @@ local function SetDistanceText(line1, line2)
 	end
 end
 
--- Cache for the nearest-teleport lookup: updateTrackingData runs every tick, but
--- the result only changes when the target sextant or the filter setting change.
--- Without this, dawnsdrop.FindNearestTeleport (and the POI faction filter it calls)
--- re-runs every frame.
-local teleportHintCache = { key = nil, name = nil }
-
 -- Builds the (line1, line2) pair for a teleport hint, wrapping at " / " when long.
 local function TeleportHintLines(name)
 	local hint = "teleport: " .. name
@@ -224,6 +243,41 @@ local function TeleportHintLines(name)
 		return hint, nil
 	end
 	return "teleport: " .. region .. " /", place
+end
+
+-- Runs once per new target (setTargetGoto). Picks the nearest same-region
+-- Teleport POI and compares "teleport then walk the rest" against "walk straight
+-- there". Sets teleportPlan only when teleporting is strictly faster.
+local function EvaluateTeleportPlan()
+	teleportPlan = nil
+	if targetSextant == nil or not settings.Get("UseTeleportHint") then
+		return
+	end
+	local directM = MetersBetweenSextants(api.Map:GetPlayerSextants(), targetSextant)
+	if directM == nil then
+		return
+	end
+	local filtered = settings.Get("TeleportHintFiltered") ~= false
+	local teleport = dawnsdrop.FindNearestTeleport(targetSextant, filtered)
+	if teleport == nil or teleport.location == nil then
+		return
+	end
+	local poiToTargetM = MetersBetweenSextants(teleport.location, targetSextant)
+	if poiToTargetM == nil then
+		return
+	end
+	local walkSeconds = directM / WALK_SPEED_MPS
+	local teleportSeconds = TELEPORT_FIXED_COST_S + (poiToTargetM / WALK_SPEED_MPS)
+	if teleportSeconds >= walkSeconds then
+		helpers.DevLog(string.format(
+			"Teleport plan: walk %.0fm (%.0fs) beats teleport via '%s' (%.0fs) - no hint",
+			directM, walkSeconds, tostring(teleport.name), teleportSeconds))
+		return
+	end
+	teleportPlan = { name = teleport.name, savedSeconds = walkSeconds - teleportSeconds }
+	helpers.DevLog(string.format(
+		"Teleport plan: teleport via '%s' saves %.0fs vs walking %.0fm",
+		tostring(teleport.name), teleportPlan.savedSeconds, directM))
 end
 
 local function updateTrackingData()
@@ -258,12 +312,12 @@ local function updateTrackingData()
 		end
 	end
 
-	local useTeleport = false
-	if regionNamePlayer ~= "?" and regionNameTarget ~= "?" then
-		if regionNamePlayer ~= regionNameTarget then
-			useTeleport = true
-		end
-	end
+	-- teleportPlan is decided once per target in EvaluateTeleportPlan. Suppress the
+	-- hint once we're in the target's region (i.e. after the teleport has happened)
+	-- so the last leg shows a live walking distance instead.
+	local sameRegion = regionNamePlayer ~= "?" and regionNameTarget ~= "?"
+		and regionNamePlayer == regionNameTarget
+	local useTeleport = teleportPlan ~= nil and not sameRegion
 	if targetName == nil then
 		targetName = "undefined"
 	end
@@ -289,16 +343,9 @@ local function updateTrackingData()
 	end
 	local navDir, navDistance, navDistanceScale, bearing, relativeDir = gps.getNavigationText(targetSextant)
 	
-	if useTeleport and settings.Get("UseTeleportHint") and navDistanceScale ~= "m" then
-		local filtered = settings.Get("TeleportHintFiltered") ~= false
-		local cacheKey = helpers.SextantKey(targetSextant) .. (filtered and "|f" or "|a")
-		if teleportHintCache.key ~= cacheKey then
-			local teleport = dawnsdrop.FindNearestTeleport(targetSextant, filtered)
-			teleportHintCache.key = cacheKey
-			teleportHintCache.name = (teleport ~= nil and teleport.name) or nil
-		end
-		if teleportHintCache.name ~= nil and teleportHintCache.name ~= "" then
-			SetDistanceText(TeleportHintLines(teleportHintCache.name))
+	if useTeleport and navDistanceScale ~= "m" then
+		if teleportPlan.name ~= nil and teleportPlan.name ~= "" then
+			SetDistanceText(TeleportHintLines(teleportPlan.name))
 		else
 			SetDistanceText("teleport to " .. regionNameTarget)
 		end
@@ -470,6 +517,8 @@ function tracking.setTargetGoto(sextant, name, ShowMapMarker, displayName)
 		tracking.AssignNextButton(nil, nil)
 	end
 	helpers.DevLog("Target set to sextant: " .. helpers.SextantKey(normalizedSextant) .. " with name: " .. tostring(name))
+	-- Decide teleport-vs-walk once here, not every frame in updateTrackingData.
+	EvaluateTeleportPlan()
 	if settings.Get("ShowTargetInfoInChat") == true then
 		local _, regionName = regionmap.GetRegionForSextant(normalizedSextant)
 		api.Chat:DispatchChatMessage(4, "[WorldSatNav] Tracking target set to: " .. tostring(targetName).. " at " .. helpers.FormatSextant(normalizedSextant).." in region: " .. tostring(regionName))
@@ -482,6 +531,11 @@ function tracking.forceInventoryUpdateForTracking(...)
 		return
 	end
 	if targetSextant == nil then
+		return
+	end
+	-- If the user closed the tracking window, a bag update must not silently
+	-- re-open it via the auto-next-map path below.
+	if TRACK_WINDOW == nil or not TRACK_WINDOW:IsVisible() then
 		return
 	end
 	local removedItemName, arg2, actionType, arg4, arg5 = ...
