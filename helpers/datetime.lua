@@ -422,6 +422,12 @@ function datetime.ParseDateTimeToUnixtime(dateText, timeText)
     if hour == nil then
         return nil, "Time format must be HH:MM or HH:MM:SS."
     end
+    hour = tonumber(hour)
+    min = tonumber(min)
+    sec = tonumber(sec)
+    if hour == nil or min == nil or sec == nil then
+        return nil, "Time format must be HH:MM or HH:MM:SS."
+    end
     if settingsModule.Get("DSToffset") == true then
          hour = hour - 1
     end
