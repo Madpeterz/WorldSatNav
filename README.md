@@ -6,7 +6,7 @@ Even now im still lost
 
 ### Zoom
 
-to zoom in CTRL + mouse wheel up/down to zoom in and out, 3 zoom levels and 1 full map
+to zoom in CTRL + mouse wheel up/down to zoom in and out, 1 full map plus 4 zoom levels (the deepest is a 2x virtual upscale of the last texture)
 
 ### Pan
 
