@@ -122,14 +122,20 @@ local DawnsMapMode = "Select"
 -- Types whose stored data is accurate enough to guide to directly (ships-style):
 -- clicking one starts tracking the nearest, and the tracker gets a "Next nearest"
 -- button that cycles through the rest, marking each visited (hidden) as you go.
+--   true = stay visited until the type is reselected or the addon reloads
+--   <number> = stay visited for that many minutes, then the marker returns
 local GUIDED_TYPES = {
-	["Old Jar"] = true,
+	["Old Jar"] = 15,
 	["Old Relic Container"] = true,
 }
 local GUIDED_HIGHLIGHT_TEXTURE = "icons/marker3.png"
-local guidedLocations = {}   -- { {sextant=, key=}, ... } for the currently rendered guided type
-local guidedActiveType = nil -- "task/itemType" id of the set held in guidedLocations/visitedGuided
-local visitedGuided = {}     -- SextantKey -> true, cleared when the guided type changes
+local guidedLocations = {}       -- { {sextant=, key=}, ... } for the currently rendered guided type
+local guidedActiveType = nil     -- "task/itemType" id of the set held in guidedLocations/visitedGuided
+local guidedActiveItemType = nil -- bare itemType of that set, for GUIDED_TYPES TTL lookups
+-- SextantKey -> visited state, cleared when the guided type changes. Value is
+-- `true` for a permanent visit, or a unix expiry timestamp (seconds) for a timed
+-- one; isGuidedVisited drops the entry once that timestamp passes.
+local visitedGuided = {}
 local lastGuidedSextant = nil
 local lastGuidedLabel = nil
 
@@ -309,7 +315,45 @@ function dawnsdrop.FindNearestTeleport(targetSextant, applyFilter)
 end
 
 local function IsGuidedType(itemType)
-	return itemType ~= nil and GUIDED_TYPES[itemType] == true
+	if itemType == nil then
+		return false
+	end
+	local mode = GUIDED_TYPES[itemType]
+	return mode == true or type(mode) == "number"
+end
+
+-- Marks a guided location visited. A numeric GUIDED_TYPES entry stores an expiry
+-- timestamp so the marker comes back after that many minutes; anything else
+-- stores `true` and stays hidden until the type changes or the addon reloads.
+local function markGuidedVisited(key)
+	local mode = GUIDED_TYPES[guidedActiveItemType]
+	if type(mode) == "number" then
+		local now = tonumber(helpers.GetCurrentTimestamp())
+		visitedGuided[key] = now ~= nil and (now + mode * 60) or true
+	else
+		visitedGuided[key] = true
+	end
+end
+
+-- True while `key` should stay hidden. Lazily forgets an expired timed visit so
+-- the next render brings its marker back.
+local function isGuidedVisited(key)
+	local state = visitedGuided[key]
+	if state == nil then
+		return false
+	end
+	if state == true then
+		return true
+	end
+	local now = tonumber(helpers.GetCurrentTimestamp())
+	if now == nil then
+		return true -- no clock to judge expiry; keep it hidden for now
+	end
+	if now >= state then
+		visitedGuided[key] = nil
+		return false
+	end
+	return true
 end
 
 local function RenderTypeLocations(task, itemType)
@@ -324,6 +368,7 @@ local function RenderTypeLocations(task, itemType)
 		local setId = tostring(task) .. "/" .. tostring(itemType)
 		if setId ~= guidedActiveType then
 			guidedActiveType = setId
+			guidedActiveItemType = itemType
 			visitedGuided = {}
 			lastGuidedSextant = nil
 			lastGuidedLabel = itemType
@@ -350,7 +395,7 @@ local function RenderTypeLocations(task, itemType)
 		local entryKey = helpers.SextantKey(entry.location)
 		local hidden = task == POI_TASK and poiSideFilter ~= nil
 			and entrySide ~= "shared" and entrySide ~= poiSideFilter
-		if guided and visitedGuided[entryKey] then
+		if guided and isGuidedVisited(entryKey) then
 			hidden = true -- already looted this run; drop it like ships drop visited ships
 		end
 		if not hidden then
@@ -692,6 +737,7 @@ end
 -- the map while still in dawnsdrop mode must NOT reset it.
 local function ResetGuidedState()
 	guidedActiveType = nil
+	guidedActiveItemType = nil
 	guidedLocations = {}
 	visitedGuided = {}
 	lastGuidedSextant = nil
@@ -769,13 +815,13 @@ function dawnsdrop.GetNextGuided()
 		api.Log:Info("WorldSatNav: No guided location selected")
 		return
 	end
-	visitedGuided[helpers.SextantKey(lastGuidedSextant)] = true
+	markGuidedVisited(helpers.SextantKey(lastGuidedSextant))
 	eventbus.TriggerEvent(eventtopics.topics.icons.clearIcon, lastGuidedSextant, "DawnsGuided")
 
 	local playerSextant = api.Map:GetPlayerSextants()
 	local best, bestDistSq = nil, nil
 	for _, loc in ipairs(guidedLocations) do
-		if not visitedGuided[loc.key] then
+		if not isGuidedVisited(loc.key) then
 			local distSq = helpers.distSqToPlayer(loc.sextant, playerSextant)
 			if bestDistSq == nil or distSq < bestDistSq then
 				bestDistSq, best = distSq, loc
