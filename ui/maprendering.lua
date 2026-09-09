@@ -1054,7 +1054,7 @@ function maprendering.OnUpdate(dt)
             dx = dx * (scrollFactor/4)
             dy = dy * (scrollFactor/4)
             WorldSatNavState.scrollX = WorldSatNavState.scrollX - dx
-            WorldSatNavState.scrollY = WorldSatNavState.scrollY + dy
+            WorldSatNavState.scrollY = WorldSatNavState.scrollY - dy
             ApplyMapView()
             WorldSatNavState.lastMouseX = mouseX
             WorldSatNavState.lastMouseY = mouseY
