@@ -966,9 +966,6 @@ GetCurrentPosition = function()
 	return cachedPosition
 end
 
-local lastupdate = 0
-
-
 function maprendering.GetCurrentMode()
 	return currentMapMode
 end
@@ -1041,12 +1038,7 @@ function maprendering.RequestModeRedraw()
 	UpdateMapMode(currentMapMode)
 end
 
-function maprendering.OnUpdate(dt)
-    lastupdate = lastupdate + dt
-    if lastupdate < (constants.timing.updateRate/4) then
-        return
-    end
-    lastupdate = 0
+local function renderTick(dt)
     if not maprendering.MapUI or not maprendering.MapUI.mapImage then
         return
     end
@@ -1074,6 +1066,8 @@ function maprendering.OnUpdate(dt)
     end
 	maprendering.TriggerMapRedraw()
 end
+
+maprendering.OnUpdate = helpers.throttle(constants.timing.fastPoll, renderTick)
 
 
 local function FocusOnMe()

@@ -2,6 +2,10 @@
 -- Central location for all magic numbers and configuration values
 local api = require("api")
 
+-- Base cadence for the addon's periodic work. Every per-feature interval below is
+-- derived from this so a single knob retunes the whole update loop.
+local updateRate = 325
+
 local Constants = {
 	-- Map center point and coordinate conversion
 	DEV_MODE = false,  -- Set to true to enable dev/debug UI controls and test data
@@ -18,8 +22,15 @@ local Constants = {
 	folderPath = api.baseDir .. "/WorldSatNav/",
 	
 	timing = {
-		updateRate = 325, -- Update timing (in milliseconds)
+		updateRate = updateRate, -- Update timing (in milliseconds)
 		demoExpireTime = 1800, -- Time after which demo events expire (in seconds) (currently set to 30 minutes)
+
+		-- Per-feature onUpdate cadences, in milliseconds. Consumed via helpers.throttle.
+		fastPoll = updateRate / 4,        -- ~81ms: GPS movement tracking, map render tick
+		trackingPoll = updateRate / 1.25, -- 260ms: tracking window data refresh
+		demoAutohidePoll = updateRate * 2, -- 650ms: demo "+" button auto-hide check
+		demoExpirePoll = updateRate * 30,  -- 9750ms: demo expiry + alert sweep
+		eventExpirePoll = 30000,           -- world-event expiry sweep
 	},
 	
 	-- Game-specific constants

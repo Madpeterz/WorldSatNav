@@ -4,6 +4,7 @@
 local api = require("api")
 local coordinates = require("WorldSatNav/core/coordinates")
 local constants = require("WorldSatNav/core/constants")
+local helpers = require("WorldSatNav/helpers")
 
 local GPS = {}
 
@@ -327,14 +328,8 @@ function GPS.GetRelativeDirectionToTarget(targetSextant)
 	return relativeDir
 end
 
-local lastUpdate = 0
-function GPS.onUpdate(dt)
-	lastUpdate = lastUpdate + dt
-	if lastUpdate < (constants.timing.updateRate/4) then
-		return
-	end
-    lastUpdate = 0
+GPS.onUpdate = helpers.throttle(constants.timing.fastPoll, function()
 	GPS.updateMovementTracking()
-end
+end)
 
 return GPS

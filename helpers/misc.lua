@@ -18,4 +18,23 @@ function misc.iterateTreasureMaps(callback)
     end
 end
 
+--- Wrap fn so it only runs once `intervalMs` of accumulated dt has passed.
+-- The returned function takes (dt, ...) and forwards every arg to fn when it
+-- fires. The accumulator resets to 0 on fire, matching the hand-rolled throttles
+-- these replace (no carry-over of the overshoot).
+-- @param intervalMs number minimum milliseconds between calls to fn
+-- @param fn function the work to throttle
+-- @return function drop-in onUpdate handler
+function misc.throttle(intervalMs, fn)
+    local elapsed = 0
+    return function(dt, ...)
+        elapsed = elapsed + (dt or 0)
+        if elapsed < intervalMs then
+            return
+        end
+        elapsed = 0
+        return fn(dt, ...)
+    end
+end
+
 return misc

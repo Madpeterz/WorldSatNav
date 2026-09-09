@@ -120,15 +120,7 @@ local function ExpireOldEvents()
     end
 end
 
-local expireTicker = 0
-function worldevents.onUpdate(dt)
-    expireTicker = expireTicker + dt
-    if expireTicker < 30000 then
-        return
-    end
-    expireTicker = 0
-    ExpireOldEvents()
-end
+worldevents.onUpdate = helpers.throttle(constants.timing.eventExpirePoll, ExpireOldEvents)
 
 function worldevents.RequestEventsForRender()
     ExpireOldEvents()

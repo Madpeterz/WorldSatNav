@@ -209,7 +209,7 @@ local function UpdateSharedData(dt)
 		location = api.Map:GetPlayerSextants(),
 		updateTicker = updateTicker
 	}
-	api.File:Write("WorldSatNav/Data/"..settings.Get("LocationOutputFile"), writeFile)
+	api.File:Write("WorldSatNav/data/"..settings.Get("LocationOutputFile"), writeFile)
 	if updateTicker > 10000 then
 		updateTicker = 0 -- reset ticker every 10 seconds to prevent overflow, just a helper so you can see file updates even if time has not changed
 	end
@@ -595,16 +595,10 @@ function tracking.forceInventoryUpdateForTracking(...)
 	end
 end
 
-local lastUpdate = 0
+local throttledTrackingData = helpers.throttle(constants.timing.trackingPoll, updateTrackingData)
 function tracking.onUpdate(dt)
 	UpdateSharedData(dt)
-	lastUpdate = lastUpdate + dt
-	if lastUpdate < (constants.timing.updateRate/1.25) then
-		return
-	end
-    lastUpdate = 0
-	updateTrackingData()
-
+	throttledTrackingData(dt)
 end
 
 function tracking.OnLoad()

@@ -392,22 +392,14 @@ local function DEMO_AUTOHIDE_PLUS()
 	end
 end
 
-local lastUpdate = 0
-local lastUpdateLongRunning = 0
-function demos.onUpdate(dt)
-	lastUpdate = lastUpdate + dt
-	lastUpdateLongRunning = lastUpdateLongRunning + dt
-	if lastUpdate < (constants.timing.updateRate*2) then
-		return
-	end
-    lastUpdate = 0
-	DEMO_AUTOHIDE_PLUS()
-	if lastUpdateLongRunning < (constants.timing.updateRate*30) then
-		return
-	end
-	lastUpdateLongRunning = 0
+local throttledAutohide = helpers.throttle(constants.timing.demoAutohidePoll, DEMO_AUTOHIDE_PLUS)
+local throttledExpireSweep = helpers.throttle(constants.timing.demoExpirePoll, function()
 	DEMO_EXPIRE()
 	DEMO_TRIGGER_ALERT()
+end)
+function demos.onUpdate(dt)
+	throttledAutohide(dt)
+	throttledExpireSweep(dt)
 end
 
 -- Pull the owner name out of the target unit frame's tooltip text, which reads
