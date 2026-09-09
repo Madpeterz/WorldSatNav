@@ -128,6 +128,10 @@ local function handleTrackClick()
     if activeAlert == nil then
         return
     end
+    if activeAlert.payload == nil or activeAlert.payload.sextant == nil then
+        helpers.DevLog("No sextant data available for tracking")
+        return
+    end
     eventbus.TriggerEvent(eventtopics.topics.tracking.start, activeAlert.payload.sextant, activeAlert.title, true)
     alertwindow.HideAlert()
 end

@@ -903,7 +903,7 @@ local function is_better_shape(shape, best_shape)
     return shape.name < best_shape.name
 end
 
-local function getShapeAt(x, y)
+local function computeShapeAt(x, y)
     local best_shape = nil
 
     for _, shape in ipairs(shapesData) do
@@ -922,6 +922,56 @@ local function getShapeAt(x, y)
     end
 
     return "?"
+end
+
+-- Memoized wrapper for computeShapeAt. The query is a pure function of the
+-- quantized (x, y) cell, so entries never go stale; they are only dropped once
+-- they have gone untouched for SHAPE_CACHE_TTL seconds. Player movement produces
+-- a bounded set of live cells; static sextants (targets, map/demo/dawn lists)
+-- stay resident and skip the polygon math entirely.
+local SHAPE_CACHE_TTL = 10
+local SHAPE_CACHE_MAX = 500
+local shapeCache = {}
+local shapeCacheCount = 0
+local shapeCacheLastSweep = 0
+
+local function sweepShapeCache(now)
+    local kept = {}
+    local keptCount = 0
+    for key, entry in pairs(shapeCache) do
+        if (now - entry.touched) <= SHAPE_CACHE_TTL then
+            kept[key] = entry
+            keptCount = keptCount + 1
+        end
+    end
+    shapeCache = kept
+    shapeCacheCount = keptCount
+    shapeCacheLastSweep = now
+end
+
+local function getShapeAt(x, y)
+    local now = tonumber(helpers.GetCurrentTimestamp())
+    if now == nil then
+        -- No usable clock: skip caching so a bad timestamp can't pin stale data.
+        return computeShapeAt(x, y)
+    end
+
+    local key = math.floor(x) .. "," .. math.floor(y)
+    local entry = shapeCache[key]
+    if entry ~= nil then
+        entry.touched = now
+        return entry.value
+    end
+
+    local value = computeShapeAt(x, y)
+    shapeCache[key] = { value = value, touched = now }
+    shapeCacheCount = shapeCacheCount + 1
+
+    if (now - shapeCacheLastSweep) >= SHAPE_CACHE_TTL or shapeCacheCount > SHAPE_CACHE_MAX then
+        sweepShapeCache(now)
+    end
+
+    return value
 end
 
 

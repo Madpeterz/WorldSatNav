@@ -7,7 +7,7 @@ local configui = {}
 
 local configElements = {}
 
-function ToggleUIVisibleState(newState)
+local function ToggleUIVisibleState(newState)
     for _, element in pairs(configElements) do
         if element and element:IsVisible() ~= newState then
             element:Show(newState)
