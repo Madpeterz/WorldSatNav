@@ -23,6 +23,7 @@ local currentTrackedType = nil
 local currentNextButtonCallback = nil
 local EVENT_NEXT_MAP = eventtopics.topics.tracking.nextMap
 local EVENT_NEXT_SHIP = eventtopics.topics.tracking.nextShip
+local EVENT_NEXT_GUIDED = eventtopics.topics.tracking.nextGuided
 
 -- Teleport-vs-walk model. Walking straight to the target takes
 -- directDistance / WALK_SPEED_MPS. Teleporting to the nearest same-region
@@ -89,6 +90,10 @@ end
 
 local function InvokeNextShipCallback()
 	eventbus.TriggerEvent(EVENT_NEXT_SHIP)
+end
+
+local function InvokeNextGuidedCallback()
+	eventbus.TriggerEvent(EVENT_NEXT_GUIDED)
 end
 
 function tracking.IsActive()
@@ -512,6 +517,9 @@ function tracking.setTargetGoto(sextant, name, ShowMapMarker, displayName)
 	elseif name == "Ship" then
 		helpers.DevLog("Assigning next button to ship callback")
 		tracking.AssignNextButton("Ship", InvokeNextShipCallback)
+	elseif name == "Dawns" then
+		helpers.DevLog("Assigning next button to guided dawnsdrop callback")
+		tracking.AssignNextButton("point", InvokeNextGuidedCallback)
 	else
 		helpers.DevLog("No valid target type provided for next button callback, hiding next button")
 		tracking.AssignNextButton(nil, nil)
@@ -603,6 +611,7 @@ function tracking.OnLoad()
     TRACK_WINDOW = createTrackUI(nil)
 	eventbus.WatchEvent(eventtopics.topics.tracking.custom, tracking.setTargetGoto, "tracking")
 	eventbus.WatchEvent(eventtopics.topics.tracking.start, tracking.setTargetGoto, "tracking")
+	eventbus.WatchEvent(eventtopics.topics.tracking.stop, tracking.Stop, "tracking")
 	eventbus.WatchEvent(eventtopics.topics.bag.itemRemoved, tracking.forceInventoryUpdateForTracking, "tracking")
 end
 

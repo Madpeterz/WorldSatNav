@@ -22,14 +22,19 @@ local mapLevels = {
 	{ level = 0, texture = "zoom-0.png", width = 473, height = 507, zoomfactor = 0, zeroPointX=311,zeroPointY=122,XCordScale=14.60,YCordScale=14.40},
 	{ level = 1, texture = "zoom-1.png", width = 948, height = 1017, zoomfactor = 2, zeroPointX=622,zeroPointY=246,XCordScale=29.15,YCordScale=28.84},
 	{ level = 2, texture = "zoom-2.png", width = 1897, height = 2023, zoomfactor = 4, zeroPointX=1245,zeroPointY=495,XCordScale=58.32,YCordScale=57.63},
-	{ level = 3, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 8, zeroPointX=2513,zeroPointY=991,XCordScale=116.44,YCordScale=115.17}
+	{ level = 3, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 8, zeroPointX=2513,zeroPointY=991,XCordScale=116.44,YCordScale=115.17},
+	-- Virtual level: no dedicated texture. Reuses zoom-3.png but halves the view
+	-- crop (zoomfactor 17 -> viewWidth 3819/18 = 212, exactly half of level 3's
+	-- 424), so it renders as a 2x upscale of level 3. zeroPoint/CordScale must
+	-- match level 3 since the underlying texture pixels are the same.
+	{ level = 4, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 17, zeroPointX=2513,zeroPointY=991,XCordScale=116.44,YCordScale=115.17}
 }
 
 -- Module state
 local WorldSatNavState = {
 	zoom = 0,
 	minZoom = 0,
-	maxZoom = 3,
+	maxZoom = 4,
 	mapWindowWidth = 473,
 	mapWindowHeight = 509,
 	UIWindowWidth = 484,
@@ -140,12 +145,18 @@ local function SelectActiveMapIcon(icon)
 		if icon.grade ~= nil then
 			displayName = displayName .. " [" .. icon.grade .. "]"
 		end
+	elseif icon.sourceType == "DawnsGuided" and icon.label ~= nil then
+		displayName = icon.label
 	end
 	if icon.sourceType == "Ship" then
 		-- SelectShipBySextant already triggers tracking.custom for the target;
 		-- also firing tracking.start here would run setTargetGoto twice.
 		helpers.DevLog("Publishing ship select by sextant event")
 		eventbus.TriggerEvent(TOPICS.ships.selectBySextant, icon.sextant, true, displayName)
+	elseif icon.sourceType == "DawnsGuided" then
+		-- Same reasoning as ships: dawnsdrop republishes tracking.custom itself.
+		helpers.DevLog("Publishing dawnsdrop guided select by sextant event")
+		eventbus.TriggerEvent(TOPICS.dawnsdrop.selectBySextant, icon.sextant, true, displayName)
 	else
 		helpers.DevLog("Selected icon source type is not Ship")
 		helpers.DevLog("Publishing icon click event for sourceType: "..tostring(icon.sourceType))
@@ -384,7 +395,7 @@ local function HideAllIcons()
 	end
 end
 
-function maprendering.CreateIconAttachedToMap(sextant, withTexturePath, sourceType, customIconSize, count, grade)
+function maprendering.CreateIconAttachedToMap(sextant, withTexturePath, sourceType, customIconSize, count, grade, label)
 	local icon = findOrCreateIcon(withTexturePath, customIconSize)
 	if not icon then
 		helpers.DevLog("Failed to create or find icon for texture: " .. withTexturePath)
@@ -393,6 +404,7 @@ function maprendering.CreateIconAttachedToMap(sextant, withTexturePath, sourceTy
 	icon.sourceType = sourceType
 	icon.count = count
 	icon.grade = grade
+	icon.label = label
 	AttachDrawableIcon(icon, sextant, maprendering.MapUI.mapImage)
 	return icon
 end
@@ -1245,7 +1257,7 @@ local function BulkDrawIcons(iconsData)
 	iconsData = iconsData or {}
 	helpers.DevLog("Received request to bulk draw icons, count: " .. tostring(#iconsData))
 	for _, iconData in pairs(iconsData) do
-		maprendering.CreateIconAttachedToMap(iconData.sextant, iconData.texture, iconData.sourceType, iconData.customIconSize, iconData.count, iconData.grade)
+		maprendering.CreateIconAttachedToMap(iconData.sextant, iconData.texture, iconData.sourceType, iconData.customIconSize, iconData.count, iconData.grade, iconData.label)
 	end
 	-- Do not request a full mode redraw here: that path clears icons and republishes render events.
 	WorldSatNavState.LastRenderConfig.iconsversion = false

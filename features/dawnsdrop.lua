@@ -118,6 +118,21 @@ local dawnsdropWindow = nil
 local TYPE_LABEL = ">"
 
 local DawnsMapMode = "Select"
+
+-- Types whose stored data is accurate enough to guide to directly (ships-style):
+-- clicking one starts tracking the nearest, and the tracker gets a "Next nearest"
+-- button that cycles through the rest, marking each visited (hidden) as you go.
+local GUIDED_TYPES = {
+	["Old Jar"] = true,
+	["Old Relic Container"] = true,
+}
+local GUIDED_HIGHLIGHT_TEXTURE = "icons/marker3.png"
+local guidedLocations = {}   -- { {sextant=, key=}, ... } for the currently rendered guided type
+local guidedActiveType = nil -- "task/itemType" id of the set held in guidedLocations/visitedGuided
+local visitedGuided = {}     -- SextantKey -> true, cleared when the guided type changes
+local lastGuidedSextant = nil
+local lastGuidedLabel = nil
+
 local DEV_MODE_BUTTON_LABELS = { "Add", "Select", "Ignore" }
 local DEV_MODE_BUTTON_IDS = { "dawnsAddModeButton", "dawnsSelectModeButton", "dawnsIgnoreModeButton" }
 local devModeButtonsBackground = nil
@@ -305,9 +320,29 @@ function dawnsdrop.FindNearestTeleport(targetSextant, applyFilter)
 	}
 end
 
+local function IsGuidedType(itemType)
+	return itemType ~= nil and GUIDED_TYPES[itemType] == true
+end
+
 local function RenderTypeLocations(task, itemType)
 	local locations = LoadLocations(task, itemType)
 	local iconsData = {}
+
+	-- Guided types track ships-style: keep a live list of their locations, reset
+	-- the visited set when the selected type changes, and paint the active one
+	-- with the highlight texture.
+	local guided = IsGuidedType(itemType)
+	if guided then
+		local setId = tostring(task) .. "/" .. tostring(itemType)
+		if setId ~= guidedActiveType then
+			guidedActiveType = setId
+			visitedGuided = {}
+			lastGuidedSextant = nil
+			lastGuidedLabel = itemType
+		end
+		guidedLocations = {}
+	end
+	local selectedKey = lastGuidedSextant ~= nil and helpers.SextantKey(lastGuidedSextant) or nil
 
 	-- Points of Interest can be limited to the player's faction:
 	-- West = Nuia, East = Haranya, Shared = both. nil filter = show all.
@@ -324,8 +359,12 @@ local function RenderTypeLocations(task, itemType)
 
 	for _, entry in ipairs(locations) do
 		local entrySide = entry.side or "west" -- untagged legacy entries treated as west
+		local entryKey = helpers.SextantKey(entry.location)
 		local hidden = task == POI_TASK and poiSideFilter ~= nil
 			and entrySide ~= "shared" and entrySide ~= poiSideFilter
+		if guided and visitedGuided[entryKey] then
+			hidden = true -- already looted this run; drop it like ships drop visited ships
+		end
 		if not hidden then
 			local texture = "icons/marker1.png"
 			local iconSize = 5
@@ -344,11 +383,19 @@ local function RenderTypeLocations(task, itemType)
 				texture = "icons/marker3.png"
 				iconSize = 9
 			end
+			if guided then
+				guidedLocations[#guidedLocations + 1] = { sextant = entry.location, key = entryKey }
+				if selectedKey ~= nil and entryKey == selectedKey then
+					texture = GUIDED_HIGHLIGHT_TEXTURE
+					iconSize = 10
+				end
+			end
 			table.insert(iconsData, {
 				sextant = entry.location,
 				texture = texture,
-				sourceType = itemType,
+				sourceType = guided and "DawnsGuided" or itemType,
 	            customIconSize = iconSize,
+				label = guided and itemType or nil,
 			})
 		end
 	end
@@ -652,6 +699,23 @@ local function MainUIReady(MainUI)
 	CreateDevModeButtons(MainUI)
 end
 
+-- Wipe guided-tracking progress. Fired when the map mode changes away from
+-- dawnsdrop, so the next entry starts the "Next point" run fresh. Opening/closing
+-- the map while still in dawnsdrop mode must NOT reset it.
+local function ResetGuidedState()
+	guidedActiveType = nil
+	guidedLocations = {}
+	visitedGuided = {}
+	lastGuidedSextant = nil
+	lastGuidedLabel = nil
+end
+
+local function OnRenderModeChanged(mode)
+	if mode ~= "dawns" then
+		ResetGuidedState()
+	end
+end
+
 function dawnsdrop.RequestDawnsDropForRender()
 	if dawnsdropWindow == nil then
 		helpers.DevLog("Dawnsdrop window not initialized yet")
@@ -695,6 +759,49 @@ function dawnsdrop.GetDawnsMapMode()
 	return DawnsMapMode
 end
 
+-- Ships-style selection for a guided type. Highlights the picked marker and hands
+-- the sextant to the tracker as a "Dawns" target, which gives it the Next button.
+function dawnsdrop.SelectGuidedBySextant(sextant, showMapMarker, label)
+	if sextant == nil then
+		helpers.DevLog("Cannot select guided dawnsdrop location: sextant is nil")
+		return
+	end
+	lastGuidedSextant = sextant
+	if type(label) == "string" and label ~= "" then
+		lastGuidedLabel = label
+	end
+	eventbus.TriggerEvent(eventtopics.topics.icons.ChangeIcon, sextant, GUIDED_HIGHLIGHT_TEXTURE, "DawnsGuided")
+	eventbus.TriggerEvent(eventtopics.topics.tracking.custom, sextant, "Dawns", showMapMarker or false, lastGuidedLabel or "Location")
+end
+
+-- "Next nearest" button handler: mark the current location visited (and hide its
+-- marker), then guide to the closest remaining unvisited one.
+function dawnsdrop.GetNextGuided()
+	if lastGuidedSextant == nil then
+		api.Log:Info("WorldSatNav: No guided location selected")
+		return
+	end
+	visitedGuided[helpers.SextantKey(lastGuidedSextant)] = true
+	eventbus.TriggerEvent(eventtopics.topics.icons.clearIcon, lastGuidedSextant, "DawnsGuided")
+
+	local playerSextant = api.Map:GetPlayerSextants()
+	local best, bestDistSq = nil, nil
+	for _, loc in ipairs(guidedLocations) do
+		if not visitedGuided[loc.key] then
+			local distSq = helpers.distSqToPlayer(loc.sextant, playerSextant)
+			if bestDistSq == nil or distSq < bestDistSq then
+				bestDistSq, best = distSq, loc
+			end
+		end
+	end
+	if best == nil then
+		api.Log:Info("WorldSatNav: No more " .. tostring(lastGuidedLabel or "guided") .. " locations to track")
+		eventbus.TriggerEvent(eventtopics.topics.tracking.stop)
+		return
+	end
+	dawnsdrop.SelectGuidedBySextant(best.sextant, false, lastGuidedLabel)
+end
+
 local function OnDevModeChanged(devModeEnabled)
 	if dawnsdropWindow == nil or not dawnsdropWindow:IsVisible() then
 		return
@@ -706,11 +813,14 @@ function dawnsdrop.OnLoad()
 	eventbus.WatchEvent(eventtopics.topics.UI.MainUILoaded, MainUIReady, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.dev.modeChanged, OnDevModeChanged, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.render.modeChanged, dawnsdrop.HideUI, "dawnsdrop")
+	eventbus.WatchEvent(eventtopics.topics.render.modeChanged, OnRenderModeChanged, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.UI.close, dawnsdrop.HideUI, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.render.config, dawnsdrop.HideUI, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.render.dawnsdrop, dawnsdrop.RequestDawnsDropForRender, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.dawnsdrop.mapClick, OnMapClicked, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.dawnsdrop.refresh, RerenderCurrentSelection, "dawnsdrop")
+	eventbus.WatchEvent(eventtopics.topics.dawnsdrop.selectBySextant, dawnsdrop.SelectGuidedBySextant, "dawnsdrop")
+	eventbus.WatchEvent(eventtopics.topics.tracking.nextGuided, dawnsdrop.GetNextGuided, "dawnsdrop")
 	maprendering.RegisterDawnsMapModeProvider(dawnsdrop.GetDawnsMapMode)
 end
 

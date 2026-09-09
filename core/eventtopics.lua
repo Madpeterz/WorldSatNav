@@ -5,6 +5,7 @@ local eventtopics = {
 			selectItemChanged = "dawnsdrop.selectItem",
 			mapClick = "dawnsdrop.mapClick",
 			refresh = "dawnsdrop.refresh",
+			selectBySextant = "dawnsdrop.selectBySextant",
 		},
 		dev = {
 			modeChanged = "dev.modeChanged",
@@ -14,6 +15,7 @@ local eventtopics = {
 			stop = "tracking.stop",
 			nextMap = "tracking.nextMap",
 			nextShip = "tracking.nextShip",
+			nextGuided = "tracking.nextGuided",
 			custom = "tracking.custom",
 		},
 		demo = {
