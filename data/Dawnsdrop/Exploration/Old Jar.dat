@@ -805,4 +805,30 @@
         },
         group = 1,
     },
+    {
+        location = {
+            deg_long = 0,
+            deg_lat = 11,
+            longitude = "W",
+            latitude = "S",
+            sec_long = 51,
+            min_lat = 52,
+            sec_lat = 45,
+            min_long = 6,
+        },
+        group = 1,
+    },
+    {
+        location = {
+            deg_long = 0,
+            deg_lat = 11,
+            sec_long = 8,
+            min_lat = 8,
+            longitude = "W",
+            latitude = "S",
+            sec_lat = 21,
+            min_long = 2,
+        },
+        group = 1,
+    },
 }
