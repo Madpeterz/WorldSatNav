@@ -37,6 +37,10 @@ local TELEPORT_FIXED_COST_S = 19 -- 2s load + 9s portal cast + 4s location looku
 -- EvaluateTeleportPlan / setTargetGoto). nil = walking straight is at least as
 -- fast, or no usable teleport / distance data.
 local teleportPlan = nil
+-- Player's region name when teleportPlan was computed. Once the player leaves it
+-- (teleported / crossed a border), the plan is spent: drop the hint and show a
+-- live walking distance instead.
+local teleportPlanOriginRegion = nil
 
 -- Distance between two sextants in the same "metres" the tracker displays.
 -- coordinates.CalculateDistance returns raw game units; gps.getGPSGuideText
@@ -114,6 +118,7 @@ function tracking.Stop()
 	currentNextButtonCallback = nil
 	lastArrowDir = ""
 	teleportPlan = nil
+	teleportPlanOriginRegion = nil
 	if TRACK_WINDOW == nil then
 		return
 	end
@@ -255,10 +260,12 @@ end
 -- there". Sets teleportPlan only when teleporting is strictly faster.
 local function EvaluateTeleportPlan()
 	teleportPlan = nil
+	teleportPlanOriginRegion = nil
 	if targetSextant == nil or not settings.Get("UseTeleportHint") then
 		return
 	end
-	local directM = MetersBetweenSextants(api.Map:GetPlayerSextants(), targetSextant)
+	local playerSextant = api.Map:GetPlayerSextants()
+	local directM = MetersBetweenSextants(playerSextant, targetSextant)
 	if directM == nil then
 		return
 	end
@@ -280,9 +287,13 @@ local function EvaluateTeleportPlan()
 		return
 	end
 	teleportPlan = { name = teleport.name, savedSeconds = walkSeconds - teleportSeconds }
+	local _, originRegion = regionmap.GetRegionForSextant(playerSextant)
+	if originRegion ~= nil and originRegion ~= "?" then
+		teleportPlanOriginRegion = originRegion
+	end
 	helpers.DevLog(string.format(
-		"Teleport plan: teleport via '%s' saves %.0fs vs walking %.0fm",
-		tostring(teleport.name), teleportPlan.savedSeconds, directM))
+		"Teleport plan: teleport via '%s' saves %.0fs vs walking %.0fm (origin region: %s)",
+		tostring(teleport.name), teleportPlan.savedSeconds, directM, tostring(teleportPlanOriginRegion)))
 end
 
 local function updateTrackingData()
@@ -293,6 +304,17 @@ local function updateTrackingData()
 
 	local _, regionNameTarget = regionmap.GetRegionForSextant(targetSextant)
 	local _, regionNamePlayer = regionmap.GetRegionForSextant(api.Map:GetPlayerSextants())
+
+	-- The teleport plan is only valid from the region it was computed in. Once the
+	-- player teleports (or walks) into a different region, retire it so tracking
+	-- falls back to a live distance readout.
+	if teleportPlan ~= nil and teleportPlanOriginRegion ~= nil
+		and regionNamePlayer ~= "?" and regionNamePlayer ~= teleportPlanOriginRegion then
+		helpers.DevLog("Tracking: player left origin region '" .. teleportPlanOriginRegion
+			.. "' (now '" .. regionNamePlayer .. "') - dropping teleport hint")
+		teleportPlan = nil
+		teleportPlanOriginRegion = nil
+	end
 
 	if TRACK_WINDOW.showBtn ~= nil then
 		local showEnabled = settings.Get("EnableShowOnTracking")
