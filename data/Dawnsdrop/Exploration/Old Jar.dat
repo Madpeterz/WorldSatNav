@@ -597,4 +597,30 @@
         },
         group = 1,
     },
+    {
+        location = {
+            deg_long = 0,
+            deg_lat = 11,
+            longitude = "W",
+            latitude = "S",
+            sec_long = 11,
+            min_lat = 42,
+            sec_lat = 46,
+            min_long = 34,
+        },
+        group = 1,
+    },
+    {
+        location = {
+            deg_long = 0,
+            deg_lat = 11,
+            sec_long = 4,
+            min_lat = 44,
+            longitude = "W",
+            latitude = "S",
+            sec_lat = 11,
+            min_long = 35,
+        },
+        group = 1,
+    },
 }
