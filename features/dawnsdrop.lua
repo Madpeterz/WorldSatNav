@@ -258,16 +258,17 @@ local function PoiEntryAllowed(entry, filterSide)
 	return entrySide == "shared" or entrySide == filterSide
 end
 
--- Finds the Teleport POI nearest to targetSextant that sits in the same region as
--- the target. When applyFilter is true, teleports the player's faction cannot use
--- are skipped. Returns { regionName, locationName, name (both joined for display),
+-- Finds the Teleport POI nearest to targetSextant, across every region. When
+-- applyFilter is true, teleports the player's faction cannot use are skipped.
+-- Returns { regionName, locationName, name (both joined for display),
 -- location = sextant } or nil.
+--
+-- No same-region restriction: the caller's cost model (fixed teleport cost +
+-- walk from the POI to the target) already rejects a POI that lands too far from
+-- the target. Restricting to the target's own region only broke far-away targets
+-- whose region has no teleport entry at all.
 function dawnsdrop.FindNearestTeleport(targetSextant, applyFilter)
 	if targetSextant == nil then
-		return nil
-	end
-	local _, targetRegion = regionmap.GetRegionForSextant(targetSextant)
-	if targetRegion == nil or targetRegion == "?" then
 		return nil
 	end
 
@@ -276,24 +277,11 @@ function dawnsdrop.FindNearestTeleport(targetSextant, applyFilter)
 		filterSide = GetPlayerSideKey()
 	end
 
-	local targetRegionLower = targetRegion:lower()
 	local locations = LoadLocations(POI_TASK, "Teleports")
-
-	-- Same-region test: trust the entry's stored regionName first (cheap string
-	-- compare), and only fall back to deriving the region from the entry's sextant
-	-- when regionName is missing or doesn't line up (legacy / mistyped entries).
-	local function entryInTargetRegion(entry)
-		local rn = entry.regionName
-		if rn ~= nil and rn ~= "" and rn:lower() == targetRegionLower then
-			return true
-		end
-		local _, entryRegion = regionmap.GetRegionForSextant(entry.location)
-		return entryRegion == targetRegion
-	end
 
 	local best, bestDistSq = nil, math.huge
 	for _, entry in ipairs(locations) do
-		if entry.location ~= nil and PoiEntryAllowed(entry, filterSide) and entryInTargetRegion(entry) then
+		if entry.location ~= nil and PoiEntryAllowed(entry, filterSide) then
 			local distSq = helpers.distSqToPlayer(entry.location, targetSextant)
 			if distSq < bestDistSq then
 				best, bestDistSq = entry, distSq
