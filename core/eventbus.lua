@@ -18,7 +18,10 @@ local function DispatchEvent(topic, arg1, arg2, arg3, arg4, arg5)
         end
         for i = 1, #topicWatchers do
             local callback = topicWatchers[i]
-            callback(arg1, arg2, arg3, arg4, arg5)
+            local ok, err = pcall(callback, arg1, arg2, arg3, arg4, arg5)
+            if not ok then
+                helpers.DevLog("Event watcher error on topic '" .. topic .. "': " .. tostring(err))
+            end
         end
     else
         if helpers.DEV_MODE then
