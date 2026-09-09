@@ -38,4 +38,30 @@
         },
         group = 1,
     },
+    {
+        location = {
+            deg_long = 0,
+            deg_lat = 11,
+            longitude = "E",
+            latitude = "S",
+            sec_long = 35,
+            min_lat = 5,
+            sec_lat = 1,
+            min_long = 13,
+        },
+        group = 1,
+    },
+    {
+        location = {
+            deg_long = 0,
+            deg_lat = 11,
+            sec_long = 33,
+            min_lat = 13,
+            longitude = "W",
+            latitude = "S",
+            sec_lat = 27,
+            min_long = 19,
+        },
+        group = 1,
+    },
 }
