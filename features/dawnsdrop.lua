@@ -843,6 +843,28 @@ local function OnDevModeChanged(devModeEnabled)
 	ShowDevModeButtons(devModeEnabled == true)
 end
 
+-- Timed guided visits (numeric GUIDED_TYPES) already expire silently inside
+-- isGuidedVisited; this periodic sweep forgets the lapsed ones and re-renders so
+-- their markers reappear without waiting for another render trigger. Cheap: the
+-- loop only runs over the current type's visited keys, and re-renders only when
+-- something actually expired.
+dawnsdrop.onUpdate = helpers.throttle(constants.timing.dawnsGuidedRefresh, function()
+	local now = tonumber(helpers.GetCurrentTimestamp())
+	if now == nil then
+		return
+	end
+	local expired = false
+	for key, state in pairs(visitedGuided) do
+		if state ~= true and now >= state then
+			visitedGuided[key] = nil
+			expired = true
+		end
+	end
+	if expired then
+		RerenderCurrentSelection()
+	end
+end)
+
 function dawnsdrop.OnLoad()
 	eventbus.WatchEvent(eventtopics.topics.UI.MainUILoaded, MainUIReady, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.dev.modeChanged, OnDevModeChanged, "dawnsdrop")

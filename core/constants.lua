@@ -30,6 +30,7 @@ local Constants = {
 		trackingPoll = updateRate / 1.25, -- 260ms: tracking window data refresh
 		demoAutohidePoll = updateRate * 2, -- 650ms: demo "+" button auto-hide check
 		demoExpirePoll = updateRate * 30,  -- 9750ms: demo expiry + alert sweep
+		dawnsGuidedRefresh = 45000,        -- 45s: sweep expired timed guided visits, re-render if any lapsed
 		eventExpirePoll = 30000,           -- world-event expiry sweep
 	},
 	
