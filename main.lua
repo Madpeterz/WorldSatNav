@@ -18,7 +18,7 @@ local eventtopics = require("WorldSatNav/core/eventtopics")
 local WorldSatNav = {
 	name = "WorldSatNav",
 	author = "Madpeter",
-	version = "1.3.1",
+	version = "1.3.2",
 	desc = "Im still not sure where to go"
 }
 
