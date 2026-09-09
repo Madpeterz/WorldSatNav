@@ -1140,14 +1140,9 @@ local function CreateUiElements()
 	end, true, nil, "Location input", "item_enchant")
 	helpers.CreateImageButton("settingsButton", maprendering.MapUI, "ui/settings.png", 478, 128+125, 25, 25, function()
 		if configWindowVisible then
-			maprendering.ReloadUIItems()
-			configWindowVisible = false
-			UpdateMapMode(currentMapMode)
+			maprendering.HideConfigPage()
 		else
-			HideAllIcons()
-			eventbus.TriggerEvent(TOPICS.render.config)
-			maprendering.UnloadUIItems()
-			configWindowVisible = true
+			maprendering.ShowConfigPage()
 		end
 	end, true, nil, "Settings", "item_enchant")
 	helpers.CreateImageButton("myPosButton", maprendering.MapUI, "ui/mypos.png", 483+25, 128+125, 25, 25, function()
@@ -1199,6 +1194,32 @@ function maprendering.ClearUIState()
 	configWindowVisible = false
 end
 
+function maprendering.IsConfigPageVisible()
+	return configWindowVisible == true
+end
+
+-- Swap the main window over to the settings page. No-op if it is already showing.
+-- Assumes the main window itself is already open (see ForceOpenConfigUI).
+function maprendering.ShowConfigPage()
+	if configWindowVisible == true then
+		return
+	end
+	HideAllIcons()
+	eventbus.TriggerEvent(TOPICS.render.config)
+	maprendering.UnloadUIItems()
+	configWindowVisible = true
+end
+
+-- Leave the settings page, restoring the last map mode. No-op if not on it.
+function maprendering.HideConfigPage()
+	if configWindowVisible ~= true then
+		return
+	end
+	maprendering.ReloadUIItems()
+	configWindowVisible = false
+	UpdateMapMode(currentMapMode)
+end
+
 function maprendering.ToggleMap()
 	eventbus.TriggerEvent(TOPICS.UI.closeGoto)
 	if maprendering.MapUI:IsVisible() then
@@ -1211,6 +1232,22 @@ function maprendering.ToggleMap()
 			currentMapMode = "maps"
 		end
 		UpdateMapMode(currentMapMode) -- Ensure the correct mode is displayed when opening display again
+	end
+end
+
+-- Show the main window without kicking off a map-mode render. Use this when the
+-- caller is about to switch straight to the config page: going through ToggleMap
+-- would queue a render.maps that fires after ShowConfigPage has unloaded the map,
+-- re-showing it behind the settings panel.
+function maprendering.ShowMainWindow()
+	if maprendering.MapUI == nil or maprendering.MapUI:IsVisible() then
+		return
+	end
+	eventbus.TriggerEvent(TOPICS.UI.closeGoto)
+	maprendering.MapUI:Show(true)
+	eventbus.TriggerEvent(TOPICS.UI.open)
+	if currentMapMode == nil then
+		currentMapMode = "maps"
 	end
 end
 

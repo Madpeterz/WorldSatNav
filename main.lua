@@ -93,6 +93,19 @@ local function OnUnload()
 	events.OnUnload()
 end
 
+-- Open the main map window (if hidden) and switch it to the settings page (if not
+-- already there). Safe to call repeatedly.
+local function ForceOpenConfigUI()
+	if maprendering.MapUI == nil then
+		helpers.DevLog("ForceOpenConfigUI: MapUI not initialised")
+		return
+	end
+	maprendering.ShowMainWindow()
+	maprendering.ShowConfigPage()
+end
+
+WorldSatNav.OnSettingToggle = ForceOpenConfigUI
+
 WorldSatNav.OnLoad = OnLoad
 WorldSatNav.OnUnload = OnUnload
 
