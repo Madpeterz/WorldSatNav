@@ -286,7 +286,11 @@ local function EvaluateTeleportPlan()
 			directM, walkSeconds, tostring(teleport.name), teleportSeconds))
 		return
 	end
-	teleportPlan = { name = teleport.name, savedSeconds = walkSeconds - teleportSeconds }
+	teleportPlan = {
+		name = teleport.name,
+		savedSeconds = walkSeconds - teleportSeconds,
+		poiToTargetM = poiToTargetM,
+	}
 	local _, originRegion = regionmap.GetRegionForSextant(playerSextant)
 	if originRegion ~= nil and originRegion ~= "?" then
 		teleportPlanOriginRegion = originRegion
@@ -340,11 +344,23 @@ local function updateTrackingData()
 	end
 
 	-- teleportPlan is decided once per target in EvaluateTeleportPlan. Suppress the
-	-- hint once we're in the target's region (i.e. after the teleport has happened)
-	-- so the last leg shows a live walking distance instead.
-	local sameRegion = regionNamePlayer ~= "?" and regionNameTarget ~= "?"
-		and regionNamePlayer == regionNameTarget
-	local useTeleport = teleportPlan ~= nil and not sameRegion
+	-- hint once walking straight from where the player is now beats teleporting -
+	-- i.e. after the teleport has happened, or the player has walked close enough.
+	-- Region equality is not a usable proxy here: the nearest teleport POI is
+	-- often in the same region as both the player and a coastal/ship target, so
+	-- comparing regions hid the hint for targets teleporting would still shorten.
+	local useTeleport = teleportPlan ~= nil
+	if useTeleport then
+		local liveDirectM = MetersBetweenSextants(api.Map:GetPlayerSextants(), targetSextant)
+		if liveDirectM ~= nil and teleportPlan.poiToTargetM ~= nil then
+			-- Same break-even as EvaluateTeleportPlan: teleporting only wins when it
+			-- shaves more than the fixed teleport cost (~251m of walking) off the trip.
+			local shavedM = liveDirectM - teleportPlan.poiToTargetM
+			if shavedM <= TELEPORT_FIXED_COST_S * WALK_SPEED_MPS then
+				useTeleport = false
+			end
+		end
+	end
 	if targetName == nil then
 		targetName = "undefined"
 	end
