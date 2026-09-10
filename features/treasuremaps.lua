@@ -359,8 +359,10 @@ function treasuremaps.onUpdate(dt)
 	end
 
 	-- The bag-slot region overlay only makes sense while the bag window is open.
-	
-	if bagIsVisible == false or mapVisible == false then
+	-- Normally it also requires the world map to be open, but the "Always show
+	-- regions" setting lets the labels stay on the bag slots regardless.
+	local alwaysShowRegions = settings.Get("AlwaysShowRegions") == true
+	if bagIsVisible == false or (mapVisible == false and not alwaysShowRegions) then
 		hideBagOverlay()
 		bagWasVisible = false
 		lastOverlaySignature = nil

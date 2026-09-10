@@ -49,6 +49,9 @@ local defaultSettings = {
     -- timing
     DSToffset = true, -- offset in hours to apply during daylight saving time
 
+    -- Maps
+    AlwaysShowRegions = false, -- when true, treasure map bag region labels show even while the map UI is closed
+
     -- Dawnsdrop
     DawnsLastTask = "",
     DawnsLastType = "",

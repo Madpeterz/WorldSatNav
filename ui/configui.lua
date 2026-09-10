@@ -35,6 +35,7 @@ local function ToggleUIVisibleState(newState)
     helpers.ToggleCheckboxVisable("eventsKeep15", newState)
     helpers.ToggleCheckboxVisable("eventsAlert", newState)
     helpers.ToggleCheckboxVisable("DSTOffset", newState)
+    helpers.ToggleCheckboxVisable("mapsAlwaysShowRegions", newState)
 end
 function configui.ShowConfigUI()
     ToggleUIVisibleState(true)
@@ -59,6 +60,7 @@ local function CheckBoxUpdate(checkState, checkboxId)
     elseif checkboxId == "eventsTrack" then SettingName = "EnableWorldEvents"
     elseif checkboxId == "eventsAlert" then SettingName = "EnableEventAlerts"
     elseif checkboxId == "DSTOffset" then SettingName = "DSToffset"
+    elseif checkboxId == "mapsAlwaysShowRegions" then SettingName = "AlwaysShowRegions"
     end
     if SettingName ~= nil then
         settingsModule.Update(SettingName, checkState)
@@ -119,17 +121,17 @@ function configui.CreateConfigUI(MapUIWindow)
     local locationLabel = helpers.createLabel("locationLabel", MapUIWindow, "Location:", 40, 220, 12)
     table.insert(configElements, locationLabel)
     -- Next map behavior [Nearest in my region only, Nearest anywhere, My region first then anywhere]
-    local nextMapModeLabel = helpers.createLabel("nextMapModeLabel", MapUIWindow, "Next map behavior:", 40, 358, 12)
+    local nextMapModeLabel = helpers.createLabel("nextMapModeLabel", MapUIWindow, "Next button behavior:", 40, 410, 12)
     table.insert(configElements, nextMapModeLabel)
-    helpers.CreateSkinnedCheckbox("nextMapModeRegionOnly", MapUIWindow, "[A] Nearest (in region)", 40, 378, settingsModule.Is("NextMapMode", 1),
+    helpers.CreateSkinnedCheckbox("nextMapModeRegionOnly", MapUIWindow, "[A] Nearest (in region)", 40, 430, settingsModule.Is("NextMapMode", 1),
     function(checked)
         if checked == true then settingsModule.Update("NextMapMode", 1) end
     end, nil, nil, "nextMapMode", nil, true)
-    helpers.CreateSkinnedCheckbox("nextMapModeAnywhere", MapUIWindow, "[B] Nearest", 210, 378, settingsModule.Is("NextMapMode", 2),
+    helpers.CreateSkinnedCheckbox("nextMapModeAnywhere", MapUIWindow, "[B] Nearest", 210, 430, settingsModule.Is("NextMapMode", 2),
     function(checked)
         if checked == true then settingsModule.Update("NextMapMode", 2) end
     end, nil, nil, "nextMapMode", nil, true)
-    helpers.CreateSkinnedCheckbox("nextMapModeRegionThenAnywhere", MapUIWindow, "[C] A then B", 320, 378, settingsModule.Is("NextMapMode", 3),
+    helpers.CreateSkinnedCheckbox("nextMapModeRegionThenAnywhere", MapUIWindow, "[C] A then B", 320, 430, settingsModule.Is("NextMapMode", 3),
     function(checked)
         if checked == true then settingsModule.Update("NextMapMode", 3) end
     end, nil, nil, "nextMapMode", nil, true)
@@ -174,7 +176,7 @@ function configui.CreateConfigUI(MapUIWindow)
     table.insert(configElements, settingPanelDiv)
     local settingPanelDiv2 = MapUIWindow:CreateImageDrawable("settingPanelDiv", "background")
 	settingPanelDiv2:SetExtent(400*settingsModule.Get("uiDrawScale"),3*settingsModule.Get("uiDrawScale"))
-	settingPanelDiv2:AddAnchor("TOPLEFT", MapUIWindow, "TOPLEFT", 40*settingsModule.Get("uiDrawScale"), 408*settingsModule.Get("uiDrawScale"))
+	settingPanelDiv2:AddAnchor("TOPLEFT", MapUIWindow, "TOPLEFT", 40*settingsModule.Get("uiDrawScale"), 362*settingsModule.Get("uiDrawScale"))
 	settingPanelDiv2:SetTexture("bg_quest")
     settingPanelDiv2:SetColor(0,0,0,0.5)
 	settingPanelDiv2:Show(true)
@@ -183,9 +185,13 @@ function configui.CreateConfigUI(MapUIWindow)
 	end
     table.insert(configElements, settingPanelDiv2)
 
-    local timeLabel = helpers.createLabel("timeLabel", MapUIWindow, "Time:", 40, 425, 12)
+    local timeLabel = helpers.createLabel("timeLabel", MapUIWindow, "Time:", 250, 160, 12)
     table.insert(configElements, timeLabel)
-    helpers.CreateSkinnedCheckbox("DSTOffset", MapUIWindow, "DST +1 hour", 40, 445, settingsModule.Is("DSToffset", true), CheckBoxUpdate)
+    helpers.CreateSkinnedCheckbox("DSTOffset", MapUIWindow, "DST +1 hour", 250, 180, settingsModule.Is("DSToffset", true), CheckBoxUpdate)
+
+    local mapsLabel = helpers.createLabel("mapsLabel", MapUIWindow, "Maps:", 40, 370, 12)
+    table.insert(configElements, mapsLabel)
+    helpers.CreateSkinnedCheckbox("mapsAlwaysShowRegions", MapUIWindow, "Always show regions", 40, 390, settingsModule.Is("AlwaysShowRegions", true), CheckBoxUpdate)
 
     configui.HideConfigUI()
 end
