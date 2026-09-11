@@ -14,13 +14,21 @@ local helpers = require("WorldSatNav/helpers")
 local configui = require("WorldSatNav/ui/configui")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
+local settings = require("WorldSatNav/core/settings")
 
 local WorldSatNav = {
 	name = "WorldSatNav",
 	author = "Madpeter",
-	version = "1.3.2",
+	version = "1.3.4",
 	desc = "Im still not sure where to go"
 }
+
+local function toggleUIbutton()
+	showUIbutton = settings.Get("showUIbutton")
+	showUIbutton = not showUIbutton
+	settings.Update("showUIbutton", showUIbutton)
+	maprendering.UiButtonState(settings.Get("showUIbutton"))
+end
 
 -- Addon initialization
 local function OnLoad()
@@ -71,6 +79,18 @@ local function OnLoad()
     maprendering.MapUI:RegisterEvent("WORLD_MESSAGE")
     maprendering.MapUI:RegisterEvent("REMOVED_ITEM")
     maprendering.MapUI:RegisterEvent("BAG_UPDATE")
+
+	ESCMenu = ESCMenu or {}
+	ESCMenu.queue = ESCMenu.queue or {}
+	table.insert(ESCMenu.queue, {
+		name     = "SatNav",                        -- row label + dedupe key
+		callback = function() toggleUIbutton() end,  -- run on click; menu closes itself
+		category = "Shop/Quality of Life",                         -- optional: Characters / Combat /
+													-- Shop/Quality of Life / Vocation /
+													-- System/Addons (default). Prefixes ok.
+		icon     = "map",                      -- optional, from the list below
+	})
+	maprendering.UiButtonState(settings.Get("showUIbutton"))
 end
 
 -- Addon cleanup

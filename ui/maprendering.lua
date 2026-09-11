@@ -1094,6 +1094,7 @@ local function FocusOnMe()
 end
 
 local cleanup = {}
+local windowUIButton = nil
 local function CreateUiElements()
     maprendering.MapUI = CreateWorldSatNavWindow()
 	if maprendering.MapUI == nil then
@@ -1184,8 +1185,15 @@ local function CreateUiElements()
 	local mainUIButton = helpers.CreateImageButton("MainUIButton", windowUIbUTTON, "icons/main_ui.png", 0, 0, 50, 50, maprendering.ToggleMap, true, "icons/main_ui_hover.png", "Open satnav","portal")
 	helpers.makeWindowDraggable(mainUIButton, nil, nil, true, true, "OpenButtonX", "OpenButtonY")
 	
-	table.insert(cleanup, mainUIButton.parent)
+	windowUIButton = mainUIButton.parent
+	table.insert(cleanup, windowUIButton)
 	table.insert(cleanup, maprendering.MapUI)
+end
+
+function maprendering.UiButtonState(show)
+	if windowUIButton ~= nil and windowUIButton.Show ~= nil then
+		windowUIButton:Show(show == true)
+	end
 end
 
 function maprendering.ClearUIState()
