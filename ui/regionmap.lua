@@ -881,6 +881,46 @@ local function point_in_shape(x, y, polygons)
     return inside
 end
 
+local function distance_to_segment(x, y, x1, y1, x2, y2)
+    local dx = x2 - x1
+    local dy = y2 - y1
+    local len_sq = dx * dx + dy * dy
+    if len_sq == 0 then
+        return math.sqrt((x - x1) * (x - x1) + (y - y1) * (y - y1))
+    end
+    local t = ((x - x1) * dx + (y - y1) * dy) / len_sq
+    t = math.max(0, math.min(1, t))
+    local px = x1 + t * dx
+    local py = y1 + t * dy
+    return math.sqrt((x - px) * (x - px) + (y - py) * (y - py))
+end
+
+local function distance_to_shape(x, y, polygons)
+    local best = math.huge
+    for _, polygon in ipairs(polygons) do
+        local n = #polygon
+        local j = n
+        for i = 1, n do
+            local xi, yi = polygon[i][1], polygon[i][2]
+            local xj, yj = polygon[j][1], polygon[j][2]
+            local d = distance_to_segment(x, y, xi, yi, xj, yj)
+            if d < best then
+                best = d
+            end
+            j = i
+        end
+    end
+    return best
+end
+
+-- Two adjacent polygons in the source data occasionally leave a sub-pixel gap
+-- along their shared border (rounding in the original vertex extraction), so
+-- a point can land in a seam that no polygon's fill covers. When no shape
+-- claims the point outright, fall back to the nearest polygon edge as long as
+-- it's within this tolerance, rather than surfacing "?" for a point that is
+-- visibly inside a region on the map.
+local SEAM_TOLERANCE_PX = 3
+
 local function is_better_shape(shape, best_shape)
     if best_shape == nil then
         return true
@@ -919,6 +959,26 @@ local function computeShapeAt(x, y)
 
     if best_shape ~= nil then
         return best_shape.name
+    end
+
+    -- No polygon claimed the point outright: check for a seam gap against
+    -- nearby shapes before giving up.
+    local nearest_shape = nil
+    local nearest_dist = math.huge
+    for _, shape in ipairs(shapesData) do
+        local bb = shape.bbox
+        if x >= bb[1] - SEAM_TOLERANCE_PX and x <= bb[3] + SEAM_TOLERANCE_PX
+           and y >= bb[2] - SEAM_TOLERANCE_PX and y <= bb[4] + SEAM_TOLERANCE_PX then
+            local d = distance_to_shape(x, y, shape.polygons)
+            if d < nearest_dist then
+                nearest_dist = d
+                nearest_shape = shape
+            end
+        end
+    end
+
+    if nearest_shape ~= nil and nearest_dist <= SEAM_TOLERANCE_PX then
+        return nearest_shape.name
     end
 
     return "?"
