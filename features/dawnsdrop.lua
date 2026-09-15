@@ -107,6 +107,9 @@ local dawnsdropTypes = {
     ["Mining"] = {
         "Iron Vein",
     },
+	["Events"] = {
+		"Ghost ships",
+	},
     ["Points of Interest"] = {
         "Teleports",
     },
