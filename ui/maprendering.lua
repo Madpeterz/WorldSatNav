@@ -1323,6 +1323,9 @@ function maprendering.ToggleMap()
 	else
 		maprendering.MapUI:Show(true)
 		eventbus.TriggerEvent(TOPICS.UI.open)
+		if maprendering.IsConfigPageVisible() then
+			maprendering.HideConfigPage()
+		end
 		if currentMapMode == nil then
 			currentMapMode = "maps"
 		end
