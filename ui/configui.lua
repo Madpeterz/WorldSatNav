@@ -120,6 +120,10 @@ function configui.CreateConfigUI(MapUIWindow)
     helpers.CreateSkinnedCheckbox("teleportHintFiltered", MapUIWindow, "Filter teleport locations", 40, 335, settingsModule.Is("TeleportHintFiltered", true), CheckBoxUpdate)
     helpers.CreateSkinnedCheckbox("locationShowTargetInfoInChat", MapUIWindow, "Show target info in chat", 250, 275, settingsModule.Is("ShowTargetInfoInChat", true), CheckBoxUpdate)
     helpers.CreateSkinnedCheckbox("locationAutoGotoNextMap", MapUIWindow, "Auto goto next map", 250, 305, settingsModule.Is("AutoGotoNextMap", true), CheckBoxUpdate)
+    helpers.CreateSkinnedCheckbox("radarEnabled", MapUIWindow, "Radar: Enable", 250, 335, settingsModule.Is("RadarEnabled", true),
+    function(checked)
+        radar.SetEnabled(checked)
+    end)
     local locationLabel = helpers.createLabel("locationLabel", MapUIWindow, "Location:", 40, 220, 12)
     table.insert(configElements, locationLabel)
     -- Next map behavior [Nearest in my region only, Nearest anywhere, My region first then anywhere]
@@ -194,11 +198,6 @@ function configui.CreateConfigUI(MapUIWindow)
     local mapsLabel = helpers.createLabel("mapsLabel", MapUIWindow, "Maps:", 40, 370, 12)
     table.insert(configElements, mapsLabel)
     helpers.CreateSkinnedCheckbox("mapsAlwaysShowRegions", MapUIWindow, "Always show regions", 40, 390, settingsModule.Is("AlwaysShowRegions", true), CheckBoxUpdate)
-
-    helpers.CreateSkinnedCheckbox("radarEnabled", MapUIWindow, "Radar: Enable", 250, 390, settingsModule.Is("RadarEnabled", true),
-    function(checked)
-        radar.SetEnabled(checked)
-    end)
 
     configui.HideConfigUI()
 end
