@@ -30,6 +30,7 @@ local defaultSettings = {
     AutoGotoNextMap = false,
     NextMapMode = 1, -- 1 = nearest in my region only, 2 = nearest anywhere, 3 = my region first then anywhere
     TeleportHintFiltered = true, -- Points of Interest hints only show for the player's faction (West=Nuia, East=Haranya, Shared=both)
+    CenterOnPlayerOnModeChange = false, -- re-centers the map view on the player whenever mode changes (Maps/Ships/Events/etc)
 
     EnableLocationOutput = false,
     LocationOutputRateLimit = 1000, -- in milliseconds, how often to output player location
@@ -49,6 +50,12 @@ local defaultSettings = {
     EnableEventAlerts = true,
     EnableWorldEvents = true,
     WorldEventsKeptFor = 5, -- in minutes, how long to keep world events in the list
+    DisableAlertWarehouseRaid = false,
+    DisableAlertCrate = false,
+    DisableAlertGhostship = false,
+    DisableAlertLeviathan = false,
+    DisableAlertPerdita = false,
+    DisableAlertSunfish = false,
 
     -- timing
     DSToffset = true, -- offset in hours to apply during daylight saving time
@@ -120,17 +127,16 @@ function WorldSatNavSettings.LoadSettings()
     if loadedSettings == nil then
         loadedSettings = {}
     end
-    -- loop for set default settings if not exists
-    local needsSave = false
+    -- Fill in any missing keys with defaults in-memory only. Do NOT persist here:
+    -- if the addon failed to load cleanly (e.g. an earlier module errored) and
+    -- getSettings returned nil/empty as a result rather than a genuine first run,
+    -- eagerly saving here would overwrite the user's real settings file with
+    -- defaults. Real values still get written the first time Update() changes
+    -- something.
     for k, v in pairs(defaultSettings) do
-        if loadedSettings[k] == nil then 
-            loadedSettings[k] = v 
-            needsSave = true
+        if loadedSettings[k] == nil then
+            loadedSettings[k] = v
         end
-    end
-    if needsSave then
-        saveSettings(addonName, loadedSettings)
-        DevLog("Settings file created with default settings")
     end
     return loadedSettings
 end

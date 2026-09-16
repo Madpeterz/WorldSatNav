@@ -2,11 +2,55 @@ local helpers = require("WorldSatNav/helpers")
 local settingsModule = require("WorldSatNav/core/settings")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
-local radar = require("WorldSatNav/features/radar")
 
 local configui = {}
 
-local configElements = {}
+local configElements = {}   -- elements always shown/hidden with the whole panel (title, divider)
+local tabRegistry = {}      -- tabName -> { checkboxIds = {}, labelWidgets = {} }
+local currentTab = "SatNav"
+local settingsTitleLabel = nil
+
+local TAB_ORDER = { "SatNav", "Demos", "Events", "Config" }
+configui.TAB_NAMES = TAB_ORDER -- tab switching is driven by maprendering's mode buttons, see SelectTab/GetActiveTab
+for _, tab in ipairs(TAB_ORDER) do
+    tabRegistry[tab] = { checkboxIds = {}, labelWidgets = {} }
+end
+
+local function RegisterCheckbox(tab, id)
+    table.insert(tabRegistry[tab].checkboxIds, id)
+end
+
+local function RegisterLabel(tab, widget)
+    table.insert(tabRegistry[tab].labelWidgets, widget)
+end
+
+local function SetActiveTab(tabName)
+    if tabRegistry[tabName] == nil then
+        return
+    end
+    currentTab = tabName
+    for tab, reg in pairs(tabRegistry) do
+        local visible = (tab == tabName)
+        for _, id in ipairs(reg.checkboxIds) do
+            helpers.ToggleCheckboxVisable(id, visible)
+        end
+        for _, widget in ipairs(reg.labelWidgets) do
+            widget:Show(visible)
+        end
+    end
+    if settingsTitleLabel ~= nil then
+        settingsTitleLabel:SetText("Settings / "..tabName)
+    end
+end
+
+-- Public API used by maprendering to drive tab switching from the repurposed mode buttons.
+function configui.SelectTab(tabName)
+    SetActiveTab(tabName)
+end
+
+function configui.GetActiveTab()
+    return currentTab
+end
 
 local function ToggleUIVisibleState(newState)
     for _, element in pairs(configElements) do
@@ -14,31 +58,20 @@ local function ToggleUIVisibleState(newState)
             element:Show(newState)
         end
     end
-    helpers.ToggleCheckboxVisable("trackingModeGuide", newState)
-    helpers.ToggleCheckboxVisable("trackingModeCompass", newState)
-    helpers.ToggleCheckboxVisable("demosShowNextHour", newState)
-    helpers.ToggleCheckboxVisable("demosEnableAddUI", newState)
-    helpers.ToggleCheckboxVisable("demosEnableAlerts", newState)
-    helpers.ToggleCheckboxVisable("demosSortByTime", newState)
-    helpers.ToggleCheckboxVisable("locationOutput", newState)
-    helpers.ToggleCheckboxVisable("locationGuideRegion", newState)
-    helpers.ToggleCheckboxVisable("locationOpenRealMap", newState)
-    helpers.ToggleCheckboxVisable("locationEnableShowOnTracking", newState)
-    helpers.ToggleCheckboxVisable("locationShowTargetInfoInChat", newState)
-    helpers.ToggleCheckboxVisable("locationAutoGotoNextMap", newState)
-    helpers.ToggleCheckboxVisable("nextMapModeRegionOnly", newState)
-    helpers.ToggleCheckboxVisable("nextMapModeAnywhere", newState)
-    helpers.ToggleCheckboxVisable("nextMapModeRegionThenAnywhere", newState)
-    helpers.ToggleCheckboxVisable("teleportHintFiltered", newState)
-    helpers.ToggleCheckboxVisable("eventsTrack", newState)
-    helpers.ToggleCheckboxVisable("eventsKeep5", newState)
-    helpers.ToggleCheckboxVisable("eventsKeep10", newState)
-    helpers.ToggleCheckboxVisable("eventsKeep15", newState)
-    helpers.ToggleCheckboxVisable("eventsAlert", newState)
-    helpers.ToggleCheckboxVisable("DSTOffset", newState)
-    helpers.ToggleCheckboxVisable("mapsAlwaysShowRegions", newState)
-    helpers.ToggleCheckboxVisable("radarEnabled", newState)
+    if newState == true then
+        SetActiveTab(currentTab)
+    else
+        for tab, reg in pairs(tabRegistry) do
+            for _, id in ipairs(reg.checkboxIds) do
+                helpers.ToggleCheckboxVisable(id, false)
+            end
+            for _, widget in ipairs(reg.labelWidgets) do
+                widget:Show(false)
+            end
+        end
+    end
 end
+
 function configui.ShowConfigUI()
     ToggleUIVisibleState(true)
 end
@@ -63,6 +96,13 @@ local function CheckBoxUpdate(checkState, checkboxId)
     elseif checkboxId == "eventsAlert" then SettingName = "EnableEventAlerts"
     elseif checkboxId == "DSTOffset" then SettingName = "DSToffset"
     elseif checkboxId == "mapsAlwaysShowRegions" then SettingName = "AlwaysShowRegions"
+    elseif checkboxId == "mapsCenterOnPlayerOnModeChange" then SettingName = "CenterOnPlayerOnModeChange"
+    elseif checkboxId == "eventsDisableWarehouseRaid" then SettingName = "DisableAlertWarehouseRaid"
+    elseif checkboxId == "eventsDisableCrate" then SettingName = "DisableAlertCrate"
+    elseif checkboxId == "eventsDisableGhostship" then SettingName = "DisableAlertGhostship"
+    elseif checkboxId == "eventsDisableLeviathan" then SettingName = "DisableAlertLeviathan"
+    elseif checkboxId == "eventsDisablePerdita" then SettingName = "DisableAlertPerdita"
+    elseif checkboxId == "eventsDisableSunfish" then SettingName = "DisableAlertSunfish"
     end
     if SettingName ~= nil then
         settingsModule.Update(SettingName, checkState)
@@ -74,131 +114,136 @@ local function CheckBoxUpdate(checkState, checkboxId)
     end
 end
 
+-- Creates a checkbox and registers it against the given tab for show/hide on tab switch.
+local function CreateTabCheckbox(tab, id, parent, text, x, y, checked, onClick, sizeX, sizeY, radioGroup, renderlayer, showText)
+    helpers.CreateSkinnedCheckbox(id, parent, text, x, y, checked, onClick, sizeX, sizeY, radioGroup, renderlayer, showText)
+    RegisterCheckbox(tab, id)
+end
+
+local function CreateTabLabel(tab, id, parent, text, x, y, fontSize)
+    local label = helpers.createLabel(id, parent, text, x, y, fontSize)
+    RegisterLabel(tab, label)
+    return label
+end
+
+-- Thin separator line between setting groups, hidden/shown with the rest of the tab.
+local function CreateTabDivider(tab, id, parent, y)
+    local div = parent:CreateImageDrawable(id, "background")
+    div:SetExtent(370*settingsModule.Get("uiDrawScale"), 1*settingsModule.Get("uiDrawScale"))
+    div:AddAnchor("TOPLEFT", parent, "TOPLEFT", 40*settingsModule.Get("uiDrawScale"), y*settingsModule.Get("uiDrawScale"))
+    div:SetTexture("bg_quest")
+    div:SetColor(1,1,1,0.15)
+    div:Show(true)
+    if div.Lower then
+        div:Lower()
+    end
+    RegisterLabel(tab, div)
+    return div
+end
+
 function configui.CreateConfigUI(MapUIWindow)
     if MapUIWindow == nil then
         helpers.DevLog("MapUIWindow is nil, cannot create config UI")
         return
     end
-    local settingsText = helpers.createLabel("settingsLabel", MapUIWindow, "Settings", 25, 10, 25)
+    local settingsText = helpers.createLabel("settingsLabel", MapUIWindow, "Settings / "..currentTab, 25, 10, 25, false, nil, 350)
     table.insert(configElements, settingsText)
-    -- tracking mode [Guide, Compass]
+    settingsTitleLabel = settingsText
 
-    local trackingModeLabel = helpers.createLabel("trackingModeLabel", MapUIWindow, "Tracking Mode:", 40, 40, 12)
-    table.insert(configElements, trackingModeLabel)
-    helpers.CreateSkinnedCheckbox(
-        "trackingModeGuide",
-        MapUIWindow,
-        "Guide",
-        40,
-        60,
-        settingsModule.Is("trackingMode","Guide"),
+    local titleDiv = MapUIWindow:CreateImageDrawable("settingPanelDiv", "background")
+    titleDiv:SetExtent(400*settingsModule.Get("uiDrawScale"),3*settingsModule.Get("uiDrawScale"))
+    titleDiv:AddAnchor("TOPLEFT", MapUIWindow, "TOPLEFT", 25*settingsModule.Get("uiDrawScale"), 40*settingsModule.Get("uiDrawScale"))
+    titleDiv:SetTexture("bg_quest")
+    titleDiv:SetColor(0,0,0,0.5)
+    titleDiv:Show(true)
+    if titleDiv.Lower then
+        titleDiv:Lower()
+    end
+    table.insert(configElements, titleDiv)
+
+    local col1, col2 = 40, 290
+
+    -- Maps tab (maps + tracking settings)
+    CreateTabLabel("SatNav", "nextMapModeLabel", MapUIWindow, "Next button behaviour:", 40, 65, 12)
+    CreateTabCheckbox("SatNav", "nextMapModeRegionOnly", MapUIWindow, "[A] Nearest (in region)", 40, 89, settingsModule.Is("NextMapMode", 1),
+        function(checked) if checked == true then settingsModule.Update("NextMapMode", 1) end end, nil, nil, "nextMapMode", nil, true)
+    CreateTabCheckbox("SatNav", "nextMapModeAnywhere", MapUIWindow, "[B] Nearest", 210, 89, settingsModule.Is("NextMapMode", 2),
+        function(checked) if checked == true then settingsModule.Update("NextMapMode", 2) end end, nil, nil, "nextMapMode", nil, true)
+    CreateTabCheckbox("SatNav", "nextMapModeRegionThenAnywhere", MapUIWindow, "[C] A then B", 320, 89, settingsModule.Is("NextMapMode", 3),
+        function(checked) if checked == true then settingsModule.Update("NextMapMode", 3) end end, nil, nil, "nextMapMode", nil, true)
+
+    CreateTabLabel("SatNav", "trackingModeLabel", MapUIWindow, "Display type:", 40, 119, 12)
+    CreateTabCheckbox("SatNav", "trackingModeGuide", MapUIWindow, "Guide", 40, 143, settingsModule.Is("RadarEnabled", false) and settingsModule.Is("trackingMode","Guide"),
         function(checked)
-            if checked == true then settingsModule.Update("trackingMode", "Guide") end
-        end,
-        nil,
-        nil,
-        "TrackingMode",
-        nil,
-        true
-    )
-    helpers.CreateSkinnedCheckbox("trackingModeCompass", MapUIWindow, "Compass", 125, 60, settingsModule.Is("trackingMode","Compass"), 
-    function(checked)
-        if checked == true then settingsModule.Update("trackingMode", "Compass") end
-    end, nil, nil, "TrackingMode", nil, true)
-    -- Demos [Show only in the next hour, Enable UI For demo add, Enable alerts, Sort demos by time]
-    helpers.CreateSkinnedCheckbox("demosShowNextHour", MapUIWindow, "Show only in the next hour", 40, 105, settingsModule.Is("DrawDemosInNextHour", true), CheckBoxUpdate)
-    helpers.CreateSkinnedCheckbox("demosEnableAddUI", MapUIWindow, "Enable + for add", 40, 135, settingsModule.Is("showDemoCreatePlus", true), CheckBoxUpdate)
-    helpers.CreateSkinnedCheckbox("demosEnableAlerts", MapUIWindow, "Enable alerts", 40, 165, settingsModule.Is("EnableAlertDemo", true), CheckBoxUpdate)
-    helpers.CreateSkinnedCheckbox("demosSortByTime", MapUIWindow, "Sort demos by time", 40, 195, settingsModule.Is("SortDemosByTime", true), CheckBoxUpdate)
-    local demosLabel = helpers.createLabel("demosLabel", MapUIWindow, "Demos:", 40, 85, 12)
-    table.insert(configElements, demosLabel)
-    -- Location [Output, Guide region name, Open real map] 
-    helpers.CreateSkinnedCheckbox("locationOutput", MapUIWindow, "Output location to file", 40, 245, settingsModule.Is("EnableLocationOutput", true), CheckBoxUpdate)
-    helpers.CreateSkinnedCheckbox("locationGuideRegion", MapUIWindow, "Tracking use region name", 250, 245, settingsModule.Is("UseTeleportHint", true), CheckBoxUpdate)
-    helpers.CreateSkinnedCheckbox("locationOpenRealMap", MapUIWindow, "Open real map on click", 40, 275, settingsModule.Is("OpenRealMap", true), CheckBoxUpdate)
-    helpers.CreateSkinnedCheckbox("locationEnableShowOnTracking", MapUIWindow, "Enable show on tracking", 40, 305, settingsModule.Is("EnableShowOnTracking", true), CheckBoxUpdate)
-    helpers.CreateSkinnedCheckbox("teleportHintFiltered", MapUIWindow, "Filter teleport locations", 40, 335, settingsModule.Is("TeleportHintFiltered", true), CheckBoxUpdate)
-    helpers.CreateSkinnedCheckbox("locationShowTargetInfoInChat", MapUIWindow, "Show target info in chat", 250, 275, settingsModule.Is("ShowTargetInfoInChat", true), CheckBoxUpdate)
-    helpers.CreateSkinnedCheckbox("locationAutoGotoNextMap", MapUIWindow, "Auto goto next map", 250, 305, settingsModule.Is("AutoGotoNextMap", true), CheckBoxUpdate)
-    helpers.CreateSkinnedCheckbox("radarEnabled", MapUIWindow, "Radar: Enable", 250, 335, settingsModule.Is("RadarEnabled", true),
-    function(checked)
-        radar.SetEnabled(checked)
-    end)
-    local locationLabel = helpers.createLabel("locationLabel", MapUIWindow, "Location:", 40, 220, 12)
-    table.insert(configElements, locationLabel)
-    -- Next map behavior [Nearest in my region only, Nearest anywhere, My region first then anywhere]
-    local nextMapModeLabel = helpers.createLabel("nextMapModeLabel", MapUIWindow, "Next button behavior:", 40, 410, 12)
-    table.insert(configElements, nextMapModeLabel)
-    helpers.CreateSkinnedCheckbox("nextMapModeRegionOnly", MapUIWindow, "[A] Nearest (in region)", 40, 430, settingsModule.Is("NextMapMode", 1),
-    function(checked)
-        if checked == true then settingsModule.Update("NextMapMode", 1) end
-    end, nil, nil, "nextMapMode", nil, true)
-    helpers.CreateSkinnedCheckbox("nextMapModeAnywhere", MapUIWindow, "[B] Nearest", 210, 430, settingsModule.Is("NextMapMode", 2),
-    function(checked)
-        if checked == true then settingsModule.Update("NextMapMode", 2) end
-    end, nil, nil, "nextMapMode", nil, true)
-    helpers.CreateSkinnedCheckbox("nextMapModeRegionThenAnywhere", MapUIWindow, "[C] A then B", 320, 430, settingsModule.Is("NextMapMode", 3),
-    function(checked)
-        if checked == true then settingsModule.Update("NextMapMode", 3) end
-    end, nil, nil, "nextMapMode", nil, true)
-    -- Events [Track events, Keep Events for [5min, 10min, 15mins], alert for events]
-    helpers.CreateSkinnedCheckbox("eventsTrack", MapUIWindow, "Track events", 250, 60, settingsModule.Is("EnableWorldEvents", true), CheckBoxUpdate)
+            if checked == true then
+                eventbus.TriggerEvent(eventtopics.topics.radar.setEnabled, false)
+                settingsModule.Update("trackingMode", "Guide")
+            end
+        end, nil, nil, "TrackingDisplayType", nil, true)
+    CreateTabCheckbox("SatNav", "trackingModeCompass", MapUIWindow, "Compass", 150, 143, settingsModule.Is("RadarEnabled", false) and settingsModule.Is("trackingMode","Compass"),
+        function(checked)
+            if checked == true then
+                eventbus.TriggerEvent(eventtopics.topics.radar.setEnabled, false)
+                settingsModule.Update("trackingMode", "Compass")
+            end
+        end, nil, nil, "TrackingDisplayType", nil, true)
+    CreateTabCheckbox("SatNav", "radarEnabled", MapUIWindow, "Radar", 260, 143, settingsModule.Is("RadarEnabled", true),
+        function(checked)
+            if checked == true then
+                eventbus.TriggerEvent(eventtopics.topics.radar.setEnabled, true)
+            end
+        end, nil, nil, "TrackingDisplayType", nil, true)
 
-    local eventsLabel = helpers.createLabel("eventsLabel", MapUIWindow, "Events:", 250, 40, 12)
-    table.insert(configElements, eventsLabel)
-    helpers.CreateSkinnedCheckbox("eventsAlert", MapUIWindow, "Enable alerts for events", 250, 30+60, settingsModule.Is("EnableEventAlerts", true), CheckBoxUpdate)
+    CreateTabDivider("SatNav", "satNavDiv1", MapUIWindow, 171)
 
-    local KeepEventsLabel = helpers.createLabel("KeepEventsLabel", MapUIWindow, "Keep events for [X] mins", 250, 115, 9)
-    table.insert(configElements, KeepEventsLabel)
-    
-    helpers.CreateSkinnedCheckbox("eventsKeep5", MapUIWindow, "5", 250, 135, settingsModule.Is("WorldEventsKeptFor",5), 
-    function(checked)
-        if checked == true then
-            settingsModule.Update("WorldEventsKeptFor", 5)
-        end
-                end, nil, nil, "eventsKeep", nil, true)
-    helpers.CreateSkinnedCheckbox("eventsKeep10", MapUIWindow, "10", 300, 135, settingsModule.Is("WorldEventsKeptFor",10), 
-    function(checked)
-        if checked == true then
-            settingsModule.Update("WorldEventsKeptFor", 10)
-        end
-    end, nil, nil, "eventsKeep", nil, true)
-    helpers.CreateSkinnedCheckbox("eventsKeep15", MapUIWindow, "15", 350, 135, settingsModule.Is("WorldEventsKeptFor",15), 
-    function(checked)
-        if checked == true then
-            settingsModule.Update("WorldEventsKeptFor", 15)
-        end
-                end, nil, nil, "eventsKeep", nil, true)
+    CreateTabCheckbox("SatNav", "mapsAlwaysShowRegions", MapUIWindow, "Keep map region label on inventory", col1, 183, settingsModule.Is("AlwaysShowRegions", true), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "locationAutoGotoNextMap", MapUIWindow, "Auto goto next map", col2, 183, settingsModule.Is("AutoGotoNextMap", true), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "locationOpenRealMap", MapUIWindow, "Open real map on tracking start", col1, 209, settingsModule.Is("OpenRealMap", true), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "locationEnableShowOnTracking", MapUIWindow, "Use \"Show\" button", col2, 209, settingsModule.Is("EnableShowOnTracking", true), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "locationGuideRegion", MapUIWindow, "Use teleport hints when tracking", col1, 235, settingsModule.Is("UseTeleportHint", true), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "locationShowTargetInfoInChat", MapUIWindow, "Target info in chat", col2, 235, settingsModule.Is("ShowTargetInfoInChat", true), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "teleportHintFiltered", MapUIWindow, "Filter teleport locations by faction", col1, 261, settingsModule.Is("TeleportHintFiltered", true), CheckBoxUpdate)
 
-    local settingPanelDiv = MapUIWindow:CreateImageDrawable("settingPanelDiv", "background")
-	settingPanelDiv:SetExtent(3*settingsModule.Get("uiDrawScale"),175*settingsModule.Get("uiDrawScale"))
-	settingPanelDiv:AddAnchor("TOPLEFT", MapUIWindow, "TOPLEFT", 225*settingsModule.Get("uiDrawScale"), 40*settingsModule.Get("uiDrawScale"))
-	settingPanelDiv:SetTexture("bg_quest")
-    settingPanelDiv:SetColor(0,0,0,0.5)
-	settingPanelDiv:Show(true)
-	if settingPanelDiv.Lower then
-		settingPanelDiv:Lower()
-	end
-    table.insert(configElements, settingPanelDiv)
-    local settingPanelDiv2 = MapUIWindow:CreateImageDrawable("settingPanelDiv", "background")
-	settingPanelDiv2:SetExtent(400*settingsModule.Get("uiDrawScale"),3*settingsModule.Get("uiDrawScale"))
-	settingPanelDiv2:AddAnchor("TOPLEFT", MapUIWindow, "TOPLEFT", 40*settingsModule.Get("uiDrawScale"), 362*settingsModule.Get("uiDrawScale"))
-	settingPanelDiv2:SetTexture("bg_quest")
-    settingPanelDiv2:SetColor(0,0,0,0.5)
-	settingPanelDiv2:Show(true)
-	if settingPanelDiv2.Lower then
-		settingPanelDiv2:Lower()
-	end
-    table.insert(configElements, settingPanelDiv2)
+    -- Demos tab
+    CreateTabCheckbox("Demos", "demosShowNextHour", MapUIWindow, "Show only in the next hour", col1, 65, settingsModule.Is("DrawDemosInNextHour", true), CheckBoxUpdate)
+    CreateTabCheckbox("Demos", "demosEnableAddUI", MapUIWindow, "Show Add button", col2, 65, settingsModule.Is("showDemoCreatePlus", true), CheckBoxUpdate)
 
-    local timeLabel = helpers.createLabel("timeLabel", MapUIWindow, "Time:", 250, 160, 12)
-    table.insert(configElements, timeLabel)
-    helpers.CreateSkinnedCheckbox("DSTOffset", MapUIWindow, "DST +1 hour", 250, 180, settingsModule.Is("DSToffset", true), CheckBoxUpdate)
+    CreateTabDivider("Demos", "demosDiv1", MapUIWindow, 92)
 
-    local mapsLabel = helpers.createLabel("mapsLabel", MapUIWindow, "Maps:", 40, 370, 12)
-    table.insert(configElements, mapsLabel)
-    helpers.CreateSkinnedCheckbox("mapsAlwaysShowRegions", MapUIWindow, "Always show regions", 40, 390, settingsModule.Is("AlwaysShowRegions", true), CheckBoxUpdate)
+    CreateTabCheckbox("Demos", "demosSortByTime", MapUIWindow, "Sort by time remaining", col1, 104, settingsModule.Is("SortDemosByTime", true), CheckBoxUpdate)
+    CreateTabCheckbox("Demos", "demosEnableAlerts", MapUIWindow, "Enable alerts for demos", col2, 104, settingsModule.Is("EnableAlertDemo", true), CheckBoxUpdate)
 
+    -- Events tab
+    CreateTabLabel("Events", "KeepEventsLabel", MapUIWindow, "Keep events for [X] mins:", 40, 65, 9)
+    CreateTabCheckbox("Events", "eventsKeep5", MapUIWindow, "5", 40, 87, settingsModule.Is("WorldEventsKeptFor",5),
+        function(checked) if checked == true then settingsModule.Update("WorldEventsKeptFor", 5) end end, nil, nil, "eventsKeep", nil, true)
+    CreateTabCheckbox("Events", "eventsKeep10", MapUIWindow, "10", 100, 87, settingsModule.Is("WorldEventsKeptFor",10),
+        function(checked) if checked == true then settingsModule.Update("WorldEventsKeptFor", 10) end end, nil, nil, "eventsKeep", nil, true)
+    CreateTabCheckbox("Events", "eventsKeep15", MapUIWindow, "15", 160, 87, settingsModule.Is("WorldEventsKeptFor",15),
+        function(checked) if checked == true then settingsModule.Update("WorldEventsKeptFor", 15) end end, nil, nil, "eventsKeep", nil, true)
+
+    CreateTabDivider("Events", "eventsDiv1", MapUIWindow, 115)
+
+    CreateTabCheckbox("Events", "eventsTrack", MapUIWindow, "Enable world events", col1, 127, settingsModule.Is("EnableWorldEvents", true), CheckBoxUpdate)
+    CreateTabCheckbox("Events", "eventsAlert", MapUIWindow, "Show alerts for events", col2, 127, settingsModule.Is("EnableEventAlerts", true), CheckBoxUpdate)
+    CreateTabLabel("Events", "disableAlertsLabel", MapUIWindow, "Disable alerts for:", 40, 155, 9)
+    CreateTabCheckbox("Events", "eventsDisableWarehouseRaid", MapUIWindow, "Warehouse opening & Raid", col1, 177, settingsModule.Is("DisableAlertWarehouseRaid", true), CheckBoxUpdate)
+    CreateTabCheckbox("Events", "eventsDisableCrate", MapUIWindow, "Crates", col2, 177, settingsModule.Is("DisableAlertCrate", true), CheckBoxUpdate)
+    CreateTabCheckbox("Events", "eventsDisableGhostship", MapUIWindow, "Delphinad Ghostship", col1, 203, settingsModule.Is("DisableAlertGhostship", true), CheckBoxUpdate)
+    CreateTabCheckbox("Events", "eventsDisableLeviathan", MapUIWindow, "Leviathan", col2, 203, settingsModule.Is("DisableAlertLeviathan", true), CheckBoxUpdate)
+    CreateTabCheckbox("Events", "eventsDisablePerdita", MapUIWindow, "Perdita", col1, 229, settingsModule.Is("DisableAlertPerdita", true), CheckBoxUpdate)
+    CreateTabCheckbox("Events", "eventsDisableSunfish", MapUIWindow, "Sunfish", col2, 229, settingsModule.Is("DisableAlertSunfish", true), CheckBoxUpdate)
+
+    -- Config tab
+    CreateTabCheckbox("Config", "locationOutput", MapUIWindow, "Output location to file", 40, 65, settingsModule.Is("EnableLocationOutput", true), CheckBoxUpdate)
+    CreateTabCheckbox("Config", "mapsCenterOnPlayerOnModeChange", MapUIWindow, "Center on player on mode change", 40, 91, settingsModule.Is("CenterOnPlayerOnModeChange", true), CheckBoxUpdate)
+
+    CreateTabDivider("Config", "configDiv1", MapUIWindow, 118)
+
+    CreateTabLabel("Config", "timeLabel", MapUIWindow, "Time:", 40, 130, 12)
+    CreateTabCheckbox("Config", "DSTOffset", MapUIWindow, "DST +1 hour", 40, 154, settingsModule.Is("DSToffset", true), CheckBoxUpdate)
+
+    SetActiveTab(currentTab)
     configui.HideConfigUI()
 end
 

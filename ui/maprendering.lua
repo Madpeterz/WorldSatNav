@@ -7,9 +7,21 @@ local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
 local maprendering = {}
 
+-- Lazily required to avoid a load-order cycle: maprendering -> configui -> radar
+-- -> tracking -> dawnsdrop -> maprendering. By the time settings are opened,
+-- all modules are already loaded so this just returns the cached module.
+local configui = nil
+local function GetConfigUI()
+	if configui == nil then
+		configui = require("WorldSatNav/ui/configui")
+	end
+	return configui
+end
+
 local TOPICS = eventtopics.topics
 
 local GetCurrentPosition
+local FocusOnMe
 
 -- Set by dawnsdrop.lua so icon clicks know whether the active Dawns tool
 -- (Add) should consume the click instead of opening the tracker.
@@ -935,6 +947,8 @@ local function CreateWorldSatNavWindow()
 
 	window.mapImage = mapImage
 	window.mapBackground = mapBackground
+	window.background = windowBackground
+	window.menuBackground = menuBackground
 	return window
 end
 
@@ -1016,6 +1030,9 @@ local function UpdateMapMode(mode)
 		maprendering.playerIcon:Show(false)
 	end
 	WorldSatNavState.LastRenderConfig.iconsversion = false
+	if settingsModule.Get("CenterOnPlayerOnModeChange") == true then
+		FocusOnMe()
+	end
 	eventbus.TriggerEvent(TOPICS.render.modeChanged, mode)
 	if mode == "maps" then
 		helpers.DevLog("Publishing maps render event due to map mode change")
@@ -1070,7 +1087,7 @@ end
 maprendering.OnUpdate = helpers.throttle(constants.timing.fastPoll, renderTick)
 
 
-local function FocusOnMe()
+function FocusOnMe()
 	if not maprendering.MapUI or not maprendering.MapUI.mapImage then
 		helpers.DevLog("Cannot focus on player, MapUI or mapImage is not initialized")
 		return
@@ -1091,6 +1108,71 @@ local function FocusOnMe()
 		return
 	end
 	SetMapZoom(WorldSatNavState.zoomLevel, maprendering.MapUI.mapImage, focusX, focusY)
+end
+
+local function OnMapsModeClick() UpdateMapMode("maps") end
+local function OnShipsModeClick()
+	eventbus.TriggerEvent(TOPICS.ships.resetVisited)
+	UpdateMapMode("ships")
+end
+local function OnEventsModeClick() UpdateMapMode("events") end
+local function OnDemosModeClick() UpdateMapMode("demos") end
+local function OnDawnsModeClick() UpdateMapMode("dawns") end
+
+-- These 5 buttons normally switch map mode. While the settings page is open,
+-- maprendering.SetModeButtonsForSettings repurposes them into tab buttons
+-- (see below), so their default label/handler/mode are kept here to restore.
+local modeButtonDefs = {
+	{ id = "mapsModeButton", label = "Maps", mode = "maps", handler = OnMapsModeClick },
+	{ id = "shipsModeButton", label = "Ships", mode = "ships", handler = OnShipsModeClick },
+	{ id = "eventsModeButton", label = "Events", mode = "events", handler = OnEventsModeClick },
+	{ id = "demosModeButton", label = "Demos", mode = "demos", handler = OnDemosModeClick },
+	{ id = "dawnsModeButton", label = "Dawns", mode = "dawns", handler = OnDawnsModeClick },
+}
+
+local inSettingsButtonMode = false
+
+-- Swaps the 5 mode buttons between "switch map mode" and "switch settings tab"
+-- duty. The first #configui.TAB_NAMES buttons become tab selectors, the last
+-- one becomes "<- Back" to close the settings page.
+function maprendering.SetModeButtonsForSettings(enabled)
+	if enabled == inSettingsButtonMode then
+		return
+	end
+	inSettingsButtonMode = enabled
+	if enabled then
+		local settingsUI = GetConfigUI()
+		local tabNames = settingsUI.TAB_NAMES
+		local activeTab = settingsUI.GetActiveTab()
+		for i, def in ipairs(modeButtonDefs) do
+			local tabName = tabNames[i]
+			helpers.SetCheckboxTextures(def.id, "button_active_settings.png", "button_ready_settings.png")
+			if tabName ~= nil then
+				helpers.SetCheckboxText(def.id, tabName)
+				helpers.SetCheckboxOnClick(def.id, function(checked)
+					if checked == true then
+						settingsUI.SelectTab(tabName)
+					end
+				end)
+				helpers.SetCheckboxState(def.id, tabName == activeTab)
+			else
+				helpers.SetCheckboxText(def.id, "<- Back")
+				helpers.SetCheckboxOnClick(def.id, function(checked)
+					if checked == true then
+						maprendering.HideConfigPage()
+					end
+				end)
+				helpers.SetCheckboxState(def.id, false)
+			end
+		end
+	else
+		for _, def in ipairs(modeButtonDefs) do
+			helpers.SetCheckboxText(def.id, def.label)
+			helpers.SetCheckboxOnClick(def.id, def.handler)
+			helpers.SetCheckboxTextures(def.id, "button_active.png", "button_ready.png")
+			helpers.SetCheckboxState(def.id, def.mode == currentMapMode)
+		end
+	end
 end
 
 local cleanup = {}
@@ -1118,22 +1200,9 @@ local function CreateUiElements()
 	end
 	redrawMapIcons(maprendering.MapUI.mapImage)
 
-	helpers.CreateSkinnedCheckbox("mapsModeButton", maprendering.MapUI, "Maps", 470, 128, true, function()
-		UpdateMapMode("maps")
-	end, 62, 25, "DisplayMode", "artwork", true, "button_active.png", "button_ready.png", "mail",false)
-	helpers.CreateSkinnedCheckbox("shipsModeButton", maprendering.MapUI, "Ships", 470, 128+25, false, function()
-		eventbus.TriggerEvent(TOPICS.ships.resetVisited)
-		UpdateMapMode("ships")
-	end, 62, 25, "DisplayMode", "artwork", true, "button_active.png", "button_ready.png", "mail",false)
-	helpers.CreateSkinnedCheckbox("eventsModeButton", maprendering.MapUI, "Events", 470, 128+50, false, function()
-		UpdateMapMode("events")
-	end, 62, 25, "DisplayMode", "artwork", true, "button_active.png", "button_ready.png", "mail",false)
-	helpers.CreateSkinnedCheckbox("demosModeButton", maprendering.MapUI, "Demos", 470, 128+75, false, function()
-		UpdateMapMode("demos")
-	end, 62, 25, "DisplayMode", "artwork", true, "button_active.png", "button_ready.png", "mail",false)
-	helpers.CreateSkinnedCheckbox("dawnsModeButton", maprendering.MapUI, "Dawns", 470, 128+100, false, function()
-		UpdateMapMode("dawns")
-	end, 62, 25, "DisplayMode", "artwork", true, "button_active.png", "button_ready.png", "mail",false)
+	for i, def in ipairs(modeButtonDefs) do
+		helpers.CreateSkinnedCheckbox(def.id, maprendering.MapUI, def.label, 470, 128+(25*(i-1)), def.mode == "maps", def.handler, 62, 25, "DisplayMode", "artwork", true, "button_active.png", "button_ready.png", "mail",false)
+	end
 
 	--helpers.createSkinnedButton("gotoLocation", maprendering.MapUI, "Goto ->", "controls/button_ready.png", 400, 450, 55, 25, nil, nil, nil, false)
 	helpers.CreateImageButton("gotoLocation", maprendering.MapUI, "ui/goto.png", 478, 128+155, 25, 25, function()
@@ -1215,6 +1284,15 @@ function maprendering.ShowConfigPage()
 	HideAllIcons()
 	eventbus.TriggerEvent(TOPICS.render.config)
 	maprendering.UnloadUIItems()
+	maprendering.SetModeButtonsForSettings(true)
+	if maprendering.MapUI ~= nil then
+		if maprendering.MapUI.background ~= nil then
+			maprendering.MapUI.background:SetTexture(api.baseDir .. "/WorldSatNav/images/settingsbackground2.png")
+		end
+		if maprendering.MapUI.menuBackground ~= nil then
+			maprendering.MapUI.menuBackground:SetTexture(api.baseDir .. "/WorldSatNav/images/settingsbackground2.png")
+		end
+	end
 	configWindowVisible = true
 end
 
@@ -1224,6 +1302,15 @@ function maprendering.HideConfigPage()
 		return
 	end
 	maprendering.ReloadUIItems()
+	maprendering.SetModeButtonsForSettings(false)
+	if maprendering.MapUI ~= nil then
+		if maprendering.MapUI.background ~= nil then
+			maprendering.MapUI.background:SetTexture(api.baseDir .. "/WorldSatNav/images/mainuibackground3.png")
+		end
+		if maprendering.MapUI.menuBackground ~= nil then
+			maprendering.MapUI.menuBackground:SetTexture(api.baseDir .. "/WorldSatNav/images/mainuibackground3.png")
+		end
+	end
 	configWindowVisible = false
 	UpdateMapMode(currentMapMode)
 end

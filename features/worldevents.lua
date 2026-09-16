@@ -54,6 +54,17 @@ local triggeredEvents = {
     }
 }
 
+-- Maps an event type key to the "disable alerts for" setting that covers it.
+local alertDisableSettingByEventType = {
+    ["Warehouse"] = "DisableAlertWarehouseRaid",
+    ["WarehouseRaid"] = "DisableAlertWarehouseRaid",
+    ["Crate"] = "DisableAlertCrate",
+    ["Delphinad Ghostship"] = "DisableAlertGhostship",
+    ["Leviathan"] = "DisableAlertLeviathan",
+    ["Perdita"] = "DisableAlertPerdita",
+    ["Sunfish"] = "DisableAlertSunfish",
+}
+
 local function LoadDemoEvents()
     if loadedDemoEvents then return end
     if constants.DEV_MODE_LOAD_DEMO_EVENTS == false then
@@ -197,7 +208,9 @@ function worldevents.WorldMessageProcessor(event, message, iconKey, sextants, in
         helpers.DevLog("WorldSatNav: No event type matched for message: " .. message)
         return
     end
-    if settings.Get("EnableEventAlerts") then
+    local alertDisableSetting = alertDisableSettingByEventType[matchedEventType]
+    local alertDisabledForEvent = alertDisableSetting ~= nil and settings.Get(alertDisableSetting) == true
+    if settings.Get("EnableEventAlerts") and not alertDisabledForEvent then
         local _, regionName = regionmap.GetRegionForSextant(sextants)
         eventbus.TriggerEvent(eventtopics.topics.alert.show, {
         title = "World event:"..matchedEventType,

@@ -57,6 +57,9 @@ local eventtopics = {
 			selectBySextant = "ships.selectBySextant",
 			resetVisited = "ships.resetVisited",
 		},
+		radar = {
+			setEnabled = "radar.setEnabled",
+		},
 		render = {
 			redrawMap = "render.redrawMap",
 			modeChanged = "render.modeChanged",

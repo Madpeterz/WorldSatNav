@@ -375,6 +375,7 @@ function radar.OnLoad()
 	eventbus.WatchEvent(eventtopics.topics.tracking.custom, radar.setTarget, "radar")
 	eventbus.WatchEvent(eventtopics.topics.tracking.start, radar.setTarget, "radar")
 	eventbus.WatchEvent(eventtopics.topics.tracking.stop, radar.clearTarget, "radar")
+	eventbus.WatchEvent(eventtopics.topics.radar.setEnabled, radar.SetEnabled, "radar")
 end
 
 function radar.OnUnload()

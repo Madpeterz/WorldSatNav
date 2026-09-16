@@ -239,7 +239,10 @@ function widgets.CreateSkinnedCheckbox(id, parent, text, offsetX, offsetY, check
             end
             CheckBoxs[id].checked = newChecked
             if newChecked ~= currentChecked then
-                onClickFunction(newChecked, id)
+                local activeOnClick = CheckBoxs[id].onClickFunction
+                if activeOnClick ~= nil then
+                    activeOnClick(newChecked, id)
+                end
                 return
             end
         end
@@ -259,7 +262,38 @@ function widgets.CreateSkinnedCheckbox(id, parent, text, offsetX, offsetY, check
         radioGroup = radioGroup,
         customTextureChecked = customTextureChecked,
         customTextureUnchecked = customTextureUnchecked,
+        onClickFunction = onClickFunction,
     }
+end
+
+-- Rebinds an existing checkbox's click callback without recreating the widget.
+function widgets.SetCheckboxOnClick(id, onClickFunction)
+    if CheckBoxs[id] == nil then
+        return
+    end
+    CheckBoxs[id].onClickFunction = onClickFunction
+end
+
+-- Updates an existing checkbox's label text in place.
+function widgets.SetCheckboxText(id, text)
+    local cb = CheckBoxs[id]
+    if cb == nil or cb.label == nil then
+        return
+    end
+    cb.label:SetText(text)
+end
+
+-- Swaps an existing checkbox/radio's checked/unchecked textures in place and
+-- refreshes the currently displayed one to match.
+function widgets.SetCheckboxTextures(id, customTextureChecked, customTextureUnchecked)
+    local cb = CheckBoxs[id]
+    if cb == nil then
+        return
+    end
+    cb.customTextureChecked = customTextureChecked
+    cb.customTextureUnchecked = customTextureUnchecked
+    local useTextureChecked, useTextureUnchecked = resolveCheckboxTextures(cb.isRadio, customTextureChecked, customTextureUnchecked)
+    cb.overlay:SetTexture(cb.checked and useTextureChecked or useTextureUnchecked)
 end
 
 function widgets.ToggleCheckboxVisable(id, visable)
