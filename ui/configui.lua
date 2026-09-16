@@ -2,6 +2,7 @@ local helpers = require("WorldSatNav/helpers")
 local settingsModule = require("WorldSatNav/core/settings")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
+local radar = require("WorldSatNav/features/radar")
 
 local configui = {}
 
@@ -36,6 +37,7 @@ local function ToggleUIVisibleState(newState)
     helpers.ToggleCheckboxVisable("eventsAlert", newState)
     helpers.ToggleCheckboxVisable("DSTOffset", newState)
     helpers.ToggleCheckboxVisable("mapsAlwaysShowRegions", newState)
+    helpers.ToggleCheckboxVisable("radarEnabled", newState)
 end
 function configui.ShowConfigUI()
     ToggleUIVisibleState(true)
@@ -192,6 +194,11 @@ function configui.CreateConfigUI(MapUIWindow)
     local mapsLabel = helpers.createLabel("mapsLabel", MapUIWindow, "Maps:", 40, 370, 12)
     table.insert(configElements, mapsLabel)
     helpers.CreateSkinnedCheckbox("mapsAlwaysShowRegions", MapUIWindow, "Always show regions", 40, 390, settingsModule.Is("AlwaysShowRegions", true), CheckBoxUpdate)
+
+    helpers.CreateSkinnedCheckbox("radarEnabled", MapUIWindow, "Radar: Enable", 250, 390, settingsModule.Is("RadarEnabled", true),
+    function(checked)
+        radar.SetEnabled(checked)
+    end)
 
     configui.HideConfigUI()
 end

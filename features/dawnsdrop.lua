@@ -109,6 +109,7 @@ local dawnsdropTypes = {
     },
 	["Events"] = {
 		"Ghost ships",
+		"World boss",
 	},
     ["Points of Interest"] = {
         "Teleports",

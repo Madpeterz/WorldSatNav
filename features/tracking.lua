@@ -107,6 +107,26 @@ function tracking.IsActive()
 	return TRACK_WINDOW:IsVisible()
 end
 
+-- The radar panel replaces this window's UI while enabled. Keeps TRACK_WINDOW
+-- hidden in that case, and restores it (for the current target, if any) once
+-- radar is turned back off. Called from setTargetGoto and from radar.SetEnabled.
+function tracking.RefreshWindowVisibility()
+	if TRACK_WINDOW == nil or targetSextant == nil then
+		return
+	end
+	local shouldShow = settings.Get("RadarEnabled") ~= true
+	if TRACK_WINDOW:IsVisible() == shouldShow then
+		return
+	end
+	TRACK_WINDOW:Show(shouldShow)
+	if shouldShow then
+		-- AssignNextButton no-ops while the window is hidden, so a target set
+		-- while radar was enabled never got its Next button wired up. Redo it
+		-- now that the window is visible again.
+		tracking.RefreshNextButton()
+	end
+end
+
 -- Fully stop tracking: clear the tracked point and hide the window entirely,
 -- rather than leaving a stale target with dead Next/Show buttons.
 function tracking.Stop()
@@ -130,6 +150,21 @@ function tracking.Stop()
 	end
 	if TRACK_WINDOW:IsVisible() then
 		TRACK_WINDOW:Show(false)
+	end
+end
+
+-- Dispatches the Next button to the callback for currentTrackedType. Shared by
+-- setTargetGoto (new target) and RefreshWindowVisibility (window re-shown
+-- after being hidden while radar owned the UI).
+function tracking.RefreshNextButton()
+	if currentTrackedType == "Map" then
+		tracking.AssignNextButton("Map", InvokeNextMapCallback)
+	elseif currentTrackedType == "Ship" then
+		tracking.AssignNextButton("Ship", InvokeNextShipCallback)
+	elseif currentTrackedType == "Dawns" then
+		tracking.AssignNextButton("point", InvokeNextGuidedCallback)
+	else
+		tracking.AssignNextButton(nil, nil)
 	end
 end
 
@@ -300,10 +335,14 @@ local function EvaluateTeleportPlan()
 		tostring(teleport.name), teleportPlan.savedSeconds, directM, tostring(teleportPlanOriginRegion)))
 end
 
-local function updateTrackingData()
-
-	if TRACK_WINDOW == nil or not TRACK_WINDOW:IsVisible() or targetSextant == nil then
-		return
+-- Shared distance/teleport-hint text builder used by both TRACK_WINDOW and
+-- radar.lua's distance field. Retires an expired teleport plan as a side
+-- effect (same lifecycle updateTrackingData always applied). Independent of
+-- TRACK_WINDOW's visibility, so radar can call it while that window is hidden.
+-- Returns: line1, line2 (nil unless a wrapped teleport hint), isTeleportHint
+function tracking.GetDistanceDisplayText()
+	if targetSextant == nil then
+		return "", nil, false
 	end
 
 	local _, regionNameTarget = regionmap.GetRegionForSextant(targetSextant)
@@ -319,6 +358,46 @@ local function updateTrackingData()
 		teleportPlan = nil
 		teleportPlanOriginRegion = nil
 	end
+
+	-- teleportPlan is decided once per target in EvaluateTeleportPlan. Suppress the
+	-- hint once walking straight from where the player is now beats teleporting -
+	-- i.e. after the teleport has happened, or the player has walked close enough.
+	-- Region equality is not a usable proxy here: the nearest teleport POI is
+	-- often in the same region as both the player and a coastal/ship target, so
+	-- comparing regions hid the hint for targets teleporting would still shorten.
+	local useTeleport = teleportPlan ~= nil
+	if useTeleport then
+		local liveDirectM = MetersBetweenSextants(api.Map:GetPlayerSextants(), targetSextant)
+		if liveDirectM ~= nil and teleportPlan.poiToTargetM ~= nil then
+			-- Same break-even as EvaluateTeleportPlan: teleporting only wins when it
+			-- shaves more than the fixed teleport cost (~251m of walking) off the trip.
+			local shavedM = liveDirectM - teleportPlan.poiToTargetM
+			if shavedM <= TELEPORT_FIXED_COST_S * WALK_SPEED_MPS then
+				useTeleport = false
+			end
+		end
+	end
+
+	local _, navDistance, navDistanceScale = gps.getNavigationText(targetSextant)
+
+	if useTeleport and navDistanceScale ~= "m" then
+		if teleportPlan.name ~= nil and teleportPlan.name ~= "" then
+			local line1, line2 = TeleportHintLines(teleportPlan.name)
+			return line1, line2, true
+		end
+		return "teleport to " .. regionNameTarget, nil, true
+	end
+
+	return string.format("%.1f %s", navDistance, navDistanceScale), nil, false
+end
+
+local function updateTrackingData()
+
+	if TRACK_WINDOW == nil or not TRACK_WINDOW:IsVisible() or targetSextant == nil then
+		return
+	end
+
+	local _, regionNameTarget = regionmap.GetRegionForSextant(targetSextant)
 
 	if TRACK_WINDOW.showBtn ~= nil then
 		local showEnabled = settings.Get("EnableShowOnTracking")
@@ -343,24 +422,6 @@ local function updateTrackingData()
 		end
 	end
 
-	-- teleportPlan is decided once per target in EvaluateTeleportPlan. Suppress the
-	-- hint once walking straight from where the player is now beats teleporting -
-	-- i.e. after the teleport has happened, or the player has walked close enough.
-	-- Region equality is not a usable proxy here: the nearest teleport POI is
-	-- often in the same region as both the player and a coastal/ship target, so
-	-- comparing regions hid the hint for targets teleporting would still shorten.
-	local useTeleport = teleportPlan ~= nil
-	if useTeleport then
-		local liveDirectM = MetersBetweenSextants(api.Map:GetPlayerSextants(), targetSextant)
-		if liveDirectM ~= nil and teleportPlan.poiToTargetM ~= nil then
-			-- Same break-even as EvaluateTeleportPlan: teleporting only wins when it
-			-- shaves more than the fixed teleport cost (~251m of walking) off the trip.
-			local shavedM = liveDirectM - teleportPlan.poiToTargetM
-			if shavedM <= TELEPORT_FIXED_COST_S * WALK_SPEED_MPS then
-				useTeleport = false
-			end
-		end
-	end
 	if targetName == nil then
 		targetName = "undefined"
 	end
@@ -384,17 +445,13 @@ local function updateTrackingData()
 		TRACK_WINDOW.markNameLabel.style:SetFontSize(fontsize)
 		TRACK_WINDOW.markNameLabel.fontSize = fontsize
 	end
-	local navDir, navDistance, navDistanceScale, bearing, relativeDir = gps.getNavigationText(targetSextant)
-	
-	if useTeleport and navDistanceScale ~= "m" then
-		if teleportPlan.name ~= nil and teleportPlan.name ~= "" then
-			SetDistanceText(TeleportHintLines(teleportPlan.name))
-		else
-			SetDistanceText("teleport to " .. regionNameTarget)
-		end
+	local navDir, _, _, _, relativeDir = gps.getNavigationText(targetSextant)
+	local line1, line2, isTeleport = tracking.GetDistanceDisplayText()
+	SetDistanceText(line1, line2)
+
+	if isTeleport then
 		updateNavArrow("portal2")
 	else
-		SetDistanceText(string.format("%.1f %s", navDistance, navDistanceScale))
 		if settings.Get("trackingMode") == "Compass" then
 			updateNavArrow(navDir)
 		elseif settings.Get("trackingMode") == "Guide" then
@@ -527,9 +584,7 @@ function tracking.setTargetGoto(sextant, name, ShowMapMarker, displayName)
 		helpers.DevLog("tracking window not initialized, cannot set target")
 		return
 	end
-	if TRACK_WINDOW:IsVisible() == false then
-		TRACK_WINDOW:Show(true)
-	end
+	tracking.RefreshWindowVisibility()
 	local xMap = coordinates.longitudeSextantToDegrees(
 		normalizedSextant.longitude,
 		normalizedSextant.deg_long or 0,
@@ -548,20 +603,7 @@ function tracking.setTargetGoto(sextant, name, ShowMapMarker, displayName)
 		helpers.DevLog("Showing map marker for target sextant at coordinates: " .. xMap .. ", " .. yMap)
 		api.Map:ToggleMapWithPortal(constants.game.portalZoneId, xMap, yMap, constants.game.portalZoomLevel)
 	end
-	helpers.DevLog("Attempting to link next button to "..name.."")
-	if name == "Map" then
-		helpers.DevLog("Assigning next button to map callback")
-		tracking.AssignNextButton("Map", InvokeNextMapCallback)
-	elseif name == "Ship" then
-		helpers.DevLog("Assigning next button to ship callback")
-		tracking.AssignNextButton("Ship", InvokeNextShipCallback)
-	elseif name == "Dawns" then
-		helpers.DevLog("Assigning next button to guided dawnsdrop callback")
-		tracking.AssignNextButton("point", InvokeNextGuidedCallback)
-	else
-		helpers.DevLog("No valid target type provided for next button callback, hiding next button")
-		tracking.AssignNextButton(nil, nil)
-	end
+	tracking.RefreshNextButton()
 	helpers.DevLog("Target set to sextant: " .. helpers.SextantKey(normalizedSextant) .. " with name: " .. tostring(name))
 	-- Decide teleport-vs-walk once here, not every frame in updateTrackingData.
 	EvaluateTeleportPlan()

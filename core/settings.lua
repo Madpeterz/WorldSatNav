@@ -13,6 +13,8 @@ local defaultSettings = {
     MainWindowX = 343,
     TrackingWindowX = 46,
     TrackingWindowY = 300,
+    RadarWindowX = 400,
+    RadarWindowY = 300,
     OpenButtonX = 1499,
     OpenButtonY = 716,
     uiDrawScale = 1.25, -- Scale for UI elements
@@ -21,6 +23,7 @@ local defaultSettings = {
     -- Tracking
     UseTeleportHint = true,
     trackingMode = "Guide",
+    RadarEnabled = true,
     OpenRealMap = true,
     EnableShowOnTracking = true,
     ShowTargetInfoInChat = false,
