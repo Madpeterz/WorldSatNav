@@ -57,6 +57,14 @@ local defaultSettings = {
     DisableAlertPerdita = false,
     DisableAlertSunfish = false,
 
+    -- Equip
+    SwapToWaterTitle = false,
+    title_id_swim = 531,
+    title_id_normal = 180,
+    SwapToWaterEquipment = false,
+    equipment_swim = "Eternal Defiance", -- item name in bag
+    equipment_normal = "Delphinad Wave Sabatons",
+
     -- timing
     DSToffset = true, -- offset in hours to apply during daylight saving time
 

@@ -5,6 +5,7 @@ local constants = require("WorldSatNav/core/constants")
 local settingsModule = require("WorldSatNav/core/settings")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
+local equip = require("WorldSatNav/features/equip")
 local maprendering = {}
 
 -- Lazily required to avoid a load-order cycle: maprendering -> configui -> radar
@@ -1007,6 +1008,7 @@ local function UpdateMapMode(mode)
 	maprendering.ReloadUIItems()
 	maprendering.ClearUIState()
 	currentMapMode = mode
+	equip.OnModeChanged(mode)
     if not maprendering.MapUI or not maprendering.MapUI.mapImage then
         return
     end
@@ -1133,8 +1135,9 @@ local modeButtonDefs = {
 local inSettingsButtonMode = false
 
 -- Swaps the 5 mode buttons between "switch map mode" and "switch settings tab"
--- duty. The first #configui.TAB_NAMES buttons become tab selectors, the last
--- one becomes "<- Back" to close the settings page.
+-- duty. The first #configui.TAB_NAMES buttons become tab selectors. Any spare
+-- button becomes "<- Back" to close the settings page (none while every button
+-- is a tab; the settings button closes the page instead).
 function maprendering.SetModeButtonsForSettings(enabled)
 	if enabled == inSettingsButtonMode then
 		return
@@ -1402,6 +1405,7 @@ function maprendering.ForceSelectUIMode(mode)
 	eventbus.TriggerEvent(TOPICS.UI.close)
 	maprendering.MapUI:Show(true)
 	currentMapMode = mode
+	equip.OnModeChanged(mode)
 	WorldSatNavState.LastRenderConfig.iconsversion = false -- Force icons to redraw with the new mode
 	helpers.SetCheckboxState("mapsModeButton", mode == "maps")
 	helpers.SetCheckboxState("shipsModeButton", mode == "ships")

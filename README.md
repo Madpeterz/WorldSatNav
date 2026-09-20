@@ -124,6 +124,16 @@ once your done commit your changes and create a pull request to merge the change
 after its been reviewed.
 
 
+### I dont have the Suggested titles can I set custom ones?
+
+yes just edit your settings file and view the page
+https://aa-classic.com/database/titles
+
+defaults are:
+
+180 - General
+531 - Abyssal Archaeologist
+
 ## Credits
 
 Based on code / assets / ideas from:

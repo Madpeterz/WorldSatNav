@@ -10,7 +10,7 @@ local tabRegistry = {}      -- tabName -> { checkboxIds = {}, labelWidgets = {} 
 local currentTab = "SatNav"
 local settingsTitleLabel = nil
 
-local TAB_ORDER = { "SatNav", "Demos", "Events", "Config" }
+local TAB_ORDER = { "SatNav", "Demos", "Events", "Config", "Equip" }
 configui.TAB_NAMES = TAB_ORDER -- tab switching is driven by maprendering's mode buttons, see SelectTab/GetActiveTab
 for _, tab in ipairs(TAB_ORDER) do
     tabRegistry[tab] = { checkboxIds = {}, labelWidgets = {} }
@@ -95,6 +95,8 @@ local function CheckBoxUpdate(checkState, checkboxId)
     elseif checkboxId == "eventsTrack" then SettingName = "EnableWorldEvents"
     elseif checkboxId == "eventsAlert" then SettingName = "EnableEventAlerts"
     elseif checkboxId == "DSTOffset" then SettingName = "DSToffset"
+    elseif checkboxId == "equipSwapWaterTitle" then SettingName = "SwapToWaterTitle"
+    elseif checkboxId == "equipSwapWaterEquipment" then SettingName = "SwapToWaterEquipment"
     elseif checkboxId == "mapsAlwaysShowRegions" then SettingName = "AlwaysShowRegions"
     elseif checkboxId == "mapsCenterOnPlayerOnModeChange" then SettingName = "CenterOnPlayerOnModeChange"
     elseif checkboxId == "eventsDisableWarehouseRaid" then SettingName = "DisableAlertWarehouseRaid"
@@ -139,6 +141,19 @@ local function CreateTabDivider(tab, id, parent, y)
     end
     RegisterLabel(tab, div)
     return div
+end
+
+-- Text box bound to a string setting, shown/hidden with the given tab.
+local function CreateTabTextInput(tab, id, parent, x, y, width, labelText, setting)
+    local input = helpers.createTextInput(id, parent, x, y, width, 29, nil, 60, labelText, function(text)
+        settingsModule.Update(setting, text)
+    end, false, FONT_COLOR.BLACK)
+    input:SetText(settingsModule.Get(setting) or "")
+    RegisterLabel(tab, input)
+    if input.label ~= nil then
+        RegisterLabel(tab, input.label)
+    end
+    return input
 end
 
 function configui.CreateConfigUI(MapUIWindow)
@@ -242,6 +257,15 @@ function configui.CreateConfigUI(MapUIWindow)
 
     CreateTabLabel("Config", "timeLabel", MapUIWindow, "Time:", 40, 130, 12)
     CreateTabCheckbox("Config", "DSTOffset", MapUIWindow, "DST +1 hour", 40, 154, settingsModule.Is("DSToffset", true), CheckBoxUpdate)
+
+    -- Equip tab (title IDs live in settings: title_id_swim / title_id_normal)
+    CreateTabCheckbox("Equip", "equipSwapWaterTitle", MapUIWindow, "Swap to water title", col1, 65, settingsModule.Is("SwapToWaterTitle", true), CheckBoxUpdate)
+
+    CreateTabDivider("Equip", "equipDiv1", MapUIWindow, 96)
+
+    CreateTabCheckbox("Equip", "equipSwapWaterEquipment", MapUIWindow, "Swap to water equipment", col1, 108, settingsModule.Is("SwapToWaterEquipment", true), CheckBoxUpdate)
+    CreateTabTextInput("Equip", "equipmentSwimInput", MapUIWindow, col1, 138, 160, "Water equipment:", "equipment_swim")
+    CreateTabTextInput("Equip", "equipmentNormalInput", MapUIWindow, 205, 138, 160, "Normal equipment:", "equipment_normal")
 
     SetActiveTab(currentTab)
     configui.HideConfigUI()
