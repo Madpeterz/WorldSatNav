@@ -995,6 +995,15 @@ end
 
 
 local function UpdateMapMode(mode)
+	-- While the settings page is up the mode buttons are tab buttons and the map
+	-- is unloaded. Background redraws (bag changes, flash-mode exit) must not
+	-- tear that down; just remember the mode and let HideConfigPage render it.
+	if configWindowVisible == true then
+		helpers.DevLog("Deferring map mode change to '" .. tostring(mode) .. "' until config page closes")
+		currentMapMode = mode
+		equip.OnModeChanged(mode)
+		return
+	end
 	helpers.SetCheckBoxOverride("mapsModeButton", false)
 	helpers.SetCheckBoxOverride("shipsModeButton", false)
 	helpers.SetCheckBoxOverride("eventsModeButton", false)
@@ -1016,10 +1025,6 @@ local function UpdateMapMode(mode)
 		helpers.DevLog("Not triggering update for map mode change because map is not visible")
         return
     end
-	if configWindowVisible == true then
-		helpers.DevLog("Not triggering update for map mode change because config window is visible")
-		return
-	end
 	HideAllIcons()
 	eventbus.TriggerEvent(TOPICS.render.clearUiState)
 	maprendering.playerIcon.inuse = true
@@ -1271,7 +1276,6 @@ end
 function maprendering.ClearUIState()
 	HideAllIcons()
 	eventbus.TriggerEvent(TOPICS.render.clearUiState)
-	configWindowVisible = false
 end
 
 function maprendering.IsConfigPageVisible()
@@ -1299,12 +1303,9 @@ function maprendering.ShowConfigPage()
 	configWindowVisible = true
 end
 
--- Leave the settings page, restoring the last map mode. No-op if not on it.
-function maprendering.HideConfigPage()
-	if configWindowVisible ~= true then
-		return
-	end
-	maprendering.ReloadUIItems()
+-- Undo the settings page chrome (tab buttons, backgrounds) without rendering a
+-- map mode. Callers decide what gets drawn next.
+local function LeaveConfigChrome()
 	maprendering.SetModeButtonsForSettings(false)
 	if maprendering.MapUI ~= nil then
 		if maprendering.MapUI.background ~= nil then
@@ -1315,6 +1316,15 @@ function maprendering.HideConfigPage()
 		end
 	end
 	configWindowVisible = false
+end
+
+-- Leave the settings page, restoring the last map mode. No-op if not on it.
+function maprendering.HideConfigPage()
+	if configWindowVisible ~= true then
+		return
+	end
+	maprendering.ReloadUIItems()
+	LeaveConfigChrome()
 	UpdateMapMode(currentMapMode)
 end
 
@@ -1373,6 +1383,11 @@ function maprendering.ReloadUIItems()
 end
 
 local function BulkDrawIcons(iconsData)
+	if configWindowVisible == true then
+		-- A render queued before the settings page opened; HideConfigPage re-renders.
+		helpers.DevLog("Ignoring bulk icon draw because config page is visible")
+		return
+	end
 	maprendering.ClearUIState()
 	maprendering.ReloadUIItems()
 	if maprendering.playerIcon ~= nil and maprendering.MapUI ~= nil and maprendering.MapUI.mapImage ~= nil then
@@ -1403,9 +1418,15 @@ function maprendering.ForceSelectUIMode(mode)
 		return
 	end
 	eventbus.TriggerEvent(TOPICS.UI.close)
+	eventbus.TriggerEvent(TOPICS.UI.closeGoto)
 	maprendering.MapUI:Show(true)
 	currentMapMode = mode
 	equip.OnModeChanged(mode)
+	-- UI.close hides the settings panel itself; also drop its tab buttons and
+	-- background so the forced view isn't drawn on top of settings chrome.
+	if configWindowVisible == true then
+		LeaveConfigChrome()
+	end
 	WorldSatNavState.LastRenderConfig.iconsversion = false -- Force icons to redraw with the new mode
 	helpers.SetCheckboxState("mapsModeButton", mode == "maps")
 	helpers.SetCheckboxState("shipsModeButton", mode == "ships")
