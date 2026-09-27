@@ -2,8 +2,78 @@
 -- Handles all coordinate conversions and transformations
 
 local constants = require("WorldSatNav/core/constants")
+local log = require("WorldSatNav/helpers/log")
 
 local Coordinates = {}
+
+--- Convert a sextant using engine-native field names (longitudeDir, longitudeDeg, ...)
+-- or camelCase names to the short longitude/deg_long/... form used throughout the addon.
+-- target: optional table to write into instead of allocating a new one (used by
+-- maprendering's GetCurrentPosition scratch buffer to avoid a table allocation every poll).
+function Coordinates.NormalizeSextant(sextant, target)
+	if sextant == nil then
+		return nil
+	end
+	local normalized = target or {}
+	normalized.longitude = sextant.longitudeDir or sextant.longitude
+	normalized.latitude = sextant.latitudeDir or sextant.latitude
+	normalized.deg_long = sextant.longitudeDeg or sextant.deg_long or sextant.degLong
+	normalized.min_long = sextant.longitudeMin or sextant.min_long or sextant.minLong
+	normalized.sec_long = sextant.longitudeSec or sextant.sec_long or sextant.secLong
+	normalized.deg_lat = sextant.latitudeDeg or sextant.deg_lat or sextant.degLat
+	normalized.min_lat = sextant.latitudeMin or sextant.min_lat or sextant.minLat
+	normalized.sec_lat = sextant.latitudeSec or sextant.sec_lat or sextant.secLat
+	if normalized.min_long == nil then normalized.min_long = 0 end
+	if normalized.sec_long == nil then normalized.sec_long = 0 end
+	if normalized.min_lat == nil then normalized.min_lat = 0 end
+	if normalized.sec_lat == nil then normalized.sec_lat = 0 end
+	return normalized
+end
+
+--- Convert a sextant to pixel coordinates on a map texture.
+-- @param renderSettings table one of maprendering's mapLevels entries
+-- @return number, number x, y (or nil, nil when the sextant is invalid)
+function Coordinates.SextantToMapCoordinates(sextant, renderSettings)
+	sextant = Coordinates.NormalizeSextant(sextant)
+	if not sextant or not renderSettings then
+		log.DevLog("Cannot convert sextant to map coordinates, sextant or renderSettings is nil")
+		return nil, nil
+	end
+
+	local long = sextant.longitude
+	local lat = sextant.latitude
+
+	local longValue = 0
+	local latValue = 0
+	if long == nil or lat == nil then
+		log.DevLog("Invalid sextant data, missing longitude or latitude direction")
+		return nil, nil
+	end
+
+	local degLong = sextant.deg_long
+	local minLong = sextant.min_long
+	local secLong = sextant.sec_long
+	local degLat = sextant.deg_lat
+	local minLat = sextant.min_lat
+	local secLat = sextant.sec_lat
+	if degLong == nil or minLong == nil or secLong == nil or degLat == nil or minLat == nil or secLat == nil then
+		log.DevLog("Invalid sextant data, cannot convert to map coordinates")
+		return nil, nil
+	end
+	longValue = degLong + (minLong / 60) + (secLong / 3600)
+	latValue = degLat + (minLat / 60) + (secLat / 3600)
+
+	if sextant.longitude == "W" then
+		longValue = -longValue
+	end
+	if sextant.latitude == "N" then
+		latValue = -latValue
+	end
+
+	local x = renderSettings.zeroPointX + (longValue * renderSettings.XCordScale)
+	local y = renderSettings.zeroPointY + (latValue * renderSettings.YCordScale)
+	return x, y
+end
 
 --- Convert latitude sextant coordinates to game world degrees
 -- @param direction string "N" or "S"

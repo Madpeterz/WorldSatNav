@@ -4,7 +4,7 @@ local helpers = require("WorldSatNav/helpers")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
 local constants = require("WorldSatNav/core/constants")
-local maprendering = require("WorldSatNav/ui/maprendering")
+local coordinates = require("WorldSatNav/core/coordinates")
 local regionmap = require("WorldSatNav/ui/regionmap")
 
 local dawnsdropTypes = {
@@ -177,6 +177,7 @@ end
 
 local function SetDawnsMapMode(mode)
 	DawnsMapMode = mode
+	eventbus.TriggerEventImmediate(eventtopics.topics.dawnsdrop.mapModeChanged, mode)
 end
 
 local function SetDawnsPoiSide(value)
@@ -478,14 +479,14 @@ end
 
 -- Finds the closest stored location to a click, within a 10px on-screen tolerance.
 local function FindClosestLocationIndex(locations, clickedSextant, mapInfo)
-	local clickedX, clickedY = maprendering.convertSextantToMapCoordinates(clickedSextant, mapInfo)
+	local clickedX, clickedY = coordinates.SextantToMapCoordinates(clickedSextant, mapInfo)
 	if clickedX == nil or clickedY == nil then
 		return nil
 	end
 	local closestIndex = nil
 	local closestDistance = nil
 	for index, entry in ipairs(locations) do
-		local x, y = maprendering.convertSextantToMapCoordinates(entry.location, mapInfo)
+		local x, y = coordinates.SextantToMapCoordinates(entry.location, mapInfo)
 		if x ~= nil and y ~= nil then
 			local distance = math.sqrt(((x - clickedX) ^ 2) + ((y - clickedY) ^ 2))
 			if closestDistance == nil or distance < closestDistance then
@@ -506,12 +507,13 @@ end
 -- Points of Interest have no tiers: clicking an existing one removes it outright.
 -- When alwaysAdd is true (e.g. "Mark here"), always insert a fresh tier-1
 -- location and never merge into or upgrade a nearby one.
-local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd)
+-- mapInfo: the zoom level's map info the click was made at (from dawnsdrop.mapClick);
+-- only needed when alwaysAdd is false.
+local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd, mapInfo)
 	local path = GetDataFilePath(task, itemType)
 	local locations = LoadLocations(task, itemType)
-	local mapInfo = maprendering.GetMapInfoForZoom(maprendering.GetCurrentZoomLevel())
 	local closestIndex = nil
-	if not alwaysAdd then
+	if not alwaysAdd and mapInfo ~= nil then
 		closestIndex = FindClosestLocationIndex(locations, clickedSextant, mapInfo)
 	end
 	if closestIndex ~= nil then
@@ -543,7 +545,7 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd)
 	RenderTypeLocations(task, itemType)
 end
 
-local function OnMapClicked(sextant)
+local function OnMapClicked(sextant, mapInfo)
 	if sextant == nil or dawnsdropWindow == nil then
 		return
 	end
@@ -556,7 +558,7 @@ local function OnMapClicked(sextant)
 		helpers.DevLog("Cannot modify dawnsdrop location, task or type is not selected")
 		return
 	end
-	AddOrUpgradeLocation(task, itemType, sextant)
+	AddOrUpgradeLocation(task, itemType, sextant, false, mapInfo)
 end
 
 local function CreateUI(parent, width, height)
@@ -644,7 +646,7 @@ local function CreateDevModeButtons(mapUI)
 			helpers.DevLog("Cannot mark location, task or type is not selected")
 			return
 		end
-		local playerSextant = maprendering.GetPlayerPosition()
+		local playerSextant = coordinates.NormalizeSextant(api.Map:GetPlayerSextants())
 		if playerSextant == nil then
 			helpers.DevLog("Cannot mark location, player position unavailable")
 			return
@@ -793,10 +795,6 @@ function dawnsdrop.HideUI()
 	dawnsdropWindow:Show(false)
 end
 
-function dawnsdrop.GetDawnsMapMode()
-	return DawnsMapMode
-end
-
 -- Ships-style selection for a guided type. Highlights the picked marker and hands
 -- the sextant to the tracker as a "Dawns" target, which gives it the Next button.
 function dawnsdrop.SelectGuidedBySextant(sextant, showMapMarker, label)
@@ -881,7 +879,6 @@ function dawnsdrop.OnLoad()
 	eventbus.WatchEvent(eventtopics.topics.dawnsdrop.refresh, RerenderCurrentSelection, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.dawnsdrop.selectBySextant, dawnsdrop.SelectGuidedBySextant, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.tracking.nextGuided, dawnsdrop.GetNextGuided, "dawnsdrop")
-	maprendering.RegisterDawnsMapModeProvider(dawnsdrop.GetDawnsMapMode)
 end
 
 function dawnsdrop.OnUnload()

@@ -31,6 +31,12 @@ local defaultSettings = {
     NextMapMode = 1, -- 1 = nearest in my region only, 2 = nearest anywhere, 3 = my region first then anywhere
     TeleportHintFiltered = true, -- Points of Interest hints only show for the player's faction (West=Nuia, East=Haranya, Shared=both)
     CenterOnPlayerOnModeChange = false, -- re-centers the map view on the player whenever mode changes (Maps/Ships/Events/etc)
+    -- Per map mode opt-out for the tracking target ring on the map
+    HideTargetIconMaps = false,
+    HideTargetIconShips = false,
+    HideTargetIconEvents = false,
+    HideTargetIconDemos = false,
+    HideTargetIconDawns = false,
 
     EnableLocationOutput = false,
     LocationOutputRateLimit = 1000, -- in milliseconds, how often to output player location

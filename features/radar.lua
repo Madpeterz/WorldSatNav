@@ -39,31 +39,6 @@ local DISTANCE_HEIGHT = 30
 local PANEL_HEIGHT = TITLE_HEIGHT + WINDOW_SIZE + DISTANCE_HEIGHT
 local CLOSE_FAR_THRESHOLD_M = 300
 
--- Incoming sextants from tracking events use engine-native field names
--- (longitudeDir, longitudeDeg, ...); coordinates.CalculateDistance and
--- gps.lua expect the shorter longitude/deg_long/... names. Mirrors
--- tracking.lua's NormalizeSextant.
-local function NormalizeSextant(sextant)
-	if sextant == nil then
-		return nil
-	end
-	local normalized = {
-		longitude = sextant.longitudeDir or sextant.longitude,
-		latitude = sextant.latitudeDir or sextant.latitude,
-		deg_long = sextant.longitudeDeg or sextant.deg_long or sextant.degLong,
-		min_long = sextant.longitudeMin or sextant.min_long or sextant.minLong,
-		sec_long = sextant.longitudeSec or sextant.sec_long or sextant.secLong,
-		deg_lat = sextant.latitudeDeg or sextant.deg_lat or sextant.degLat,
-		min_lat = sextant.latitudeMin or sextant.min_lat or sextant.minLat,
-		sec_lat = sextant.latitudeSec or sextant.sec_lat or sextant.secLat
-	}
-	if normalized.min_long == nil then normalized.min_long = 0 end
-	if normalized.sec_long == nil then normalized.sec_long = 0 end
-	if normalized.min_lat == nil then normalized.min_lat = 0 end
-	if normalized.sec_lat == nil then normalized.sec_lat = 0 end
-	return normalized
-end
-
 -- Same empirical correction factor tracking.lua's MetersBetweenSextants and
 -- gps.lua's getGPSGuideText apply to coordinates.CalculateDistance's raw output.
 local function MetersBetweenSextants(a, b)
@@ -209,7 +184,7 @@ function radar.update(dt)
 end
 
 function radar.setTarget(sextant, name, showMapMarker, displayName)
-	local normalizedSextant = NormalizeSextant(sextant)
+	local normalizedSextant = coordinates.NormalizeSextant(sextant)
 	if normalizedSextant == nil or normalizedSextant.longitude == nil or normalizedSextant.latitude == nil
 		or normalizedSextant.deg_long == nil or normalizedSextant.deg_lat == nil then
 		helpers.DevLog("Invalid sextant for radar target, cannot update")
@@ -245,11 +220,27 @@ function radar.setTarget(sextant, name, showMapMarker, displayName)
 		RADAR_WINDOW.showBtn:Show(settings.Get("EnableShowOnTracking") == true)
 	end
 
+	-- tracking.setTargetGoto handles TRACK_WINDOW for the same event.
 	radar.RefreshWindowVisibility()
-	tracking.RefreshWindowVisibility()
 
 	currentBackgroundMode = nil -- force a texture refresh for the new target
 	radar.update(0)
+end
+
+function radar.renameTarget(displayName)
+	if radarTargetSextant == nil then
+		return
+	end
+	radarTargetName = displayName
+	if RADAR_WINDOW ~= nil and RADAR_WINDOW.titleLabel ~= nil then
+		RADAR_WINDOW.titleLabel:SetText("Target: " .. tostring(radarTargetName or "undefined"))
+	end
+end
+
+-- Closing the radar ends tracking as a whole (not just the radar view), so
+-- tracking stops reacting to bag updates for a target nobody is watching.
+local function closeRadar()
+	eventbus.TriggerEvent(eventtopics.topics.tracking.stop)
 end
 
 function radar.clearTarget()
@@ -273,12 +264,11 @@ function radar.clearTarget()
 	end
 end
 
--- Called from configui when the "Radar: Enable" checkbox changes. Reconciles
--- both windows immediately for whatever target is currently being tracked.
+-- radar.setEnabled handler (fired by configui's "Radar: Enable" checkbox).
+-- tracking watches the same topic to reconcile TRACK_WINDOW.
 function radar.SetEnabled(enabled)
 	settings.Update("RadarEnabled", enabled)
 	radar.RefreshWindowVisibility()
-	tracking.RefreshWindowVisibility()
 end
 
 local function createRadarUI()
@@ -326,9 +316,9 @@ local function createRadarUI()
 	window.closeBtn:AddAnchor("TOPLEFT", window, (WINDOW_SIZE * scale) - (20 * scale), 3 * scale)
 	api.Interface:ApplyButtonSkin(window.closeBtn, BUTTON_BASIC.WINDOW_SMALL_CLOSE)
 	window.closeBtn:Show(true)
-	window.closeBtn:SetHandler("OnClick", radar.clearTarget)
-	window:SetHandler("OnClose", radar.clearTarget)
-	window:SetHandler("OnCloseByEsc", radar.clearTarget)
+	window.closeBtn:SetHandler("OnClick", closeRadar)
+	window:SetHandler("OnClose", closeRadar)
+	window:SetHandler("OnCloseByEsc", closeRadar)
 
 	-- Show/Next buttons render below the panel, mirroring tracking.lua's
 	-- TRACK_WINDOW:GetHeight()+5 button placement.
@@ -375,6 +365,7 @@ function radar.OnLoad()
 	eventbus.WatchEvent(eventtopics.topics.tracking.custom, radar.setTarget, "radar")
 	eventbus.WatchEvent(eventtopics.topics.tracking.start, radar.setTarget, "radar")
 	eventbus.WatchEvent(eventtopics.topics.tracking.stop, radar.clearTarget, "radar")
+	eventbus.WatchEvent(eventtopics.topics.tracking.targetRenamed, radar.renameTarget, "radar")
 	eventbus.WatchEvent(eventtopics.topics.radar.setEnabled, radar.SetEnabled, "radar")
 end
 

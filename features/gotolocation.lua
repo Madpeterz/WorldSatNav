@@ -3,7 +3,6 @@ local settingsModule = require("WorldSatNav/core/settings")
 local helpers = require("WorldSatNav/helpers")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
-local maprendering = require("WorldSatNav/ui/maprendering")
 local gotoLocation = {}
 local GOTO_TARGET_TEXT = ""
 
@@ -17,6 +16,7 @@ local EXPORT_LABEL = "Export demo sharecode"
 
 local gotoLocationWindow = nil
 local currentMode = "goto"
+local currentMapMode = "maps" -- mirrors maprendering via render.modeSelected
 local importSubmitCallback = nil
 local suppressCloseOnModeChange = false
 
@@ -160,7 +160,7 @@ function gotoLocation.ToggleUI()
     if gotoLocationWindow:IsVisible() == true then
         gotoLocationWindow:Show(false)
     else
-        if maprendering.GetCurrentMode() == "dawns" then
+        if currentMapMode == "dawns" then
             suppressCloseOnModeChange = true
             eventbus.TriggerEvent(eventtopics.topics.UI.requestUIMode, "maps")
         end
@@ -250,6 +250,9 @@ function gotoLocation.OnLoad()
 	eventbus.WatchEvent(eventtopics.topics.UI.openImportSharecode, gotoLocation.OpenImportSharecode, "gotoLocation")
 	eventbus.WatchEvent(eventtopics.topics.UI.openExportSharecode, gotoLocation.OpenExportSharecode, "gotoLocation")
 	eventbus.WatchEvent(eventtopics.topics.render.modeChanged, OnModeChanged, "gotoLocation")
+	eventbus.WatchEvent(eventtopics.topics.render.modeSelected, function(mode)
+		currentMapMode = mode
+	end, "gotoLocation")
 end
 
 function gotoLocation.OnUnload()

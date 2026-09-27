@@ -20,6 +20,14 @@ local targetXMap = nil
 local targetYMap = nil
 local currentTrackedType = nil
 
+-- Bag changes are debounced and then the tracked map location is recounted.
+-- Deliberately ignores the REMOVED_ITEM/BAG_UPDATE payloads: the bag slot
+-- widgets iterateTreasureMaps reads can still hold the consumed map when
+-- REMOVED_ITEM fires, and the payload shape differs between the two events.
+local INVENTORY_RECOUNT_DEBOUNCE = 400
+local inventoryRecountPending = false
+local inventoryRecountElapsed = 0
+
 local currentNextButtonCallback = nil
 local EVENT_NEXT_MAP = eventtopics.topics.tracking.nextMap
 local EVENT_NEXT_SHIP = eventtopics.topics.tracking.nextShip
@@ -51,27 +59,6 @@ local function MetersBetweenSextants(a, b)
 		return nil
 	end
 	return d * (3.2 / 3.6)
-end
-
-local function NormalizeSextant(sextant)
-	if sextant == nil then
-		return nil
-	end
-	local normalized = {
-		longitude = sextant.longitudeDir or sextant.longitude,
-		latitude = sextant.latitudeDir or sextant.latitude,
-		deg_long = sextant.longitudeDeg or sextant.deg_long or sextant.degLong,
-		min_long = sextant.longitudeMin or sextant.min_long or sextant.minLong,
-		sec_long = sextant.longitudeSec or sextant.sec_long or sextant.secLong,
-		deg_lat = sextant.latitudeDeg or sextant.deg_lat or sextant.degLat,
-		min_lat = sextant.latitudeMin or sextant.min_lat or sextant.minLat,
-		sec_lat = sextant.latitudeSec or sextant.sec_lat or sextant.secLat
-	}
-	if normalized.min_long == nil then normalized.min_long = 0 end
-	if normalized.sec_long == nil then normalized.sec_long = 0 end
-	if normalized.min_lat == nil then normalized.min_lat = 0 end
-	if normalized.sec_lat == nil then normalized.sec_lat = 0 end
-	return normalized
 end
 
 local function SextantFromInfo(info)
@@ -109,12 +96,17 @@ end
 
 -- The radar panel replaces this window's UI while enabled. Keeps TRACK_WINDOW
 -- hidden in that case, and restores it (for the current target, if any) once
--- radar is turned back off. Called from setTargetGoto and from radar.SetEnabled.
-function tracking.RefreshWindowVisibility()
+-- radar is turned back off. Called from setTargetGoto and on radar.setEnabled.
+-- radarEnabled: optional override; the radar.setEnabled payload is passed in
+-- because this watcher can run before radar's has saved the new setting.
+function tracking.RefreshWindowVisibility(radarEnabled)
 	if TRACK_WINDOW == nil or targetSextant == nil then
 		return
 	end
-	local shouldShow = settings.Get("RadarEnabled") ~= true
+	if radarEnabled == nil then
+		radarEnabled = settings.Get("RadarEnabled")
+	end
+	local shouldShow = radarEnabled ~= true
 	if TRACK_WINDOW:IsVisible() == shouldShow then
 		return
 	end
@@ -139,6 +131,7 @@ function tracking.Stop()
 	lastArrowDir = ""
 	teleportPlan = nil
 	teleportPlanOriginRegion = nil
+	inventoryRecountPending = false
 	if TRACK_WINDOW == nil then
 		return
 	end
@@ -500,6 +493,9 @@ local function createTrackUI(onCloseCallback)
 		if onCloseCallback then
 			onCloseCallback()
 		end
+		-- Closing the tracker ends tracking (clears the map target ring too),
+		-- matching the radar's close button.
+		eventbus.TriggerEvent(eventtopics.topics.tracking.stop)
 	end
 
 	TRACK_WINDOW.closeBtn:SetHandler("OnClick", TRACK_WINDOW.OnClose)
@@ -570,7 +566,7 @@ end
 
 
 function tracking.setTargetGoto(sextant, name, ShowMapMarker, displayName)
-	local normalizedSextant = NormalizeSextant(sextant)
+	local normalizedSextant = coordinates.NormalizeSextant(sextant)
 	if normalizedSextant == nil or normalizedSextant.longitude == nil or normalizedSextant.latitude == nil
 		or normalizedSextant.deg_long == nil or normalizedSextant.deg_lat == nil then
 		helpers.DevLog("Invalid sextant for tracking target, cannot update")
@@ -614,32 +610,26 @@ function tracking.setTargetGoto(sextant, name, ShowMapMarker, displayName)
 	updateTrackingData()
 end
 
-function tracking.forceInventoryUpdateForTracking(...)
-	if currentTrackedType ~= "Map" then
+function tracking.forceInventoryUpdateForTracking()
+	if currentTrackedType ~= "Map" or targetSextant == nil then
 		return
 	end
-	if targetSextant == nil then
+	inventoryRecountPending = true
+	inventoryRecountElapsed = 0
+end
+
+local function RecountTrackedMaps()
+	if currentTrackedType ~= "Map" or targetSextant == nil then
 		return
 	end
 	-- If the user closed the tracking window, a bag update must not silently
-	-- re-open it via the auto-next-map path below.
-	if TRACK_WINDOW == nil or not TRACK_WINDOW:IsVisible() then
+	-- re-open it via the auto-next-map path below. In radar mode TRACK_WINDOW
+	-- is always hidden; closing the radar fires tracking.stop instead, so
+	-- targetSextant (checked above) covers that case.
+	if TRACK_WINDOW == nil then
 		return
 	end
-	local removedItemName, arg2, actionType, arg4, arg5 = ...
-	if type(removedItemName) ~= "string" then
-		return
-	end
-	if type(actionType) ~= "string" then
-		return
-	end
-	if actionType ~= "destroy" then
-		helpers.DevLog("not a removal ignoring")
-		return
-	end
-	local trimmedItemName = string.sub(removedItemName, 2)
-	if string.match(trimmedItemName, "^i24581") == nil then
-		helpers.DevLog("Removed item was not a treasure map (" .. tostring(removedItemName) .. "), ignoring")
+	if settings.Get("RadarEnabled") ~= true and not TRACK_WINDOW:IsVisible() then
 		return
 	end
 	local targetKey = helpers.SextantKey(targetSextant)
@@ -658,27 +648,45 @@ function tracking.forceInventoryUpdateForTracking(...)
 			mapsInRegion = mapsInRegion + 1
 		end
 	end)
-	helpers.DevLog("Maps remaining at tracked location: " .. mapCount)
-	local nextMapMode = settings.Get("NextMapMode") or 1
-	if nextMapMode ~= 2 and mapsInRegion > 0  and settings.Get("ShowTargetInfoInChat") == true then
-		api.Chat:DispatchChatMessage(4, "[WorldSatNav] You have " .. mapsInRegion .. " more map(s) in your current region.")
-	end
-	helpers.DevLog("Maps in player region: " .. mapsInRegion)
 	local newDisplayName = "Map (" .. mapCount .. ")"
 	if mapGrade ~= nil then
 		newDisplayName = newDisplayName .. " [" .. mapGrade .. "]"
 	end
+	-- Unrelated bag changes recount to the same name; nothing to do.
+	if newDisplayName == targetName then
+		return
+	end
+	helpers.DevLog("Maps remaining at tracked location: " .. mapCount .. ", in player region: " .. mapsInRegion)
+	local nextMapMode = settings.Get("NextMapMode") or 1
+	if nextMapMode ~= 2 and mapsInRegion > 0 and settings.Get("ShowTargetInfoInChat") == true then
+		api.Chat:DispatchChatMessage(4, "[WorldSatNav] You have " .. mapsInRegion .. " more map(s) in your current region.")
+	end
 	targetName = newDisplayName
 	updateTrackingData()
+	eventbus.TriggerEvent(eventtopics.topics.tracking.targetRenamed, newDisplayName)
 	if mapCount == 0 and settings.Get("AutoGotoNextMap") == true then
 		InvokeNextMapCallback()
 	end
+end
+
+local function UpdateInventoryRecount(dt)
+	if not inventoryRecountPending then
+		return
+	end
+	inventoryRecountElapsed = inventoryRecountElapsed + (dt or 0)
+	if inventoryRecountElapsed < INVENTORY_RECOUNT_DEBOUNCE then
+		return
+	end
+	inventoryRecountPending = false
+	inventoryRecountElapsed = 0
+	RecountTrackedMaps()
 end
 
 local throttledTrackingData = helpers.throttle(constants.timing.trackingPoll, updateTrackingData)
 function tracking.onUpdate(dt)
 	UpdateSharedData(dt)
 	throttledTrackingData(dt)
+	UpdateInventoryRecount(dt)
 end
 
 function tracking.OnLoad()
@@ -687,6 +695,8 @@ function tracking.OnLoad()
 	eventbus.WatchEvent(eventtopics.topics.tracking.start, tracking.setTargetGoto, "tracking")
 	eventbus.WatchEvent(eventtopics.topics.tracking.stop, tracking.Stop, "tracking")
 	eventbus.WatchEvent(eventtopics.topics.bag.itemRemoved, tracking.forceInventoryUpdateForTracking, "tracking")
+	eventbus.WatchEvent(eventtopics.topics.bag.updated, tracking.forceInventoryUpdateForTracking, "tracking")
+	eventbus.WatchEvent(eventtopics.topics.radar.setEnabled, tracking.RefreshWindowVisibility, "tracking")
 end
 
 function tracking.OnUnload()

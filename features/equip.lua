@@ -1,6 +1,8 @@
 local api = require("api")
 local helpers = require("WorldSatNav/helpers")
 local settingsModule = require("WorldSatNav/core/settings")
+local eventbus = require("WorldSatNav/core/eventbus")
+local eventtopics = require("WorldSatNav/core/eventtopics")
 
 local equip = {}
 
@@ -42,7 +44,7 @@ end
 
 local currentState = nil -- "swim" once we have swapped in, nil until then
 
--- Called on every map mode change. Swaps to the swim gear/title on entering
+-- Called on every map mode selection (render.modeSelected). Swaps to the swim gear/title on entering
 -- Ships mode and back when leaving it. Repeat calls for the same mode are no-ops.
 function equip.OnModeChanged(mode)
 	if mode == "ships" and currentState ~= "swim" then
@@ -52,6 +54,10 @@ function equip.OnModeChanged(mode)
 		currentState = nil
 		equip.SwapTo("normal")
 	end
+end
+
+function equip.OnLoad()
+	eventbus.WatchEvent(eventtopics.topics.render.modeSelected, equip.OnModeChanged, "equip")
 end
 
 return equip

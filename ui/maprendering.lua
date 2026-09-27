@@ -5,31 +5,18 @@ local constants = require("WorldSatNav/core/constants")
 local settingsModule = require("WorldSatNav/core/settings")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
-local equip = require("WorldSatNav/features/equip")
+local coordinates = require("WorldSatNav/core/coordinates")
+local configui = require("WorldSatNav/ui/configui")
 local maprendering = {}
-
--- Lazily required to avoid a load-order cycle: maprendering -> configui -> radar
--- -> tracking -> dawnsdrop -> maprendering. By the time settings are opened,
--- all modules are already loaded so this just returns the cached module.
-local configui = nil
-local function GetConfigUI()
-	if configui == nil then
-		configui = require("WorldSatNav/ui/configui")
-	end
-	return configui
-end
 
 local TOPICS = eventtopics.topics
 
 local GetCurrentPosition
 local FocusOnMe
 
--- Set by dawnsdrop.lua so icon clicks know whether the active Dawns tool
--- (Add) should consume the click instead of opening the tracker.
-local dawnsMapModeGetter = nil
-function maprendering.RegisterDawnsMapModeProvider(getterFn)
-	dawnsMapModeGetter = getterFn
-end
+-- Mirrors dawnsdrop's active tool (via dawnsdrop.mapModeChanged) so icon clicks
+-- know whether the Add tool should consume the click instead of opening the tracker.
+local dawnsMapMode = "Select"
 
 local mapLevels = {
 	{ level = 0, texture = "zoom-0.png", width = 473, height = 507, zoomfactor = 0, zeroPointX=311,zeroPointY=122,XCordScale=14.60,YCordScale=14.40},
@@ -78,6 +65,26 @@ local activeIcons = {}          -- set: icon -> true, only icons currently inuse
 local freeIconsByTexture = {}   -- texture path -> array of free icons using that texture
 local freeIconsAny = {}         -- array of free icons, any texture
 
+-- Current tracking/radar target, drawn as a ring (maprendering.targetIcon).
+-- Kept here as well as on the icon because HideIcon wipes icon.sextant.
+local TARGET_ICON_TEXTURE = "icons/target.png"
+local TARGET_ICON_SIZE = 12 -- just outside the size-7 map/ship icons it surrounds
+local trackedTargetSextant = nil
+-- map mode -> setting that opts that mode out of drawing the target ring
+local TARGET_ICON_HIDE_SETTING = {
+	maps = "HideTargetIconMaps",
+	ships = "HideTargetIconShips",
+	events = "HideTargetIconEvents",
+	demos = "HideTargetIconDemos",
+	dawns = "HideTargetIconDawns",
+}
+
+-- Player and target icons live for the whole session and are re-attached
+-- after every HideAllIcons, so they must never enter the free pools.
+local function IsPersistentIcon(icon)
+	return icon == maprendering.playerIcon or icon == maprendering.targetIcon
+end
+
 local function markIconActive(icon)
 	activeIcons[icon] = true
 end
@@ -90,8 +97,8 @@ end
 local function releaseIcon(icon)
 	icon.inuse = false
 	markIconInactive(icon)
-	if icon == maprendering.playerIcon then
-		return -- never recycle the player icon
+	if IsPersistentIcon(icon) then
+		return
 	end
 	if icon.textureNode then
 		local bucket = freeIconsByTexture[icon.textureNode]
@@ -200,7 +207,7 @@ local function findOrCreateIcon(withTexturePath, customIconSize)
 	-- No free icons with the same texture, take any free icon
 	while #freeIconsAny > 0 do
 		local icon = table.remove(freeIconsAny)
-		if icon.inuse == false and icon ~= maprendering.playerIcon then
+		if icon.inuse == false and not IsPersistentIcon(icon) then
 			icon.inuse = true
 			icon.textureNode = withTexturePath
 			icon:SetTexture(constants.folderPath.."images/" .. withTexturePath)
@@ -242,8 +249,7 @@ local function findOrCreateIcon(withTexturePath, customIconSize)
 			helpers.DevLog("Player icon clicked, ignoring")
 			return
 		end
-		if maprendering.GetCurrentMode() == "dawns" and dawnsMapModeGetter ~= nil then
-			local dawnsMapMode = dawnsMapModeGetter()
+		if maprendering.GetCurrentMode() == "dawns" then
 			if dawnsMapMode == "Add" then
 				if maprendering.MapUI ~= nil and maprendering.MapUI.OnClick ~= nil then
 					maprendering.MapUI:OnClick()
@@ -281,7 +287,8 @@ function maprendering.ChangeSelectedIcon(sextant, withTexturePath)
 		return
 	end
 	for _, icon in pairs(iconsStore) do
-		if icon.sextant ~= nil and SextantEquals(icon.sextant, sextant) then
+		-- The target ring shares its sextant with the icon it surrounds.
+		if icon ~= maprendering.targetIcon and icon.sextant ~= nil and SextantEquals(icon.sextant, sextant) then
 			icon.textureNode = withTexturePath
 			icon:SetTexture(constants.folderPath.."images/" .. withTexturePath)
 			return
@@ -351,7 +358,7 @@ local function AttachDrawableIcon(icon, sextant, drawTarget)
 end
 
 local function IsValidSextant(sextant)
-	sextant = maprendering.NormalizeSextant(sextant)
+	sextant = coordinates.NormalizeSextant(sextant)
 	if not sextant then
 		return false
 	end
@@ -363,28 +370,6 @@ local function IsValidSextant(sextant)
 		and sextant.deg_lat ~= nil
 		and sextant.min_lat ~= nil
 		and sextant.sec_lat ~= nil
-end
-
--- target: optional table to write into instead of allocating a new one (used by
--- GetCurrentPosition's scratch buffer to avoid a table allocation every poll).
-function maprendering.NormalizeSextant(sextant, target)
-	if sextant == nil then
-		return nil
-	end
-	local normalized = target or {}
-	normalized.longitude = sextant.longitudeDir or sextant.longitude
-	normalized.latitude = sextant.latitudeDir or sextant.latitude
-	normalized.deg_long = sextant.longitudeDeg or sextant.deg_long or sextant.degLong
-	normalized.min_long = sextant.longitudeMin or sextant.min_long or sextant.minLong
-	normalized.sec_long = sextant.longitudeSec or sextant.sec_long or sextant.secLong
-	normalized.deg_lat = sextant.latitudeDeg or sextant.deg_lat or sextant.degLat
-	normalized.min_lat = sextant.latitudeMin or sextant.min_lat or sextant.minLat
-	normalized.sec_lat = sextant.latitudeSec or sextant.sec_lat or sextant.secLat
-	if normalized.min_long == nil then normalized.min_long = 0 end
-	if normalized.sec_long == nil then normalized.sec_long = 0 end
-	if normalized.min_lat == nil then normalized.min_lat = 0 end
-	if normalized.sec_lat == nil then normalized.sec_lat = 0 end
-	return normalized
 end
 
 local function HideIcon(index)
@@ -424,7 +409,7 @@ end
 
 
 local function CopySextant(sextant)
-	sextant = maprendering.NormalizeSextant(sextant)
+	sextant = coordinates.NormalizeSextant(sextant)
 	if sextant == nil then
 		return nil
 	end
@@ -438,6 +423,35 @@ local function CopySextant(sextant)
 		min_lat = sextant.min_lat,
 		sec_lat = sextant.sec_lat
 	}
+end
+
+local function AttachTargetIcon()
+	local icon = maprendering.targetIcon
+	if icon == nil or maprendering.MapUI == nil or maprendering.MapUI.mapImage == nil then
+		return
+	end
+	local hideSetting = TARGET_ICON_HIDE_SETTING[currentMapMode]
+	local hiddenForMode = hideSetting ~= nil and settingsModule.Get(hideSetting) == true
+	if hiddenForMode or trackedTargetSextant == nil or not IsValidSextant(trackedTargetSextant) then
+		icon.inuse = false
+		markIconInactive(icon)
+		icon.sextant = nil
+		icon:Show(false)
+		return
+	end
+	icon.sourceType = "target"
+	AttachDrawableIcon(icon, CopySextant(trackedTargetSextant), maprendering.MapUI.mapImage)
+end
+
+-- tracking.custom / tracking.start handler; sextant may use engine field names.
+function maprendering.SetTrackedTarget(sextant)
+	trackedTargetSextant = CopySextant(sextant)
+	AttachTargetIcon()
+end
+
+function maprendering.ClearTrackedTarget()
+	trackedTargetSextant = nil
+	AttachTargetIcon()
 end
 
 local function redrawMapIcons(drawTarget)
@@ -520,7 +534,7 @@ local function redrawMapIcons(drawTarget)
 			if icon.renderedZoomLevel == renderSettings.level and icon.renderedXstate == WorldSatNavState.scrollX and icon.renderedYstate == WorldSatNavState.scrollY and SextantEquals(icon.sextant, icon.renderedSextant) then
 				
 			else
-				local mapX, mapY = maprendering.convertSextantToMapCoordinates(icon.sextant, renderSettings)
+				local mapX, mapY = coordinates.SextantToMapCoordinates(icon.sextant, renderSettings)
 				if mapX ~= nil and mapY ~= nil then
 					local relX = (mapX - WorldSatNavState.scrollX) * scaleX
 					local relY = (mapY - WorldSatNavState.scrollY) * scaleY
@@ -581,49 +595,6 @@ function maprendering.ExitFlashMode()
 end
 
 
-
-function maprendering.convertSextantToMapCoordinates(sextant, renderSettings)
-	-- sextant coordinate structure with longitude, latitude, deg_long, min_long, sec_long, deg_lat, min_lat, sec_lat
-	sextant = maprendering.NormalizeSextant(sextant)
-	if not sextant or not renderSettings then
-		helpers.DevLog("Cannot convert sextant to map coordinates, sextant or renderSettings is nil")
-		return nil, nil
-	end
-
-	local long = sextant.longitude
-	local lat = sextant.latitude
-
-	local longValue = 0
-	local latValue = 0
-	if long == nil or lat == nil then
-		helpers.DevLog("Invalid sextant data, missing longitude or latitude direction")
-		return nil, nil
-	end
-
-	local degLong = sextant.deg_long
-	local minLong = sextant.min_long
-	local secLong = sextant.sec_long
-	local degLat = sextant.deg_lat
-	local minLat = sextant.min_lat
-	local secLat = sextant.sec_lat
-	if degLong == nil or minLong == nil or secLong == nil or degLat == nil or minLat == nil or secLat == nil then
-		helpers.DevLog("Invalid sextant data, cannot convert to map coordinates")
-		return nil, nil
-	end
-	longValue = degLong + (minLong / 60) + (secLong / 3600)
-	latValue = degLat + (minLat / 60) + (secLat / 3600)
-
-	if sextant.longitude == "W" then
-		longValue = -longValue
-	end
-	if sextant.latitude == "N" then
-		latValue = -latValue
-	end
-
-	local x = renderSettings.zeroPointX + (longValue * renderSettings.XCordScale)
-	local y = renderSettings.zeroPointY + (latValue * renderSettings.YCordScale)
-	return x, y
-end
 
 function maprendering.convertMapCoordinatesToSextant(x, y, renderSettings)
 	if x == nil or y == nil or renderSettings == nil then
@@ -883,7 +854,7 @@ local function CreateWorldSatNavWindow()
 		local clickedY = normY * clickedMapInfo.height
 		local clickedSextant = maprendering.convertMapCoordinatesToSextant(clickedX, clickedY, clickedMapInfo)
 		if clickedSextant ~= nil then
-			eventbus.TriggerEvent(TOPICS.dawnsdrop.mapClick, clickedSextant)
+			eventbus.TriggerEvent(TOPICS.dawnsdrop.mapClick, clickedSextant, clickedMapInfo)
 		end
 	end
 	window:SetHandler("OnClick", window.OnClick)
@@ -964,7 +935,7 @@ GetCurrentPosition = function()
 	if raw == nil then
 		return nil
 	end
-	maprendering.NormalizeSextant(raw, positionScratch)
+	coordinates.NormalizeSextant(raw, positionScratch)
 	if cachedPosition ~= nil and SextantEquals(cachedPosition, positionScratch) then
 		return cachedPosition
 	end
@@ -1001,7 +972,7 @@ local function UpdateMapMode(mode)
 	if configWindowVisible == true then
 		helpers.DevLog("Deferring map mode change to '" .. tostring(mode) .. "' until config page closes")
 		currentMapMode = mode
-		equip.OnModeChanged(mode)
+		eventbus.TriggerEventImmediate(TOPICS.render.modeSelected, mode)
 		return
 	end
 	helpers.SetCheckBoxOverride("mapsModeButton", false)
@@ -1017,7 +988,7 @@ local function UpdateMapMode(mode)
 	maprendering.ReloadUIItems()
 	maprendering.ClearUIState()
 	currentMapMode = mode
-	equip.OnModeChanged(mode)
+	eventbus.TriggerEventImmediate(TOPICS.render.modeSelected, mode)
     if not maprendering.MapUI or not maprendering.MapUI.mapImage then
         return
     end
@@ -1036,6 +1007,7 @@ local function UpdateMapMode(mode)
 	if not IsValidSextant(maprendering.playerIcon.sextant) then
 		maprendering.playerIcon:Show(false)
 	end
+	AttachTargetIcon()
 	WorldSatNavState.LastRenderConfig.iconsversion = false
 	if settingsModule.Get("CenterOnPlayerOnModeChange") == true then
 		FocusOnMe()
@@ -1109,7 +1081,7 @@ function FocusOnMe()
 		helpers.DevLog("Cannot focus on player, map info for current zoom level is not available")
 		return
 	end
-	local focusX, focusY = maprendering.convertSextantToMapCoordinates(currentPosition, mapInfo)
+	local focusX, focusY = coordinates.SextantToMapCoordinates(currentPosition, mapInfo)
 	if focusX == nil or focusY == nil then
 		helpers.DevLog("Cannot focus on player, failed to convert sextant to map coordinates")
 		return
@@ -1149,7 +1121,7 @@ function maprendering.SetModeButtonsForSettings(enabled)
 	end
 	inSettingsButtonMode = enabled
 	if enabled then
-		local settingsUI = GetConfigUI()
+		local settingsUI = configui
 		local tabNames = settingsUI.TAB_NAMES
 		local activeTab = settingsUI.GetActiveTab()
 		for i, def in ipairs(modeButtonDefs) do
@@ -1205,6 +1177,16 @@ local function CreateUiElements()
 	AttachDrawableIcon(maprendering.playerIcon, maprendering.playerIcon.sextant, maprendering.MapUI.mapImage)
 	if not IsValidSextant(maprendering.playerIcon.sextant) then
 		maprendering.playerIcon:Show(false)
+	end
+
+	maprendering.targetIcon = findOrCreateIcon(TARGET_ICON_TEXTURE, TARGET_ICON_SIZE)
+	if maprendering.targetIcon ~= nil then
+		-- Display only: the ring is larger than the icon it surrounds, so its
+		-- button would swallow clicks meant for that icon.
+		maprendering.targetIcon.button:Show(false)
+		AttachTargetIcon()
+	else
+		helpers.DevLog("Failed to create target icon")
 	end
 	redrawMapIcons(maprendering.MapUI.mapImage)
 
@@ -1401,6 +1383,7 @@ local function BulkDrawIcons(iconsData)
 			maprendering.playerIcon:Show(false)
 		end
 	end
+	AttachTargetIcon()
 	iconsData = iconsData or {}
 	helpers.DevLog("Received request to bulk draw icons, count: " .. tostring(#iconsData))
 	for _, iconData in pairs(iconsData) do
@@ -1421,7 +1404,7 @@ function maprendering.ForceSelectUIMode(mode)
 	eventbus.TriggerEvent(TOPICS.UI.closeGoto)
 	maprendering.MapUI:Show(true)
 	currentMapMode = mode
-	equip.OnModeChanged(mode)
+	eventbus.TriggerEventImmediate(TOPICS.render.modeSelected, mode)
 	-- UI.close hides the settings panel itself; also drop its tab buttons and
 	-- background so the forced view isn't drawn on top of settings chrome.
 	if configWindowVisible == true then
@@ -1445,7 +1428,21 @@ function maprendering.OnLoad()
 	eventbus.WatchEvent(TOPICS.icons.drawIcon, maprendering.CreateIconAttachedToMap, "maprendering")
 	eventbus.WatchEvent(TOPICS.icons.ChangeIcon, maprendering.ChangeSelectedIcon, "maprendering")
 	eventbus.WatchEvent(TOPICS.icons.clearIcon, maprendering.DisableIconBySextent, "maprendering")
-	eventbus.WatchEvent(TOPICS.render.redrawMap, maprendering.RequestModeRedraw, "maprendering")
+	-- onlyForMode: optional; when given, skip the redraw unless that mode is showing.
+	eventbus.WatchEvent(TOPICS.render.redrawMap, function(onlyForMode)
+		if onlyForMode ~= nil and onlyForMode ~= currentMapMode then
+			return
+		end
+		maprendering.RequestModeRedraw()
+	end, "maprendering")
+	eventbus.WatchEvent(TOPICS.render.flashIcon, maprendering.FlashModeIcon, "maprendering")
+	eventbus.WatchEvent(TOPICS.render.exitFlash, maprendering.ExitFlashMode, "maprendering")
+	eventbus.WatchEvent(TOPICS.tracking.custom, maprendering.SetTrackedTarget, "maprendering")
+	eventbus.WatchEvent(TOPICS.tracking.start, maprendering.SetTrackedTarget, "maprendering")
+	eventbus.WatchEvent(TOPICS.tracking.stop, maprendering.ClearTrackedTarget, "maprendering")
+	eventbus.WatchEvent(TOPICS.dawnsdrop.mapModeChanged, function(mode)
+		dawnsMapMode = mode
+	end, "maprendering")
 	eventbus.WatchEvent(TOPICS.icons.BulkDrawIconsAndRedraw, BulkDrawIcons, "maprendering")
 	eventbus.WatchEvent(TOPICS.UI.clearItems, maprendering.ClearUIState, "maprendering")
 	eventbus.WatchEvent(TOPICS.UI.EmptyUI, maprendering.UnloadUIItems, "maprendering")

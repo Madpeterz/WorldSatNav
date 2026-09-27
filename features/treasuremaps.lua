@@ -262,7 +262,7 @@ local selectedItem = nil
 
 local function ExitFlashModeIfActive()
 	if selectedItem ~= nil then
-		maprendering.ExitFlashMode()
+		eventbus.TriggerEventImmediate(eventtopics.topics.render.exitFlash)
 		selectedItem = nil
 	end
 end
@@ -295,7 +295,7 @@ local function FlashModeTick()
 	local currentItemKey = helpers.SextantKey(currentItemSextant)
 	if currentItemKey ~= selectedItem then
 		selectedItem = currentItemKey
-		maprendering.FlashModeIcon(currentItemSextant, "icons/marker1.png", "Map", 10)
+		eventbus.TriggerEventImmediate(eventtopics.topics.render.flashIcon, currentItemSextant, "icons/marker1.png", "Map", 10)
 	end
 end
 
@@ -348,10 +348,8 @@ function treasuremaps.onUpdate(dt)
 				lastBagSignatureAge = 0
 				helpers.DevLog("Bag content changed, new signature: " .. currentSignature)
 				if lastSentSignature ~= nil and currentSignature ~= lastSentSignature then
-					if maprendering.GetCurrentMode() == "maps" then
-						helpers.DevLog("Current map mode is 'maps', triggering map redraw to update treasure map icons")
-						maprendering.RequestModeRedraw()
-					end
+					helpers.DevLog("Requesting maps-mode redraw to update treasure map icons")
+					eventbus.TriggerEvent(eventtopics.topics.render.redrawMap, "maps")
 				end
 			end
 		end

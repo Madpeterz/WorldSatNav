@@ -105,6 +105,11 @@ local function CheckBoxUpdate(checkState, checkboxId)
     elseif checkboxId == "eventsDisableLeviathan" then SettingName = "DisableAlertLeviathan"
     elseif checkboxId == "eventsDisablePerdita" then SettingName = "DisableAlertPerdita"
     elseif checkboxId == "eventsDisableSunfish" then SettingName = "DisableAlertSunfish"
+    elseif checkboxId == "targetIconHideMaps" then SettingName = "HideTargetIconMaps"
+    elseif checkboxId == "targetIconHideShips" then SettingName = "HideTargetIconShips"
+    elseif checkboxId == "targetIconHideEvents" then SettingName = "HideTargetIconEvents"
+    elseif checkboxId == "targetIconHideDemos" then SettingName = "HideTargetIconDemos"
+    elseif checkboxId == "targetIconHideDawns" then SettingName = "HideTargetIconDawns"
     end
     if SettingName ~= nil then
         settingsModule.Update(SettingName, checkState)
@@ -218,6 +223,15 @@ function configui.CreateConfigUI(MapUIWindow)
     CreateTabCheckbox("SatNav", "locationGuideRegion", MapUIWindow, "Use teleport hints when tracking", col1, 235, settingsModule.Is("UseTeleportHint", true), CheckBoxUpdate)
     CreateTabCheckbox("SatNav", "locationShowTargetInfoInChat", MapUIWindow, "Target info in chat", col2, 235, settingsModule.Is("ShowTargetInfoInChat", true), CheckBoxUpdate)
     CreateTabCheckbox("SatNav", "teleportHintFiltered", MapUIWindow, "Filter teleport locations by faction", col1, 261, settingsModule.Is("TeleportHintFiltered", true), CheckBoxUpdate)
+
+    CreateTabDivider("SatNav", "satNavDiv2", MapUIWindow, 289)
+
+    CreateTabLabel("SatNav", "targetIconHideLabel", MapUIWindow, "Hide target icon on:", 40, 301, 9)
+    CreateTabCheckbox("SatNav", "targetIconHideMaps", MapUIWindow, "Maps", col1, 323, settingsModule.Is("HideTargetIconMaps", true), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "targetIconHideShips", MapUIWindow, "Ships", col2, 323, settingsModule.Is("HideTargetIconShips", true), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "targetIconHideEvents", MapUIWindow, "Events", col1, 349, settingsModule.Is("HideTargetIconEvents", true), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "targetIconHideDemos", MapUIWindow, "Demos", col2, 349, settingsModule.Is("HideTargetIconDemos", true), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "targetIconHideDawns", MapUIWindow, "Dawns", col1, 375, settingsModule.Is("HideTargetIconDawns", true), CheckBoxUpdate)
 
     -- Demos tab
     CreateTabCheckbox("Demos", "demosShowNextHour", MapUIWindow, "Show only in the next hour", col1, 65, settingsModule.Is("DrawDemosInNextHour", true), CheckBoxUpdate)

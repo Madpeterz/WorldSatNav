@@ -6,7 +6,7 @@ local settingsModule = require("WorldSatNav/core/settings")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
 local regionmap = require("WorldSatNav/ui/regionmap")
-local maprendering = require("WorldSatNav/ui/maprendering")
+local coordinates = require("WorldSatNav/core/coordinates")
 
 local demos = {}
 local demosData = {}
@@ -16,6 +16,7 @@ local demoAddButton = nil
 local demoWindow = nil
 local demoControlsListMenubutton = nil
 local demoImportButton = nil
+local demoListAddButton = nil -- list page only; ignores showDemoCreatePlus
 local TableListControlForDemos = nil
 
 local function normalizeTimestamp(value)
@@ -113,6 +114,9 @@ function demos.HideAllDemoUI()
 	end
 	if demoImportButton ~= nil and demoImportButton:IsVisible() then
 		demoImportButton:Show(false)
+	end
+	if demoListAddButton ~= nil and demoListAddButton:IsVisible() then
+		demoListAddButton:Show(false)
 	end
 	if TableListControlForDemos ~= nil then
 		TableListControlForDemos.Show(false)
@@ -294,7 +298,7 @@ local function loadDemosData()
 	end
 	local newDemoscount = 0
 	for _, demo in pairs(demosDataFromFile) do
-		local normalizedLocation = maprendering.NormalizeSextant(demo.location)
+		local normalizedLocation = coordinates.NormalizeSextant(demo.location)
 		local sextentKey = helpers.SextantKey(normalizedLocation)
 		local startAt = tonumber(demo.startat)
 		local isNew = demosData[sextentKey] == nil
@@ -443,7 +447,7 @@ function demos.AutoFillClicked()
 		api.Log:Info("WorldSatNav: Auto fill abort - no target selected")
 		return
 	end
-	local targetpos = maprendering.NormalizeSextant(api.Map:GetPlayerSextants())
+	local targetpos = coordinates.NormalizeSextant(api.Map:GetPlayerSextants())
 	if targetpos == nil then
 		api.Log:Info("WorldSatNav: Auto fill abort - could not get player position")
 		return
@@ -466,7 +470,7 @@ function demos.AutoFillClicked()
 end
 
 function demos.CreateDemo(ownername, buildingname, dateText, timeText, timestamp)
-    local playerSextants = maprendering.NormalizeSextant(api.Map:GetPlayerSextants())
+    local playerSextants = coordinates.NormalizeSextant(api.Map:GetPlayerSextants())
     if type(playerSextants) ~= "table" then
         api.Log:Info("WorldSatNav: Unable to create demo because player coordinates are unavailable.")
         return false
@@ -738,6 +742,13 @@ function demos.MainUIReady(MainUIWindow)
 	demoImportButton:AddAnchor("BOTTOMLEFT", MainUIWindow, 10, -10)
 	demoImportButton:Show(false)
 	demoImportButton:SetHandler("OnClick", demos.ImportShareCodeClicked)
+	demoListAddButton = helpers.createButton("DemoListAddButton", MainUIWindow, "Add", 70, MainUIWindow:GetHeight() - 35)
+	demoListAddButton:RemoveAllAnchors()
+	-- Chain off Import's edge: the button skin sets its own width, not createButton's 55.
+	demoListAddButton:AddAnchor("BOTTOMLEFT", demoImportButton, "BOTTOMRIGHT", 5, 0)
+	demoListAddButton:Show(false)
+	-- Same path as the target overlay "+" button; UI.close hides the list first.
+	demoListAddButton:SetHandler("OnClick", demos.ShowDemoWindow)
 	demoControlsListMenubutton:SetHandler("OnClick", function(button)
 		button = button or demoControlsListMenubutton
 		if button:GetText() == "List demos" then
@@ -757,8 +768,10 @@ function demos.MainUIReady(MainUIWindow)
 				TableListControlForDemos.setColSize(5, 60)
 			end
 			demos.RedrawDemosList()
+			demoListAddButton:Show(true)
 		else
 			button:SetText("List demos")
+			demoListAddButton:Show(false)
 			if TableListControlForDemos ~= nil then
 				TableListControlForDemos.Show(false)
 			end

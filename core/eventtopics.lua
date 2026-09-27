@@ -6,6 +6,7 @@ local eventtopics = {
 			mapClick = "dawnsdrop.mapClick",
 			refresh = "dawnsdrop.refresh",
 			selectBySextant = "dawnsdrop.selectBySextant",
+			mapModeChanged = "dawnsdrop.mapModeChanged",
 		},
 		dev = {
 			modeChanged = "dev.modeChanged",
@@ -17,6 +18,7 @@ local eventtopics = {
 			nextShip = "tracking.nextShip",
 			nextGuided = "tracking.nextGuided",
 			custom = "tracking.custom",
+			targetRenamed = "tracking.targetRenamed",
 		},
 		demo = {
 			triggerAlert = "demo.triggerAlert",
@@ -63,6 +65,9 @@ local eventtopics = {
 		render = {
 			redrawMap = "render.redrawMap",
 			modeChanged = "render.modeChanged",
+			modeSelected = "render.modeSelected",
+			flashIcon = "render.flashIcon",
+			exitFlash = "render.exitFlash",
 			maps = "render.maps",
 			ships = "render.ships",
 			demos = "render.demos",
