@@ -132,7 +132,10 @@ local function handleTrackClick()
         helpers.DevLog("No sextant data available for tracking")
         return
     end
-    eventbus.TriggerEvent(eventtopics.topics.tracking.start, activeAlert.payload.sextant, activeAlert.title, true)
+    -- payload.trackType ("Event", "Demo", ...) tells the map which mode owns the
+    -- target; the title stays as the tracker's display name.
+    local trackType = activeAlert.payload.trackType or activeAlert.title
+    eventbus.TriggerEvent(eventtopics.topics.tracking.start, activeAlert.payload.sextant, trackType, true, activeAlert.title)
     alertwindow.HideAlert()
 end
 

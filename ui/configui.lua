@@ -98,6 +98,7 @@ local function CheckBoxUpdate(checkState, checkboxId)
     elseif checkboxId == "equipSwapWaterTitle" then SettingName = "SwapToWaterTitle"
     elseif checkboxId == "equipSwapWaterEquipment" then SettingName = "SwapToWaterEquipment"
     elseif checkboxId == "mapsAlwaysShowRegions" then SettingName = "AlwaysShowRegions"
+    elseif checkboxId == "mapsColorIconByGrade" then SettingName = "ColorMapIconByGrade"
     elseif checkboxId == "mapsCenterOnPlayerOnModeChange" then SettingName = "CenterOnPlayerOnModeChange"
     elseif checkboxId == "eventsDisableWarehouseRaid" then SettingName = "DisableAlertWarehouseRaid"
     elseif checkboxId == "eventsDisableCrate" then SettingName = "DisableAlertCrate"
@@ -223,6 +224,7 @@ function configui.CreateConfigUI(MapUIWindow)
     CreateTabCheckbox("SatNav", "locationGuideRegion", MapUIWindow, "Use teleport hints when tracking", col1, 235, settingsModule.Is("UseTeleportHint", true), CheckBoxUpdate)
     CreateTabCheckbox("SatNav", "locationShowTargetInfoInChat", MapUIWindow, "Target info in chat", col2, 235, settingsModule.Is("ShowTargetInfoInChat", true), CheckBoxUpdate)
     CreateTabCheckbox("SatNav", "teleportHintFiltered", MapUIWindow, "Filter teleport locations by faction", col1, 261, settingsModule.Is("TeleportHintFiltered", true), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "mapsColorIconByGrade", MapUIWindow, "Color icon for grade", col2, 261, settingsModule.Is("ColorMapIconByGrade", true), CheckBoxUpdate)
 
     CreateTabDivider("SatNav", "satNavDiv2", MapUIWindow, 289)
 

@@ -284,6 +284,7 @@ local function DEMO_TRIGGER_ALERT()
 		countUpTo5Minutes = false,
 		payload = {
 			sextant = demosData[selectedKey].sextent,
+			trackType = "Demo",
 		},
 	}
 	eventbus.TriggerEvent(eventtopics.topics.alert.show, alertData)

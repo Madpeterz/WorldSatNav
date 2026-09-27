@@ -78,6 +78,15 @@ local TARGET_ICON_HIDE_SETTING = {
 	demos = "HideTargetIconDemos",
 	dawns = "HideTargetIconDawns",
 }
+-- tracked type (tracking event "name") -> the map mode that owns it
+local TRACKED_TYPE_MODE = {
+	Map = "maps",
+	Ship = "ships",
+	Event = "events",
+	Demo = "demos",
+	Dawns = "dawns",
+}
+local trackedTargetMode = nil -- nil: not tied to a mode (e.g. custom goto), drawn in every mode
 
 -- Player and target icons live for the whole session and are re-attached
 -- after every HideAllIcons, so they must never enter the free pools.
@@ -432,7 +441,8 @@ local function AttachTargetIcon()
 	end
 	local hideSetting = TARGET_ICON_HIDE_SETTING[currentMapMode]
 	local hiddenForMode = hideSetting ~= nil and settingsModule.Get(hideSetting) == true
-	if hiddenForMode or trackedTargetSextant == nil or not IsValidSextant(trackedTargetSextant) then
+	local otherModesTarget = trackedTargetMode ~= nil and trackedTargetMode ~= currentMapMode
+	if hiddenForMode or otherModesTarget or trackedTargetSextant == nil or not IsValidSextant(trackedTargetSextant) then
 		icon.inuse = false
 		markIconInactive(icon)
 		icon.sextant = nil
@@ -444,13 +454,15 @@ local function AttachTargetIcon()
 end
 
 -- tracking.custom / tracking.start handler; sextant may use engine field names.
-function maprendering.SetTrackedTarget(sextant)
+function maprendering.SetTrackedTarget(sextant, name)
 	trackedTargetSextant = CopySextant(sextant)
+	trackedTargetMode = TRACKED_TYPE_MODE[name]
 	AttachTargetIcon()
 end
 
 function maprendering.ClearTrackedTarget()
 	trackedTargetSextant = nil
+	trackedTargetMode = nil
 	AttachTargetIcon()
 end
 
@@ -1405,6 +1417,7 @@ function maprendering.ForceSelectUIMode(mode)
 	maprendering.MapUI:Show(true)
 	currentMapMode = mode
 	eventbus.TriggerEventImmediate(TOPICS.render.modeSelected, mode)
+	AttachTargetIcon() -- this path skips HideAllIcons, so re-check the ring's mode here
 	-- UI.close hides the settings panel itself; also drop its tab buttons and
 	-- background so the forced view isn't drawn on top of settings chrome.
 	if configWindowVisible == true then

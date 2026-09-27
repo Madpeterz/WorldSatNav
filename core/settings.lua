@@ -76,6 +76,7 @@ local defaultSettings = {
 
     -- Maps
     AlwaysShowRegions = false, -- when true, treasure map bag region labels show even while the map UI is closed
+    ColorMapIconByGrade = false, -- map icons use the grade texture and grow with the map count instead of the marker1-3 textures
 
     -- Dawnsdrop
     DawnsLastTask = "",

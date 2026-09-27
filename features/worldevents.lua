@@ -225,7 +225,7 @@ function worldevents.WorldMessageProcessor(event, message, iconKey, sextants, in
         countUpTo5Minutes = true,
         trackText = "Track",
         source = "custom",
-        payload = { sextant = sextants },
+        payload = { sextant = sextants, trackType = "Event" },
         })
     end
 end

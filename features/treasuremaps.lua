@@ -36,16 +36,36 @@ local function SextantFromInfo(info)
 	return sextant
 end
 
+-- Grades with an images/icons/map_grade_<grade>.png texture.
+local GRADE_ICON_TEXTURES = {
+	rare = "icons/map_grade_rare.png",
+	arcane = "icons/map_grade_arcane.png",
+	heroic = "icons/map_grade_heroic.png",
+}
+local MAP_ICON_SIZE = 7
+local MAP_ICON_SIZE_STEP = 2 -- ColorMapIconByGrade: extra size per map at the location, up to 3
+
 local function renderMapFromStorage(sextant, count, grade)
 	local textureCount = count
 	if textureCount > 3 then
 		textureCount = 3
 	end
+	local texture = "icons/marker"..textureCount..".png"
+	local iconSize = MAP_ICON_SIZE
+	if settings.Get("ColorMapIconByGrade") == true then
+		-- Grade picks the texture, count only drives the size. Unknown grades
+		-- keep the count marker so they stay distinguishable.
+		local gradeTexture = grade ~= nil and GRADE_ICON_TEXTURES[string.lower(tostring(grade))] or nil
+		if gradeTexture ~= nil then
+			texture = gradeTexture
+		end
+		iconSize = MAP_ICON_SIZE + (textureCount - 1) * MAP_ICON_SIZE_STEP
+	end
 	return {
 		sextant = sextant,
-		texture = "icons/marker"..textureCount..".png",
+		texture = texture,
 		sourceType = "Map",
-		customIconSize = 7,
+		customIconSize = iconSize,
 		count = count,
 		grade = grade,
 	}
