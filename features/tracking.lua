@@ -231,6 +231,9 @@ end
 local sharedDataLastUpdate = 0
 local updateTicker = 0
 local function UpdateSharedData(dt)
+	if settings.Get("EnableLocationOutput") ~= true then
+		return
+	end
 	-- Throttled updates (run every 750ms)
 	sharedDataLastUpdate = sharedDataLastUpdate + dt
 	if sharedDataLastUpdate < settings.Get("LocationOutputRateLimit") then
