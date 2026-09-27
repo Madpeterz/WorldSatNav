@@ -171,15 +171,19 @@ function radar.update(dt)
 
 	if RADAR_WINDOW.distanceLabel ~= nil then
 		local line1, line2, isTeleport = tracking.GetDistanceDisplayText()
+		local trend, strength = tracking.GetDistanceTrend()
 		if isTeleport then
 			local text = line1
 			if line2 ~= nil and line2 ~= "" then
 				text = text .. " " .. line2
 			end
 			RADAR_WINDOW.distanceLabel:SetText(text)
+			trend = "neutral"
 		else
-			RADAR_WINDOW.distanceLabel:SetText(string.format("Distance: %.1fm", distanceM))
+			-- Same formatted distance as the tracker window (switches to km).
+			RADAR_WINDOW.distanceLabel:SetText("Distance: " .. line1)
 		end
+		tracking.ApplyDistanceTrendColor(RADAR_WINDOW.distanceLabel, trend, strength)
 	end
 end
 

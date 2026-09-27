@@ -74,6 +74,102 @@ local function SextantFromInfo(info)
 	return sextant
 end
 
+-- Distance trend: is the player getting closer to or further from the target?
+-- Measured against a reference distance that only moves once the live distance
+-- has changed by TREND_STEP_M, so sextant rounding noise cannot flip it.
+-- The colour holds at full strength for TREND_HOLD_S seconds after the last
+-- step, then fades back to white over TREND_FADE_S (stopped, or moving
+-- sideways to the target).
+local TREND_STEP_M = 1.0
+local TREND_HOLD_S = 1
+local TREND_FADE_S = 1.5
+local TREND_COLORS = {
+	closer = {0.4, 1, 0.4},
+	further = {1, 0.45, 0.45},
+}
+local trendRefDistance = nil
+local trendSinceStepS = 0 -- seconds since the last step, advanced by tracking.onUpdate's dt
+local currentTrend = "neutral"
+
+local function ResetDistanceTrend()
+	trendRefDistance = nil
+	trendSinceStepS = 0
+	currentTrend = "neutral"
+end
+
+local function SetTrend(trend, detail)
+	if trend ~= currentTrend then
+		helpers.DevLog("Tracking trend: " .. currentTrend .. " -> " .. trend .. (detail or ""))
+	end
+	currentTrend = trend
+end
+
+-- @return string "closer", "further" or "neutral"
+-- @return number strength 0-1 of the trend colour (1 = full colour, 0 = white)
+function tracking.GetDistanceTrend()
+	if targetSextant == nil then
+		return "neutral", 0
+	end
+	local liveM = MetersBetweenSextants(api.Map:GetPlayerSextants(), targetSextant)
+	if liveM == nil then
+		return "neutral", 0
+	end
+	if trendRefDistance == nil then
+		trendRefDistance = liveM
+		trendSinceStepS = 0
+		currentTrend = "neutral"
+		return currentTrend, 0
+	end
+
+	local delta = liveM - trendRefDistance
+	if math.abs(delta) >= TREND_STEP_M then
+		-- A step long after the previous one while "stopped" points at position
+		-- drift re-triggering the colour; log it to confirm in DEV_MODE.
+		if trendSinceStepS >= TREND_HOLD_S then
+			helpers.DevLog(string.format("Tracking trend: step %.2fm after %.1fs idle", delta, trendSinceStepS))
+		end
+		SetTrend(delta < 0 and "closer" or "further", string.format(" (step %.2fm)", delta))
+		trendRefDistance = liveM
+		trendSinceStepS = 0
+	end
+
+	if currentTrend == "neutral" then
+		return currentTrend, 0
+	end
+	local fadeElapsed = trendSinceStepS - TREND_HOLD_S
+	if fadeElapsed <= 0 then
+		return currentTrend, 1
+	end
+	if fadeElapsed >= TREND_FADE_S then
+		SetTrend("neutral")
+		return currentTrend, 0
+	end
+	return currentTrend, 1 - fadeElapsed / TREND_FADE_S
+end
+
+-- Colours a distance label: the trend colour blended toward white by
+-- (1 - strength). Skips the style call when the blended colour is unchanged.
+function tracking.ApplyDistanceTrendColor(label, trend, strength)
+	if label == nil or label.style == nil then
+		return
+	end
+	local white = FONT_COLOR.WHITE
+	local color = TREND_COLORS[trend]
+	strength = color and (strength or 1) or 0
+	color = color or white
+	local r = white[1] + (color[1] - white[1]) * strength
+	local g = white[2] + (color[2] - white[2]) * strength
+	local b = white[3] + (color[3] - white[3]) * strength
+	local key = string.format("%.2f,%.2f,%.2f", r, g, b)
+	if label.appliedTrendColor == key then
+		return
+	end
+	label.appliedTrendColor = key
+	-- Always via style:SetColor: ApplyTextColor alone does not override a
+	-- colour previously set on the style, so green/red would stick.
+	label.style:SetColor(r, g, b, 1)
+end
+
 local function InvokeNextMapCallback()
 	helpers.DevLog("Publishing next map event")
 	eventbus.TriggerEvent(EVENT_NEXT_MAP)
@@ -132,6 +228,7 @@ function tracking.Stop()
 	teleportPlan = nil
 	teleportPlanOriginRegion = nil
 	inventoryRecountPending = false
+	ResetDistanceTrend()
 	if TRACK_WINDOW == nil then
 		return
 	end
@@ -444,6 +541,11 @@ local function updateTrackingData()
 	local navDir, _, _, _, relativeDir = gps.getNavigationText(targetSextant)
 	local line1, line2, isTeleport = tracking.GetDistanceDisplayText()
 	SetDistanceText(line1, line2)
+	local trend, strength = tracking.GetDistanceTrend()
+	if isTeleport then
+		trend = "neutral"
+	end
+	tracking.ApplyDistanceTrendColor(TRACK_WINDOW.distanceLabel, trend, strength)
 
 	if isTeleport then
 		updateNavArrow("portal2")
@@ -578,6 +680,7 @@ function tracking.setTargetGoto(sextant, name, ShowMapMarker, displayName)
 	targetSextant = normalizedSextant
 	targetName = displayName or name
 	currentTrackedType = name
+	ResetDistanceTrend()
 	ShowMapMarker = ShowMapMarker or false
 	if TRACK_WINDOW == nil then
 		helpers.DevLog("tracking window not initialized, cannot set target")
@@ -687,6 +790,7 @@ end
 
 local throttledTrackingData = helpers.throttle(constants.timing.trackingPoll, updateTrackingData)
 function tracking.onUpdate(dt)
+	trendSinceStepS = trendSinceStepS + (tonumber(dt) or 0) / 1000
 	UpdateSharedData(dt)
 	throttledTrackingData(dt)
 	UpdateInventoryRecount(dt)

@@ -9,12 +9,11 @@ local helpers = require("WorldSatNav/helpers")
 local GPS = {}
 
 -- State (must be declared before functions that use them)
-local prevPlayerPos = nil
+local movementAnchor = nil -- Position the movement bearing is measured from
 local playerMovementDirection = nil -- Bearing in degrees (0-360)
 local lastRelativeDirection = nil -- Track last direction for hysteresis
 local pendingDirection = nil -- Candidate direction waiting for confirmation
 local pendingDirectionCount = 0 -- How many consecutive times we've seen the candidate
-local recentBearings = {} -- Store recent bearings for smoothing
 
 -- Helper function to normalize angle to 0-360 range
 local function normalizeAngle(angle)
@@ -154,57 +153,40 @@ end
 -- Uses world coordinates from api.Unit:UnitWorldPosition("player"): x = East,
 -- y = North, z = Up, all in game-world meters. This is higher resolution and
 -- updates faster than sextant lon/lat, giving a more stable movement bearing.
+--
+-- The bearing is taken from an anchor point to the current position, and only
+-- once the player is MOVEMENT_ANCHOR_DISTANCE meters away from it. Measuring
+-- over a longer baseline means the same position noise swings the angle by a
+-- few degrees instead of tens (as it did with tiny per-tick steps).
+local MOVEMENT_ANCHOR_DISTANCE = 1.5  -- meters
+local TELEPORT_DISTANCE = 500         -- meters; a jump this large cannot be normal movement
+
 local function updateMovementDirection(x, y)
 	if x == nil or y == nil then
 		return
 	end
-	if prevPlayerPos == nil then
-		prevPlayerPos = {x = x, y = y}
+	if movementAnchor == nil then
+		movementAnchor = {x = x, y = y}
 		return
 	end
 
-	-- Calculate position differences (meters)
-	local eastDiff  = x - prevPlayerPos.x
-	local northDiff = y - prevPlayerPos.y
+	-- Displacement from the anchor (meters)
+	local eastDiff  = x - movementAnchor.x
+	local northDiff = y - movementAnchor.y
+	local distSq = eastDiff * eastDiff + northDiff * northDiff
 
-	-- Very small threshold - any detectable movement, in meters
-	local movementThreshold = 0.05
-	local absEastDiff  = math.abs(eastDiff)
-	local absNorthDiff = math.abs(northDiff)
-
-	-- Detect teleportation: a jump this large cannot be normal movement.
-	-- Reset state instead of injecting a nonsense bearing into the smoothing buffer.
-	local teleportThreshold = 500  -- meters
-	if absEastDiff > teleportThreshold or absNorthDiff > teleportThreshold then
-		prevPlayerPos = {x = x, y = y}
-		recentBearings = {}
+	-- Teleport: reset instead of producing a nonsense bearing.
+	if distSq > TELEPORT_DISTANCE * TELEPORT_DISTANCE then
+		movementAnchor = {x = x, y = y}
 		playerMovementDirection = nil
 		return
 	end
 
-	if absEastDiff > movementThreshold or absNorthDiff > movementThreshold then
-		-- Calculate bearing of movement
-		local bearing = bearingDeg(eastDiff, northDiff)
-
-		-- Add to recent bearings for smoothing
-		table.insert(recentBearings, bearing)
-		if #recentBearings > 5 then
-			table.remove(recentBearings, 1) -- Keep only last 5 samples
-		end
-		
-		-- Average the recent bearings for smoother direction
-		-- Handle circular averaging (account for 0/360 wraparound)
-		local sinSum, cosSum = 0, 0
-		for _, b in ipairs(recentBearings) do
-			local rad = b * (math.pi / 180)
-			sinSum = sinSum + math.sin(rad)
-			cosSum = cosSum + math.cos(rad)
-		end
-		playerMovementDirection = bearingDeg(sinSum, cosSum)
-
-		prevPlayerPos = {x = x, y = y}
+	if distSq >= MOVEMENT_ANCHOR_DISTANCE * MOVEMENT_ANCHOR_DISTANCE then
+		playerMovementDirection = bearingDeg(eastDiff, northDiff)
+		movementAnchor = {x = x, y = y}
 	end
-	-- If no significant movement, keep previous direction
+	-- Until the player has moved far enough, keep the previous direction
 end
 
 -- Calculate GPS guidance text showing direction and distance
