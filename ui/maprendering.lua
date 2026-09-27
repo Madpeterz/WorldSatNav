@@ -103,7 +103,12 @@ local function markIconInactive(icon)
 end
 
 -- Release an icon back to the free pool so findOrCreateIcon can reuse it in O(1).
+-- Idempotent: an already-free icon is already in the free lists, and pushing it
+-- again would grow them by the whole pool on every HideAllIcons.
 local function releaseIcon(icon)
+	if icon.inuse == false then
+		return
+	end
 	icon.inuse = false
 	markIconInactive(icon)
 	if IsPersistentIcon(icon) then
@@ -384,6 +389,10 @@ end
 local function HideIcon(index)
 	if iconsStore[index] then
 		local iconU = iconsStore[index]
+		-- Already released and cleared by an earlier HideIcon: skip the UI calls.
+		if iconU.inuse == false and iconU.sextant == nil then
+			return
+		end
 		iconU:Show(false)
 		releaseIcon(iconU)
 		iconU.sextant = nil
