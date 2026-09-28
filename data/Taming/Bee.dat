@@ -1,0 +1,28 @@
+{
+    {
+        name = "Giant Worker Bee",
+        sextant = {
+            deg_long = "11",
+            deg_lat = "15",
+            sec_long = "59",
+            min_lat = "46",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "18",
+            min_long = "31",
+        },
+    },
+    {
+        name = "Giant Queen Bee",
+        sextant = {
+            deg_long = "11",
+            deg_lat = "15",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "23",
+            min_lat = "55",
+            sec_lat = "58",
+            min_long = "38",
+        },
+    },
+}
