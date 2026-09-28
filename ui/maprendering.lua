@@ -179,7 +179,8 @@ local function SelectActiveMapIcon(icon)
 		if icon.grade ~= nil then
 			displayName = displayName .. " [" .. icon.grade .. "]"
 		end
-	elseif icon.sourceType == "DawnsGuided" and icon.label ~= nil then
+	elseif icon.label ~= nil then
+		-- DawnsGuided, and named dawnsdrop entries such as Taiming (monster name)
 		displayName = icon.label
 	end
 	if icon.sourceType == "Ship" then
@@ -788,6 +789,7 @@ local function SetMapZoom(givenzoomLevel, mapImage, focusX, focusY)
 	end
 	mapImage:SetTexture(texture)
 	WorldSatNavState.zoomLevel = givenzoomLevel
+	eventbus.TriggerEvent(TOPICS.render.zoomChanged, givenzoomLevel)
 	local viewWidth = math.floor(texWidth / (zoomFactor + 1))
 	local viewHeight = math.floor(texHeight / (zoomFactor + 1))
 	if focusX ~= nil and focusY ~= nil then

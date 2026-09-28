@@ -114,6 +114,9 @@ local dawnsdropTypes = {
     ["Points of Interest"] = {
         "Teleports",
     },
+    -- Filled at runtime with the monster names found in the Taiming data file
+    -- (see TamingTypeItems); this placeholder only makes it a listed task.
+    ["Taiming"] = {},
 }
 
 local dawnsdrop = {}
@@ -159,12 +162,52 @@ local poiSideButtonsBackground = nil
 local poiLocationNameInput = nil -- text box on the POI dev row; value stored as entry.locationName
 local ShowPoiSideButtons -- forward declaration; assigned below
 
--- Current text of the POI location-name box, trimmed; nil when empty/unavailable.
-local function GetPoiLocationName()
-	if poiLocationNameInput == nil or poiLocationNameInput.GetText == nil then
+-- Taiming: a top-level task whose second combo lists the monster names read from
+-- one shared data file, instead of one file per type. No faction sides.
+-- In DEV_MODE the POI dev row shows a difficulty picker and a monster-name box.
+-- Entries are stored as { sextant, name, difficulty } (not the location/group
+-- shape the other types use) and render with the difficulty's
+-- colored orb (images/icons/taming_<difficulty>.png).
+local TAMING_TASK = "Taiming"
+local TAMING_DATA_PATH = "WorldSatNav/data/Dawnsdrop/Taiming/Taiming.dat"
+local TAMING_DIFFICULTIES = {
+	"Easy",   -- green
+	"Normal", -- salmon
+	"Hard",   -- light gold
+	"Party",  -- pink
+	"Raid",   -- dark red
+}
+local DawnsTamingDifficulty = TAMING_DIFFICULTIES[1]
+local tamingDifficultyCombo = nil
+local tamingDifficultyPreview = nil -- orb in the difficulty's color next to the difficulty combo
+local tamingMonsterNameInput = nil -- text box on the Taiming dev row; value stored as entry.name
+local RefreshTamingTypeCombo -- forward declaration; assigned below
+
+-- Difficulty key: a strip along the bottom of the map with one orb + label per
+-- difficulty, shown while Taiming is selected and the map is at TAMING_KEY_ZOOM.
+local TAMING_KEY_ZOOM = 0
+local mapZoomLevel = 0 -- mirrored from render.zoomChanged
+local tamingKeyBackground = nil
+local tamingKeyWidgets = {} -- orbs + labels, shown/hidden together
+local UpdateTamingKey -- forward declaration; assigned below
+
+-- Orb texture for a taming difficulty; unknown / missing ones fall back to Easy.
+local function TamingDifficultyTexture(difficulty)
+	local key = string.lower(tostring(difficulty or TAMING_DIFFICULTIES[1]))
+	for _, name in ipairs(TAMING_DIFFICULTIES) do
+		if string.lower(name) == key then
+			return "icons/taming_" .. key .. ".png"
+		end
+	end
+	return "icons/taming_" .. string.lower(TAMING_DIFFICULTIES[1]) .. ".png"
+end
+
+-- Current text of a POI dev-row text box, trimmed; nil when empty/unavailable.
+local function GetTrimmedInputText(input)
+	if input == nil or input.GetText == nil then
 		return nil
 	end
-	local text = poiLocationNameInput:GetText()
+	local text = input:GetText()
 	if type(text) ~= "string" then
 		return nil
 	end
@@ -173,6 +216,12 @@ local function GetPoiLocationName()
 		return nil
 	end
 	return text
+end
+
+-- Taiming entries keep their position in entry.sextant; every other type uses
+-- entry.location.
+local function EntrySextant(entry)
+	return entry.sextant or entry.location
 end
 
 local function SetDawnsMapMode(mode)
@@ -193,8 +242,44 @@ local function GetTaskNames()
 	return names
 end
 
+local function GetDataFilePath(task, itemType)
+	if task == TAMING_TASK then
+		return TAMING_DATA_PATH -- every monster lives in the one file
+	end
+	return "WorldSatNav/data/Dawnsdrop/" .. task .. "/" .. itemType .. ".dat"
+end
+
+local function LoadLocations(task, itemType)
+	local path = GetDataFilePath(task, itemType)
+	return api.File:Read(path) or {}
+end
+
+-- Every distinct monster name in the Taiming file, sorted.
+local function TamingTypeItems()
+	local items = {}
+	local seen = {}
+	for _, entry in ipairs(LoadLocations(TAMING_TASK)) do
+		local name = entry.name
+		if type(name) == "string" and name ~= "" and not seen[name] then
+			seen[name] = true
+			table.insert(items, name)
+		end
+	end
+	table.sort(items)
+	return items
+end
+
+-- True when a Taiming entry belongs to the selected monster name.
+local function TamingEntryMatches(entry, itemType)
+	return entry.name == itemType
+end
+
 local function PopulateTypeComboBox(task)
 	if dawnsdropWindow == nil or dawnsdropWindow.typeCombo == nil then
+		return
+	end
+	if task == TAMING_TASK then
+		RefreshTamingTypeCombo()
 		return
 	end
 	local items = dawnsdropTypes[task]
@@ -205,15 +290,6 @@ local function PopulateTypeComboBox(task)
 	dawnsdropWindow.typeCombo.dropdownItem = items
 	dawnsdropWindow.typeCombo:Show(true)
 	dawnsdropWindow.typeCombo:Select(1)
-end
-
-local function GetDataFilePath(task, itemType)
-	return "WorldSatNav/data/Dawnsdrop/" .. task .. "/" .. itemType .. ".dat"
-end
-
-local function LoadLocations(task, itemType)
-	local path = GetDataFilePath(task, itemType)
-	return api.File:Read(path) or {}
 end
 
 -- Player factions on each continent. api.Unit:GetFactionName returns one of these
@@ -397,16 +473,23 @@ local function RenderTypeLocations(task, itemType)
 
 	for _, entry in ipairs(locations) do
 		local entrySide = entry.side or "west" -- untagged legacy entries treated as west
-		local entryKey = helpers.SextantKey(entry.location)
+		local entryKey = helpers.SextantKey(EntrySextant(entry))
 		local hidden = task == POI_TASK and poiSideFilter ~= nil
 			and entrySide ~= "shared" and entrySide ~= poiSideFilter
 		if guided and isGuidedVisited(entryKey) then
 			hidden = true -- already looted this run; drop it like ships drop visited ships
 		end
+		if task == TAMING_TASK and not TamingEntryMatches(entry, itemType) then
+			hidden = true
+		end
 		if not hidden then
 			local texture = "icons/marker1.png"
 			local iconSize = 5
-			if task == POI_TASK then
+			if task == TAMING_TASK then
+				-- Taiming markers are colored by difficulty.
+				iconSize = 10
+				texture = TamingDifficultyTexture(entry.difficulty)
+			elseif task == POI_TASK then
 				-- Points of Interest markers use per-side object icons, not group tiers.
 				iconSize = 8
 				local objType = entrySide
@@ -422,22 +505,51 @@ local function RenderTypeLocations(task, itemType)
 				iconSize = 9
 			end
 			if guided then
-				guidedLocations[#guidedLocations + 1] = { sextant = entry.location, key = entryKey }
+				guidedLocations[#guidedLocations + 1] = { sextant = EntrySextant(entry), key = entryKey }
 				if selectedKey ~= nil and entryKey == selectedKey then
 					texture = GUIDED_HIGHLIGHT_TEXTURE
 					iconSize = 10
 				end
 			end
+			local label = guided and itemType or nil
+			local sourceType = guided and "DawnsGuided" or itemType
+			if task == TAMING_TASK then
+				sourceType = TAMING_TASK -- itemType is the monster name
+				if entry.name ~= nil and entry.name ~= "" then
+					label = entry.name -- radar shows it as "Target: <name>"
+				end
+			end
 			table.insert(iconsData, {
-				sextant = entry.location,
+				sextant = EntrySextant(entry),
 				texture = texture,
-				sourceType = guided and "DawnsGuided" or itemType,
+				sourceType = sourceType,
 	            customIconSize = iconSize,
-				label = guided and itemType or nil,
+				label = label,
 			})
 		end
 	end
 	eventbus.TriggerEvent(eventtopics.topics.icons.BulkDrawIconsAndRedraw, iconsData)
+end
+
+-- Refills the type combo with the Taiming monster names and selects preferName
+-- (or the first name); selecting runs OnTypeSelected, which renders. With no
+-- names yet the combo is hidden and the map cleared.
+RefreshTamingTypeCombo = function(preferName)
+	if dawnsdropWindow == nil or dawnsdropWindow.typeCombo == nil then
+		return
+	end
+	local combo = dawnsdropWindow.typeCombo
+	local items = TamingTypeItems()
+	combo.dropdownItem = items
+	if #items == 0 then
+		combo:Show(false)
+		RenderTypeLocations(TAMING_TASK, nil)
+		return
+	end
+	combo:Show(true)
+	if not helpers.SelectComboBoxByText(combo, preferName) then
+		combo:Select(1)
+	end
 end
 
 -- Re-render the icons for whatever task/type is currently selected. Used when an
@@ -463,6 +575,9 @@ local function OnTaskSelected(task)
 	if ShowPoiSideButtons ~= nil and dawnsdropWindow ~= nil and dawnsdropWindow:IsVisible() then
 		ShowPoiSideButtons(true)
 	end
+	if UpdateTamingKey ~= nil then
+		UpdateTamingKey()
+	end
 end
 
 local function OnTypeSelected(itemType)
@@ -478,7 +593,8 @@ local function OnTypeSelected(itemType)
 end
 
 -- Finds the closest stored location to a click, within a 10px on-screen tolerance.
-local function FindClosestLocationIndex(locations, clickedSextant, mapInfo)
+-- include(entry), when given, skips entries it rejects (e.g. hidden Taiming names).
+local function FindClosestLocationIndex(locations, clickedSextant, mapInfo, include)
 	local clickedX, clickedY = coordinates.SextantToMapCoordinates(clickedSextant, mapInfo)
 	if clickedX == nil or clickedY == nil then
 		return nil
@@ -486,7 +602,10 @@ local function FindClosestLocationIndex(locations, clickedSextant, mapInfo)
 	local closestIndex = nil
 	local closestDistance = nil
 	for index, entry in ipairs(locations) do
-		local x, y = coordinates.SextantToMapCoordinates(entry.location, mapInfo)
+		local x, y = nil, nil
+		if include == nil or include(entry) then
+			x, y = coordinates.SextantToMapCoordinates(EntrySextant(entry), mapInfo)
+		end
 		if x ~= nil and y ~= nil then
 			local distance = math.sqrt(((x - clickedX) ^ 2) + ((y - clickedY) ^ 2))
 			if closestDistance == nil or distance < closestDistance then
@@ -513,13 +632,19 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd, m
 	local path = GetDataFilePath(task, itemType)
 	local locations = LoadLocations(task, itemType)
 	local closestIndex = nil
+	local tamingSelectAfter = itemType -- Taiming combo item to reselect after the write
 	if not alwaysAdd and mapInfo ~= nil then
-		closestIndex = FindClosestLocationIndex(locations, clickedSextant, mapInfo)
+		local include = nil
+		if task == TAMING_TASK then
+			-- Only markers currently shown for the selected monster can be removed.
+			include = function(entry) return TamingEntryMatches(entry, itemType) end
+		end
+		closestIndex = FindClosestLocationIndex(locations, clickedSextant, mapInfo, include)
 	end
 	if closestIndex ~= nil then
 		local entry = locations[closestIndex]
-		if task == POI_TASK or entry.group >= 3 then
-			-- Points of Interest have no tier steps: clicking an existing one removes it.
+		if task == POI_TASK or task == TAMING_TASK or entry.group >= 3 then
+			-- Points of Interest and Taiming have no tier steps: clicking an existing one removes it.
 			table.remove(locations, closestIndex)
 			helpers.DevLog("Removed dawnsdrop location at " .. path)
 		else
@@ -527,21 +652,45 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd, m
 			helpers.DevLog("Upgraded dawnsdrop location to group " .. entry.group .. " at " .. path)
 		end
 	else
-		local entry = { location = clickedSextant, group = 1 }
-		if task == POI_TASK then
-			entry.side = DawnsPoiSide
-			entry.locationName = GetPoiLocationName()
-			local _, regionName = regionmap.GetRegionForSextant(clickedSextant)
-			if regionName ~= nil and regionName ~= "?" then
-				entry.regionName = regionName
+		local entry
+		if task == TAMING_TASK then
+			local name = GetTrimmedInputText(tamingMonsterNameInput)
+			if name == nil then
+				-- Unnamed spots would never appear in the name combo.
+				helpers.DevLog("Cannot add Taiming location, monster name is empty")
+				return
+			end
+			entry = {
+				sextant = clickedSextant,
+				name = name,
+				difficulty = DawnsTamingDifficulty,
+			}
+			tamingSelectAfter = name -- show the monster just added
+		else
+			entry = { location = clickedSextant, group = 1 }
+			if task == POI_TASK then
+				entry.side = DawnsPoiSide
+				entry.locationName = GetTrimmedInputText(poiLocationNameInput)
+				local _, regionName = regionmap.GetRegionForSextant(clickedSextant)
+				if regionName ~= nil and regionName ~= "?" then
+					entry.regionName = regionName
+				end
 			end
 		end
 		table.insert(locations, entry)
 		helpers.DevLog("Added dawnsdrop location to " .. path
 			.. (entry.side ~= nil and (" [" .. entry.side .. "]") or "")
-			.. (entry.locationName ~= nil and (" '" .. entry.locationName .. "'") or ""))
+			.. (entry.difficulty ~= nil and (" [" .. entry.difficulty .. "]") or "")
+			.. (entry.locationName ~= nil and (" '" .. entry.locationName .. "'") or "")
+			.. (entry.name ~= nil and (" '" .. entry.name .. "'") or ""))
 	end
 	api.File:Write(path, locations)
+	if task == TAMING_TASK then
+		-- Names may have been added or removed: rebuild the combo and reselect
+		-- (falls back to the first name once a name's last marker is gone).
+		RefreshTamingTypeCombo(tamingSelectAfter)
+		return
+	end
 	RenderTypeLocations(task, itemType)
 end
 
@@ -554,7 +703,8 @@ local function OnMapClicked(sextant, mapInfo)
 	end
 	local task = helpers.getComboBoxValue(dawnsdropWindow.taskCombo)
 	local itemType = helpers.getComboBoxValue(dawnsdropWindow.typeCombo)
-	if task == nil or itemType == nil then
+	-- Taiming may have no names yet; its type comes from the monster-name box.
+	if task == nil or (itemType == nil and task ~= TAMING_TASK) then
 		helpers.DevLog("Cannot modify dawnsdrop location, task or type is not selected")
 		return
 	end
@@ -642,7 +792,7 @@ local function CreateDevModeButtons(mapUI)
 	markHereButton:SetHandler("OnClick", function()
 		local task = dawnsdropWindow ~= nil and helpers.getComboBoxValue(dawnsdropWindow.taskCombo) or nil
 		local itemType = dawnsdropWindow ~= nil and helpers.getComboBoxValue(dawnsdropWindow.typeCombo) or nil
-		if task == nil or itemType == nil then
+		if task == nil or (itemType == nil and task ~= TAMING_TASK) then
 			helpers.DevLog("Cannot mark location, task or type is not selected")
 			return
 		end
@@ -655,8 +805,9 @@ local function CreateDevModeButtons(mapUI)
 	end)
 	markHereButton:Show(false)
 
-	-- Second dev row: side tag + location-name box for Points of Interest markers.
-	-- Only shown when DEV_MODE is on and the POI task is selected (see ShowPoiSideButtons).
+	-- Second dev row: side tag + location-name box for Points of Interest markers,
+	-- or difficulty + monster-name box for Taiming. Only shown when DEV_MODE is on
+	-- and one of those tasks is selected (see ShowPoiSideButtons).
 	local poiRowY = y - 28
 	local poiNameX = margin + (#POI_SIDE_BUTTON_LABELS * spacing)
 	local poiNameWidth = 200
@@ -684,6 +835,38 @@ local function CreateDevModeButtons(mapUI)
 	if poiLocationNameInput ~= nil then
 		poiLocationNameInput:Show(false)
 	end
+
+	-- Taiming swaps the location-name box for a monster-name box in the same slot
+	-- (the guide text is fixed at creation, so it is a separate widget).
+	tamingMonsterNameInput = helpers.createTextInput("dawnsTamingMonsterNameInput", mapUI, poiNameX, poiRowY,
+		poiNameWidth, 22, "Monster name", 60, nil, nil, false, FONT_COLOR.BLACK)
+	if tamingMonsterNameInput ~= nil then
+		tamingMonsterNameInput:Show(false)
+	end
+
+	-- Taiming swaps the side tags above for a difficulty combo (same row, same
+	-- slot). CreateComboBox doesn't scale its offsets, so pre-scale here.
+	local difficultyX = margin
+	local difficultyWidth = 130
+	local previewX = difficultyX + difficultyWidth + 8
+	local previewSize = 18
+
+	tamingDifficultyPreview = mapUI:CreateImageDrawable("dawnsTamingDifficultyPreview", "overlay")
+	tamingDifficultyPreview:SetExtent(previewSize * uiScale, previewSize * uiScale)
+	tamingDifficultyPreview:AddAnchor("TOPLEFT", mapUI, "TOPLEFT", previewX * uiScale, (poiRowY + 2) * uiScale)
+	tamingDifficultyPreview:SetTexture(constants.folderPath .. "images/" .. TamingDifficultyTexture(DawnsTamingDifficulty))
+	tamingDifficultyPreview:Show(false)
+
+	tamingDifficultyCombo = helpers.CreateComboBox(mapUI, TAMING_DIFFICULTIES, difficultyX * uiScale, poiRowY * uiScale,
+		difficultyWidth * uiScale, 22 * uiScale, false, FONT_COLOR.BLACK, DawnsTamingDifficulty, nil,
+		"dawnsTamingDifficultyCombo")
+	local originalDifficultySelect = tamingDifficultyCombo.Select
+	function tamingDifficultyCombo:Select(index)
+		originalDifficultySelect(self, index)
+		DawnsTamingDifficulty = helpers.getComboBoxValue(self, DawnsTamingDifficulty)
+		tamingDifficultyPreview:SetTexture(constants.folderPath .. "images/" .. TamingDifficultyTexture(DawnsTamingDifficulty))
+	end
+	tamingDifficultyCombo:Show(false)
 end
 
 local function IsPoiTaskSelected()
@@ -693,21 +876,97 @@ local function IsPoiTaskSelected()
 	return helpers.getComboBoxValue(dawnsdropWindow.taskCombo) == POI_TASK
 end
 
+local function IsTamingTaskSelected()
+	if dawnsdropWindow == nil or dawnsdropWindow.taskCombo == nil then
+		return false
+	end
+	return helpers.getComboBoxValue(dawnsdropWindow.taskCombo) == TAMING_TASK
+end
+
 -- Assigns the forward-declared upvalue so callers defined earlier (OnTaskSelected)
--- can reach it.
+-- can reach it. Shared dev row for Points of Interest and Taiming: Taiming shows
+-- the difficulty picker in place of the side tags and the monster-name box in
+-- place of the location-name box.
 ShowPoiSideButtons = function(visible)
-	if visible and (constants.DEV_MODE ~= true or not IsPoiTaskSelected()) then
+	local showTaming = IsTamingTaskSelected()
+	if visible and (constants.DEV_MODE ~= true or not (IsPoiTaskSelected() or showTaming)) then
 		visible = false
 	end
+	showTaming = visible and showTaming
 	for _, id in ipairs(POI_SIDE_BUTTON_IDS) do
-		helpers.ToggleCheckboxVisable(id, visible)
+		helpers.ToggleCheckboxVisable(id, visible and not showTaming)
+	end
+	for _, widget in ipairs({ tamingDifficultyCombo, tamingDifficultyPreview }) do
+		widget:Show(showTaming)
+	end
+	if tamingMonsterNameInput ~= nil then
+		tamingMonsterNameInput:Show(showTaming)
 	end
 	if poiSideButtonsBackground ~= nil then
 		poiSideButtonsBackground:Show(visible)
 	end
 	if poiLocationNameInput ~= nil then
-		poiLocationNameInput:Show(visible)
+		poiLocationNameInput:Show(visible and not showTaming)
 	end
+end
+
+-- Builds the difficulty key inside the bottom edge of the map image (map area is
+-- 473x509 at 5,4 in unscaled window units, see maprendering). Hidden until
+-- UpdateTamingKey decides otherwise.
+local function CreateTamingKey(mapUI)
+	local uiScale = settingsModule.Get("uiDrawScale")
+	local entryWidth = 84
+	local stripHeight = 24
+	local orbSize = 16
+	local stripWidth = #TAMING_DIFFICULTIES * entryWidth
+	local stripX = 5 + math.floor((473 - stripWidth) / 2)
+	local stripY = 4 + 509 - stripHeight - 4
+
+	tamingKeyBackground = mapUI:CreateImageDrawable("dawnsTamingKeyBackground", "artwork")
+	tamingKeyBackground:SetExtent(stripWidth * uiScale, stripHeight * uiScale)
+	tamingKeyBackground:AddAnchor("TOPLEFT", mapUI, "TOPLEFT", stripX * uiScale, stripY * uiScale)
+	tamingKeyBackground:SetTexture(api.baseDir .. "/WorldSatNav/images/mainuibackground3.png")
+	tamingKeyBackground:SetColor(1, 1, 1, 0.75)
+	tamingKeyBackground:Show(false)
+
+	tamingKeyWidgets = {}
+	for index, difficulty in ipairs(TAMING_DIFFICULTIES) do
+		local entryX = stripX + ((index - 1) * entryWidth) + 6
+		local orb = mapUI:CreateImageDrawable("dawnsTamingKeyOrb" .. index, "overlay")
+		orb:SetExtent(orbSize * uiScale, orbSize * uiScale)
+		orb:AddAnchor("TOPLEFT", mapUI, "TOPLEFT", entryX * uiScale,
+			(stripY + ((stripHeight - orbSize) / 2)) * uiScale)
+		orb:SetTexture(constants.folderPath .. "images/" .. TamingDifficultyTexture(difficulty))
+		orb:Show(false)
+		table.insert(tamingKeyWidgets, orb)
+
+		-- createLabel scales its own offsets.
+		local label = helpers.createLabel("dawnsTamingKeyLabel" .. index, mapUI, difficulty,
+			entryX + orbSize + 4, stripY + 2, 13, true, FONT_COLOR.BLACK,
+			(entryWidth - orbSize - 10) * uiScale, (stripHeight - 4) * uiScale)
+		if label ~= nil then
+			label:Show(false)
+			table.insert(tamingKeyWidgets, label)
+		end
+	end
+end
+
+-- Shows the difficulty key only while the dawnsdrop UI is open on Taiming at
+-- TAMING_KEY_ZOOM.
+UpdateTamingKey = function()
+	local visible = dawnsdropWindow ~= nil and dawnsdropWindow:IsVisible()
+		and IsTamingTaskSelected() and mapZoomLevel == TAMING_KEY_ZOOM
+	if tamingKeyBackground ~= nil then
+		tamingKeyBackground:Show(visible)
+	end
+	for _, widget in ipairs(tamingKeyWidgets) do
+		widget:Show(visible)
+	end
+end
+
+local function OnMapZoomChanged(level)
+	mapZoomLevel = level
+	UpdateTamingKey()
 end
 
 local function ShowDevModeButtons(visible)
@@ -736,6 +995,7 @@ local function MainUIReady(MainUI)
 	local height = MainUI:GetHeight()
 	dawnsdropWindow = CreateUI(MainUI, width, height)
 	CreateDevModeButtons(MainUI)
+	CreateTamingKey(MainUI)
 end
 
 -- Wipe guided-tracking progress. Fired when the map mode changes away from
@@ -777,6 +1037,7 @@ function dawnsdrop.RequestDawnsDropForRender()
 		helpers.SelectComboBoxByText(dawnsdropWindow.typeCombo, savedType)
 	end
 	dawnsdropWindow:Show(true)
+	UpdateTamingKey()
 	SetDawnsMapMode("Select")
 	helpers.SetCheckboxState("dawnsSelectModeButton", true)
 	helpers.SetCheckboxState("dawnsAddModeButton", false)
@@ -793,6 +1054,7 @@ function dawnsdrop.HideUI()
 		return
 	end
 	dawnsdropWindow:Show(false)
+	UpdateTamingKey()
 end
 
 -- Ships-style selection for a guided type. Highlights the picked marker and hands
@@ -875,6 +1137,7 @@ function dawnsdrop.OnLoad()
 	eventbus.WatchEvent(eventtopics.topics.UI.close, dawnsdrop.HideUI, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.render.config, dawnsdrop.HideUI, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.render.dawnsdrop, dawnsdrop.RequestDawnsDropForRender, "dawnsdrop")
+	eventbus.WatchEvent(eventtopics.topics.render.zoomChanged, OnMapZoomChanged, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.dawnsdrop.mapClick, OnMapClicked, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.dawnsdrop.refresh, RerenderCurrentSelection, "dawnsdrop")
 	eventbus.WatchEvent(eventtopics.topics.dawnsdrop.selectBySextant, dawnsdrop.SelectGuidedBySextant, "dawnsdrop")

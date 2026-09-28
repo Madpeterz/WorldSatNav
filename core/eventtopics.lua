@@ -76,6 +76,7 @@ local eventtopics = {
 			demoadd = "render.demoadd",
 			dawnsdrop = "render.dawnsdrop",
 			clearUiState = "render.clearUiState",
+			zoomChanged = "render.zoomChanged",
 		},
 	}
 }
