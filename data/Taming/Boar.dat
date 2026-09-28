@@ -1,0 +1,15 @@
+{
+    {
+        name = "Enraged Armored Boar",
+        sextant = {
+            deg_long = "10",
+            deg_lat = "16",
+            sec_long = "47",
+            min_lat = "35",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "22",
+            min_long = "18",
+        },
+    },
+}

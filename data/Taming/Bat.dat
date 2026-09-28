@@ -1,0 +1,28 @@
+{
+    {
+        name = "Bat",
+        sextant = {
+            deg_long = "12",
+            deg_lat = "14",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "29",
+            min_lat = "59",
+            sec_lat = "39",
+            min_long = "0",
+        },
+    },
+    {
+        name = "Bat",
+        sextant = {
+            deg_long = "12",
+            deg_lat = "14",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "13",
+            min_lat = "53",
+            sec_lat = "45",
+            min_long = "9",
+        },
+    },
+}

@@ -1,0 +1,28 @@
+{
+    {
+        name = "Mine Grub",
+        sextant = {
+            deg_long = "8",
+            deg_lat = "17",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "33",
+            min_lat = "9",
+            sec_lat = "47",
+            min_long = "46",
+        },
+    },
+    {
+        name = "Mine Grub",
+        sextant = {
+            deg_long = "8",
+            deg_lat = "17",
+            sec_long = "8",
+            min_lat = "18",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "37",
+            min_long = "51",
+        },
+    },
+}

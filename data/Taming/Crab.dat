@@ -1,0 +1,41 @@
+{
+    {
+        name = "Giant Crab",
+        sextant = {
+            deg_long = "8",
+            deg_lat = "14",
+            sec_long = "40",
+            min_lat = "22",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "42",
+            min_long = "33",
+        },
+    },
+    {
+        name = "Diamond Shores Crab",
+        sextant = {
+            deg_long = "2",
+            deg_lat = "1",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "25",
+            min_lat = "18",
+            sec_lat = "35",
+            min_long = "12",
+        },
+    },
+    {
+        name = "Diamond Shores Crab",
+        sextant = {
+            deg_long = "2",
+            deg_lat = "1",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "57",
+            min_lat = "24",
+            sec_lat = "27",
+            min_long = "21",
+        },
+    },
+}

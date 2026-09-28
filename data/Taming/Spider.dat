@@ -1,0 +1,54 @@
+{
+    {
+        name = "Thornback Spider Hatchling",
+        sextant = {
+            deg_long = "10",
+            deg_lat = "16",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "16",
+            min_lat = "48",
+            sec_lat = "1",
+            min_long = "6",
+        },
+    },
+    {
+        name = "Thornback Spider Queen",
+        sextant = {
+            deg_long = "9",
+            deg_lat = "16",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "56",
+            min_lat = "49",
+            sec_lat = "37",
+            min_long = "56",
+        },
+    },
+    {
+        name = "Thornback Spider Hatchling",
+        sextant = {
+            deg_long = "9",
+            deg_lat = "16",
+            sec_long = "50",
+            min_lat = "44",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "10",
+            min_long = "45",
+        },
+    },
+    {
+        name = "Giant Thornback Spider",
+        sextant = {
+            deg_long = "9",
+            deg_lat = "16",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "49",
+            min_lat = "44",
+            sec_lat = "32",
+            min_long = "34",
+        },
+    },
+}

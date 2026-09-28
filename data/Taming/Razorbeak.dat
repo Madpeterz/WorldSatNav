@@ -1,0 +1,41 @@
+{
+    {
+        name = "Plains Razorbeak",
+        sextant = {
+            deg_long = "8",
+            deg_lat = "16",
+            sec_long = "48",
+            min_lat = "39",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "37",
+            min_long = "56",
+        },
+    },
+    {
+        name = "Plains Razorbeak",
+        sextant = {
+            deg_long = "6",
+            deg_lat = "16",
+            sec_long = "2",
+            min_lat = "57",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "43",
+            min_long = "28",
+        },
+    },
+    {
+        name = "Diamond Shores Razorbeak",
+        sextant = {
+            deg_long = "2",
+            deg_lat = "1",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "17",
+            min_lat = "16",
+            sec_lat = "59",
+            min_long = "10",
+        },
+    },
+}

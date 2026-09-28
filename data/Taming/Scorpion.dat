@@ -1,0 +1,15 @@
+{
+    {
+        name = "Tameable Scorpion",
+        sextant = {
+            deg_long = "9",
+            deg_lat = "15",
+            sec_long = "12",
+            min_lat = "14",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "29",
+            min_long = "38",
+        },
+    },
+}

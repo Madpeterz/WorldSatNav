@@ -1,0 +1,15 @@
+{
+    {
+        name = "Red Crayfish",
+        sextant = {
+            deg_long = "8",
+            deg_lat = "14",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "3",
+            min_lat = "20",
+            sec_lat = "1",
+            min_long = "34",
+        },
+    },
+}

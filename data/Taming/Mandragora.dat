@@ -1,0 +1,15 @@
+{
+    {
+        name = "Mandragora",
+        sextant = {
+            deg_long = "10",
+            deg_lat = "12",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "51",
+            min_lat = "43",
+            sec_lat = "30",
+            min_long = "21",
+        },
+    },
+}
