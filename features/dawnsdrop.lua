@@ -173,7 +173,7 @@ local POI_SIDE_VALUES = { "west", "east", "shared" }
 local DawnsPoiSide = "shared"
 local poiSideButtonsBackground = nil
 local poiLocationNameInput = nil -- text box on the POI dev row; value stored as entry.locationName
-local ShowPoiSideButtons -- forward declaration; assigned below
+local ShowDevModeButtons -- forward declaration; assigned below
 
 -- Taming: one data file per monster in data/Taming (outside data/Dawnsdrop).
 -- No faction sides. Entries are stored as { sextant, name } (not the
@@ -515,8 +515,8 @@ local function OnTaskSelected(task)
 	settingsModule.Update("DawnsLastTask", task)
 	eventbus.TriggerEvent(eventtopics.topics.dawnsdrop.selectTypeChanged, task)
 	PopulateTypeComboBox(task)
-	if ShowPoiSideButtons ~= nil and dawnsdropWindow ~= nil and dawnsdropWindow:IsVisible() then
-		ShowPoiSideButtons(true)
+	if ShowDevModeButtons ~= nil and dawnsdropWindow ~= nil and dawnsdropWindow:IsVisible() then
+		ShowDevModeButtons(true)
 	end
 end
 
@@ -573,8 +573,8 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd, m
 	end
 	if closestIndex ~= nil then
 		local entry = locations[closestIndex]
-		if task == POI_TASK or task == TAMING_TASK or entry.group >= 3 then
-			-- Points of Interest and Taming have no tier steps: clicking an existing one removes it.
+		if task == POI_TASK or entry.group >= 3 then
+			-- Points of Interest have no tier steps: clicking an existing one removes it.
 			table.remove(locations, closestIndex)
 			helpers.DevLog("Removed dawnsdrop location at " .. path)
 		else
@@ -582,25 +582,19 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd, m
 			helpers.DevLog("Upgraded dawnsdrop location to group " .. entry.group .. " at " .. path)
 		end
 	else
-		local entry
-		if task == TAMING_TASK then
-			entry = { sextant = clickedSextant, name = itemType }
-		else
-			entry = { location = clickedSextant, group = 1 }
-			if task == POI_TASK then
-				entry.side = DawnsPoiSide
-				entry.locationName = GetTrimmedInputText(poiLocationNameInput)
-				local _, regionName = regionmap.GetRegionForSextant(clickedSextant)
-				if regionName ~= nil and regionName ~= "?" then
-					entry.regionName = regionName
-				end
+		local entry = { location = clickedSextant, group = 1 }
+		if task == POI_TASK then
+			entry.side = DawnsPoiSide
+			entry.locationName = GetTrimmedInputText(poiLocationNameInput)
+			local _, regionName = regionmap.GetRegionForSextant(clickedSextant)
+			if regionName ~= nil and regionName ~= "?" then
+				entry.regionName = regionName
 			end
 		end
 		table.insert(locations, entry)
 		helpers.DevLog("Added dawnsdrop location to " .. path
 			.. (entry.side ~= nil and (" [" .. entry.side .. "]") or "")
-			.. (entry.locationName ~= nil and (" '" .. entry.locationName .. "'") or "")
-			.. (entry.name ~= nil and (" '" .. entry.name .. "'") or ""))
+			.. (entry.locationName ~= nil and (" '" .. entry.locationName .. "'") or ""))
 	end
 	api.File:Write(path, locations)
 	RenderTypeLocations(task, itemType)
@@ -615,6 +609,9 @@ local function OnMapClicked(sextant, mapInfo)
 	end
 	local task = helpers.getComboBoxValue(dawnsdropWindow.taskCombo)
 	local itemType = helpers.getComboBoxValue(dawnsdropWindow.typeCombo)
+	if task == TAMING_TASK then
+		return -- Taming has no dev controls; Add mode may still be set from another task
+	end
 	if task == nil or itemType == nil then
 		helpers.DevLog("Cannot modify dawnsdrop location, task or type is not selected")
 		return
@@ -754,9 +751,14 @@ local function IsPoiTaskSelected()
 	return helpers.getComboBoxValue(dawnsdropWindow.taskCombo) == POI_TASK
 end
 
--- Assigns the forward-declared upvalue so callers defined earlier (OnTaskSelected)
--- can reach it.
-ShowPoiSideButtons = function(visible)
+local function IsTamingTaskSelected()
+	if dawnsdropWindow == nil or dawnsdropWindow.taskCombo == nil then
+		return false
+	end
+	return helpers.getComboBoxValue(dawnsdropWindow.taskCombo) == TAMING_TASK
+end
+
+local function ShowPoiSideButtons(visible)
 	if visible and (constants.DEV_MODE ~= true or not IsPoiTaskSelected()) then
 		visible = false
 	end
@@ -771,8 +773,10 @@ ShowPoiSideButtons = function(visible)
 	end
 end
 
-local function ShowDevModeButtons(visible)
-	if visible and constants.DEV_MODE ~= true then
+-- Assigns the forward-declared upvalue so callers defined earlier (OnTaskSelected)
+-- can reach it. Taming is read-only, so the whole dev UI stays hidden for it.
+ShowDevModeButtons = function(visible)
+	if visible and (constants.DEV_MODE ~= true or IsTamingTaskSelected()) then
 		visible = false
 	end
 	for _, id in ipairs(DEV_MODE_BUTTON_IDS) do
