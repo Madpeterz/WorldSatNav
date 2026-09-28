@@ -12,4 +12,17 @@
             min_long = "1",
         },
     },
+    {
+        name = "Heedmar Owl",
+        sextant = {
+            deg_long = "1",
+            deg_lat = "4",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "33",
+            min_lat = "1",
+            sec_lat = "48",
+            min_long = "46",
+        },
+    },
 }

@@ -12,4 +12,30 @@
             min_long = "20",
         },
     },
+    {
+        name = "Calmlands Skyfin",
+        sextant = {
+            deg_long = "0",
+            deg_lat = "3",
+            sec_long = "25",
+            min_lat = "33",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "43",
+            min_long = "32",
+        },
+    },
+    {
+        name = "Calmlands Skyfin",
+        sextant = {
+            deg_long = "0",
+            deg_lat = "3",
+            sec_long = "15",
+            min_lat = "37",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "32",
+            min_long = "21",
+        },
+    },
 }
