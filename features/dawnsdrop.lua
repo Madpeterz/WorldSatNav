@@ -114,9 +114,9 @@ local dawnsdropTypes = {
     ["Points of Interest"] = {
         "Teleports",
     },
-    -- Filled at runtime with the monster names found in the Taiming data file
+    -- Filled at runtime with the monster names found in the Taming data file
     -- (see TamingTypeItems); this placeholder only makes it a listed task.
-    ["Taiming"] = {},
+    ["Taming"] = {},
 }
 
 local dawnsdrop = {}
@@ -162,14 +162,14 @@ local poiSideButtonsBackground = nil
 local poiLocationNameInput = nil -- text box on the POI dev row; value stored as entry.locationName
 local ShowPoiSideButtons -- forward declaration; assigned below
 
--- Taiming: a top-level task whose second combo lists the monster names read from
+-- Taming: a top-level task whose second combo lists the monster names read from
 -- one shared data file, instead of one file per type. No faction sides.
 -- In DEV_MODE the POI dev row shows a difficulty picker and a monster-name box.
 -- Entries are stored as { sextant, name, difficulty } (not the location/group
 -- shape the other types use) and render with the difficulty's
 -- colored orb (images/icons/taming_<difficulty>.png).
-local TAMING_TASK = "Taiming"
-local TAMING_DATA_PATH = "WorldSatNav/data/Dawnsdrop/Taiming/Taiming.dat"
+local TAMING_TASK = "Taming"
+local TAMING_DATA_PATH = "WorldSatNav/data/Dawnsdrop/Taming/Taming.dat"
 local TAMING_DIFFICULTIES = {
 	"Easy",   -- green
 	"Normal", -- salmon
@@ -180,11 +180,11 @@ local TAMING_DIFFICULTIES = {
 local DawnsTamingDifficulty = TAMING_DIFFICULTIES[1]
 local tamingDifficultyCombo = nil
 local tamingDifficultyPreview = nil -- orb in the difficulty's color next to the difficulty combo
-local tamingMonsterNameInput = nil -- text box on the Taiming dev row; value stored as entry.name
+local tamingMonsterNameInput = nil -- text box on the Taming dev row; value stored as entry.name
 local RefreshTamingTypeCombo -- forward declaration; assigned below
 
 -- Difficulty key: a strip along the bottom of the map with one orb + label per
--- difficulty, shown while Taiming is selected and the map is at TAMING_KEY_ZOOM.
+-- difficulty, shown while Taming is selected and the map is at TAMING_KEY_ZOOM.
 local TAMING_KEY_ZOOM = 0
 local mapZoomLevel = 0 -- mirrored from render.zoomChanged
 local tamingKeyBackground = nil
@@ -218,7 +218,7 @@ local function GetTrimmedInputText(input)
 	return text
 end
 
--- Taiming entries keep their position in entry.sextant; every other type uses
+-- Taming entries keep their position in entry.sextant; every other type uses
 -- entry.location.
 local function EntrySextant(entry)
 	return entry.sextant or entry.location
@@ -254,7 +254,7 @@ local function LoadLocations(task, itemType)
 	return api.File:Read(path) or {}
 end
 
--- Every distinct monster name in the Taiming file, sorted.
+-- Every distinct monster name in the Taming file, sorted.
 local function TamingTypeItems()
 	local items = {}
 	local seen = {}
@@ -269,7 +269,7 @@ local function TamingTypeItems()
 	return items
 end
 
--- True when a Taiming entry belongs to the selected monster name.
+-- True when a Taming entry belongs to the selected monster name.
 local function TamingEntryMatches(entry, itemType)
 	return entry.name == itemType
 end
@@ -486,7 +486,7 @@ local function RenderTypeLocations(task, itemType)
 			local texture = "icons/marker1.png"
 			local iconSize = 5
 			if task == TAMING_TASK then
-				-- Taiming markers are colored by difficulty.
+				-- Taming markers are colored by difficulty.
 				iconSize = 10
 				texture = TamingDifficultyTexture(entry.difficulty)
 			elseif task == POI_TASK then
@@ -531,7 +531,7 @@ local function RenderTypeLocations(task, itemType)
 	eventbus.TriggerEvent(eventtopics.topics.icons.BulkDrawIconsAndRedraw, iconsData)
 end
 
--- Refills the type combo with the Taiming monster names and selects preferName
+-- Refills the type combo with the Taming monster names and selects preferName
 -- (or the first name); selecting runs OnTypeSelected, which renders. With no
 -- names yet the combo is hidden and the map cleared.
 RefreshTamingTypeCombo = function(preferName)
@@ -593,7 +593,7 @@ local function OnTypeSelected(itemType)
 end
 
 -- Finds the closest stored location to a click, within a 10px on-screen tolerance.
--- include(entry), when given, skips entries it rejects (e.g. hidden Taiming names).
+-- include(entry), when given, skips entries it rejects (e.g. hidden Taming names).
 local function FindClosestLocationIndex(locations, clickedSextant, mapInfo, include)
 	local clickedX, clickedY = coordinates.SextantToMapCoordinates(clickedSextant, mapInfo)
 	if clickedX == nil or clickedY == nil then
@@ -632,7 +632,7 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd, m
 	local path = GetDataFilePath(task, itemType)
 	local locations = LoadLocations(task, itemType)
 	local closestIndex = nil
-	local tamingSelectAfter = itemType -- Taiming combo item to reselect after the write
+	local tamingSelectAfter = itemType -- Taming combo item to reselect after the write
 	if not alwaysAdd and mapInfo ~= nil then
 		local include = nil
 		if task == TAMING_TASK then
@@ -644,7 +644,7 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd, m
 	if closestIndex ~= nil then
 		local entry = locations[closestIndex]
 		if task == POI_TASK or task == TAMING_TASK or entry.group >= 3 then
-			-- Points of Interest and Taiming have no tier steps: clicking an existing one removes it.
+			-- Points of Interest and Taming have no tier steps: clicking an existing one removes it.
 			table.remove(locations, closestIndex)
 			helpers.DevLog("Removed dawnsdrop location at " .. path)
 		else
@@ -657,7 +657,7 @@ local function AddOrUpgradeLocation(task, itemType, clickedSextant, alwaysAdd, m
 			local name = GetTrimmedInputText(tamingMonsterNameInput)
 			if name == nil then
 				-- Unnamed spots would never appear in the name combo.
-				helpers.DevLog("Cannot add Taiming location, monster name is empty")
+				helpers.DevLog("Cannot add Taming location, monster name is empty")
 				return
 			end
 			entry = {
@@ -703,7 +703,7 @@ local function OnMapClicked(sextant, mapInfo)
 	end
 	local task = helpers.getComboBoxValue(dawnsdropWindow.taskCombo)
 	local itemType = helpers.getComboBoxValue(dawnsdropWindow.typeCombo)
-	-- Taiming may have no names yet; its type comes from the monster-name box.
+	-- Taming may have no names yet; its type comes from the monster-name box.
 	if task == nil or (itemType == nil and task ~= TAMING_TASK) then
 		helpers.DevLog("Cannot modify dawnsdrop location, task or type is not selected")
 		return
@@ -806,7 +806,7 @@ local function CreateDevModeButtons(mapUI)
 	markHereButton:Show(false)
 
 	-- Second dev row: side tag + location-name box for Points of Interest markers,
-	-- or difficulty + monster-name box for Taiming. Only shown when DEV_MODE is on
+	-- or difficulty + monster-name box for Taming. Only shown when DEV_MODE is on
 	-- and one of those tasks is selected (see ShowPoiSideButtons).
 	local poiRowY = y - 28
 	local poiNameX = margin + (#POI_SIDE_BUTTON_LABELS * spacing)
@@ -836,7 +836,7 @@ local function CreateDevModeButtons(mapUI)
 		poiLocationNameInput:Show(false)
 	end
 
-	-- Taiming swaps the location-name box for a monster-name box in the same slot
+	-- Taming swaps the location-name box for a monster-name box in the same slot
 	-- (the guide text is fixed at creation, so it is a separate widget).
 	tamingMonsterNameInput = helpers.createTextInput("dawnsTamingMonsterNameInput", mapUI, poiNameX, poiRowY,
 		poiNameWidth, 22, "Monster name", 60, nil, nil, false, FONT_COLOR.BLACK)
@@ -844,7 +844,7 @@ local function CreateDevModeButtons(mapUI)
 		tamingMonsterNameInput:Show(false)
 	end
 
-	-- Taiming swaps the side tags above for a difficulty combo (same row, same
+	-- Taming swaps the side tags above for a difficulty combo (same row, same
 	-- slot). CreateComboBox doesn't scale its offsets, so pre-scale here.
 	local difficultyX = margin
 	local difficultyWidth = 130
@@ -884,7 +884,7 @@ local function IsTamingTaskSelected()
 end
 
 -- Assigns the forward-declared upvalue so callers defined earlier (OnTaskSelected)
--- can reach it. Shared dev row for Points of Interest and Taiming: Taiming shows
+-- can reach it. Shared dev row for Points of Interest and Taming: Taming shows
 -- the difficulty picker in place of the side tags and the monster-name box in
 -- place of the location-name box.
 ShowPoiSideButtons = function(visible)
@@ -951,7 +951,7 @@ local function CreateTamingKey(mapUI)
 	end
 end
 
--- Shows the difficulty key only while the dawnsdrop UI is open on Taiming at
+-- Shows the difficulty key only while the dawnsdrop UI is open on Taming at
 -- TAMING_KEY_ZOOM.
 UpdateTamingKey = function()
 	local visible = dawnsdropWindow ~= nil and dawnsdropWindow:IsVisible()

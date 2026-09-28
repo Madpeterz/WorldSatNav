@@ -180,7 +180,7 @@ local function SelectActiveMapIcon(icon)
 			displayName = displayName .. " [" .. icon.grade .. "]"
 		end
 	elseif icon.label ~= nil then
-		-- DawnsGuided, and named dawnsdrop entries such as Taiming (monster name)
+		-- DawnsGuided, and named dawnsdrop entries such as Taming (monster name)
 		displayName = icon.label
 	end
 	if icon.sourceType == "Ship" then

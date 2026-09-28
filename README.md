@@ -71,7 +71,7 @@ The MOST location data is a guide not a 100% sextant track, but will get you clo
 - Points of interest
   - Teleports (true locations, missing alot of east only)
 
-- Taiming
+- Taming
   - Tameable monsters by name (colored by difficulty: Easy / Normal / Hard / Party / Raid)
   
 
