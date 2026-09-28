@@ -64,4 +64,30 @@
             min_long = "22",
         },
     },
+    {
+        name = "Exeloch Boar",
+        sextant = {
+            deg_long = "1",
+            deg_lat = "3",
+            sec_long = "40",
+            min_lat = "53",
+            longitude = "E",
+            latitude = "S",
+            sec_lat = "29",
+            min_long = "18",
+        },
+    },
+    {
+        name = "Exeloch Boar",
+        sextant = {
+            deg_long = "1",
+            deg_lat = "4",
+            sec_long = "43",
+            min_lat = "3",
+            longitude = "E",
+            latitude = "S",
+            sec_lat = "17",
+            min_long = "11",
+        },
+    },
 }
