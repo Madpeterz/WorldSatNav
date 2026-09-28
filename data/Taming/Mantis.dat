@@ -12,4 +12,43 @@
             min_long = "38",
         },
     },
+    {
+        name = "Lilyut Mantis",
+        sextant = {
+            deg_long = "9",
+            deg_lat = "12",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "53",
+            min_lat = "53",
+            sec_lat = "33",
+            min_long = "13",
+        },
+    },
+    {
+        name = "Lilyut Mantis",
+        sextant = {
+            deg_long = "9",
+            deg_lat = "12",
+            sec_long = "59",
+            min_lat = "44",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "43",
+            min_long = "7",
+        },
+    },
+    {
+        name = "Lilyut Mantis",
+        sextant = {
+            deg_long = "9",
+            deg_lat = "12",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "50",
+            min_lat = "32",
+            sec_lat = "59",
+            min_long = "5",
+        },
+    },
 }
