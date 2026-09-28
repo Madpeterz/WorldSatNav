@@ -51,4 +51,30 @@
             min_long = "5",
         },
     },
+    {
+        name = "Mantis",
+        sextant = {
+            deg_long = "12",
+            deg_lat = "15",
+            sec_long = "58",
+            min_lat = "51",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "48",
+            min_long = "22",
+        },
+    },
+    {
+        name = "Vicious Giant Mantis",
+        sextant = {
+            deg_long = "9",
+            deg_lat = "15",
+            sec_long = "22",
+            min_lat = "19",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "6",
+            min_long = "49",
+        },
+    },
 }

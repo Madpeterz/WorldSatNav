@@ -25,4 +25,17 @@
             min_long = "38",
         },
     },
+    {
+        name = "Giant Worker Bee",
+        sextant = {
+            deg_long = "11",
+            deg_lat = "15",
+            sec_long = "9",
+            min_lat = "55",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "42",
+            min_long = "52",
+        },
+    },
 }
