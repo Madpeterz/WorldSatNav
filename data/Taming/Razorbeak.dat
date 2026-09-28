@@ -38,4 +38,17 @@
             min_long = "10",
         },
     },
+    {
+        name = "Sanddeep Razorbeak",
+        sextant = {
+            deg_long = "11",
+            deg_lat = "19",
+            sec_long = "19",
+            min_lat = "25",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "45",
+            min_long = "45",
+        },
+    },
 }

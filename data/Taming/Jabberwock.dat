@@ -1,0 +1,54 @@
+{
+    {
+        name = "Jabberwock",
+        sextant = {
+            deg_long = "13",
+            deg_lat = "19",
+            sec_long = "14",
+            min_lat = "53",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "57",
+            min_long = "32",
+        },
+    },
+    {
+        name = "Jabberwock",
+        sextant = {
+            deg_long = "13",
+            deg_lat = "20",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "11",
+            min_lat = "4",
+            sec_lat = "17",
+            min_long = "31",
+        },
+    },
+    {
+        name = "Devouring Jabberwock",
+        sextant = {
+            deg_long = "13",
+            deg_lat = "20",
+            sec_long = "16",
+            min_lat = "13",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "54",
+            min_long = "35",
+        },
+    },
+    {
+        name = "Tameable Jabberwock",
+        sextant = {
+            deg_long = "13",
+            deg_lat = "20",
+            sec_long = "40",
+            min_lat = "11",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "53",
+            min_long = "44",
+        },
+    },
+}

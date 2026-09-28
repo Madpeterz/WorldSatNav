@@ -25,4 +25,30 @@
             min_long = "12",
         },
     },
+    {
+        name = "Mottled Mandragora",
+        sextant = {
+            deg_long = "13",
+            deg_lat = "18",
+            sec_long = "54",
+            min_lat = "44",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "34",
+            min_long = "10",
+        },
+    },
+    {
+        name = "Mottled Mandragora",
+        sextant = {
+            deg_long = "13",
+            deg_lat = "18",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "30",
+            min_lat = "53",
+            sec_lat = "53",
+            min_long = "13",
+        },
+    },
 }

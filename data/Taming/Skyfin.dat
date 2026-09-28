@@ -1,0 +1,15 @@
+{
+    {
+        name = "Skyfin",
+        sextant = {
+            deg_long = "12",
+            deg_lat = "19",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "26",
+            min_lat = "7",
+            sec_lat = "24",
+            min_long = "20",
+        },
+    },
+}
