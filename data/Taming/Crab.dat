@@ -116,4 +116,17 @@
             min_long = "52",
         },
     },
+    {
+        name = "Giant Crab",
+        sextant = {
+            deg_long = "6",
+            deg_lat = "14",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "32",
+            min_lat = "27",
+            sec_lat = "6",
+            min_long = "53",
+        },
+    },
 }

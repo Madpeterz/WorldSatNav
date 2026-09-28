@@ -116,6 +116,7 @@ local dawnsdropTypes = {
     },
     -- One file per monster in data/Taming (see GetDataFilePath).
     ["Taming"] = {
+        "Ant",
         "Bat",
         "Bee",
         "Boar",
@@ -131,6 +132,7 @@ local dawnsdropTypes = {
         "Scorpion",
         "Skyfin",
         "Spider",
+        "Starfish",
         "Turtle",
     },
 }

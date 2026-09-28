@@ -1,0 +1,15 @@
+{
+    {
+        name = "Tameable Ant",
+        sextant = {
+            deg_long = "6",
+            deg_lat = "14",
+            sec_long = "28",
+            min_lat = "32",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "11",
+            min_long = "22",
+        },
+    },
+}

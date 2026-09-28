@@ -90,4 +90,30 @@
             min_long = "55",
         },
     },
+    {
+        name = "Plains Spider Hatchling",
+        sextant = {
+            deg_long = "7",
+            deg_lat = "13",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "57",
+            min_lat = "38",
+            sec_lat = "13",
+            min_long = "23",
+        },
+    },
+    {
+        name = "Plains Spider Hatchling",
+        sextant = {
+            deg_long = "7",
+            deg_lat = "13",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "33",
+            min_lat = "32",
+            sec_lat = "56",
+            min_long = "32",
+        },
+    },
 }
