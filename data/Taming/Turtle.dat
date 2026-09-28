@@ -142,4 +142,43 @@
             min_long = "55",
         },
     },
+    {
+        name = "Aegis Island Turtle",
+        sextant = {
+            deg_long = "6",
+            deg_lat = "1",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "57",
+            min_lat = "41",
+            sec_lat = "7",
+            min_long = "44",
+        },
+    },
+    {
+        name = "Aegis Island Turtle",
+        sextant = {
+            deg_long = "6",
+            deg_lat = "2",
+            sec_long = "4",
+            min_lat = "17",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "51",
+            min_long = "33",
+        },
+    },
+    {
+        name = "Aegis Island Turtle",
+        sextant = {
+            deg_long = "7",
+            deg_lat = "2",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "45",
+            min_lat = "17",
+            sec_lat = "45",
+            min_long = "8",
+        },
+    },
 }

@@ -51,4 +51,43 @@
             min_long = "0",
         },
     },
+    {
+        name = "Blue Crayfish",
+        sextant = {
+            deg_long = "6",
+            deg_lat = "1",
+            sec_long = "37",
+            min_lat = "39",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "59",
+            min_long = "42",
+        },
+    },
+    {
+        name = "Blue Crayfish",
+        sextant = {
+            deg_long = "6",
+            deg_lat = "2",
+            sec_long = "42",
+            min_lat = "15",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "42",
+            min_long = "34",
+        },
+    },
+    {
+        name = "Blue Crayfish",
+        sextant = {
+            deg_long = "7",
+            deg_lat = "2",
+            sec_long = "13",
+            min_lat = "17",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "48",
+            min_long = "9",
+        },
+    },
 }
