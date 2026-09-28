@@ -122,7 +122,7 @@ local dawnsdropTypes = {
         "Boar",
         "Crab",
         "Crayfish",
-        "Earth Elemental Lord",
+        "Earth Elemental",
         "Grub",
         "Jabberwock",
         "Mandragora",

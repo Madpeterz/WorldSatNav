@@ -38,4 +38,30 @@
             min_long = "23",
         },
     },
+    {
+        name = "Bone Grub",
+        sextant = {
+            deg_long = "10",
+            deg_lat = "11",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "6",
+            min_lat = "7",
+            sec_lat = "5",
+            min_long = "5",
+        },
+    },
+    {
+        name = "Bone Grub",
+        sextant = {
+            deg_long = "10",
+            deg_lat = "11",
+            sec_long = "43",
+            min_lat = "17",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "2",
+            min_long = "2",
+        },
+    },
 }
