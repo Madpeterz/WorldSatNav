@@ -21,7 +21,7 @@ local settings = require("WorldSatNav/core/settings")
 local WorldSatNav = {
 	name = "WorldSatNav",
 	author = "Madpeter",
-	version = "1.4.3",
+	version = "1.4.4",
 	desc = "Im still not sure where to go"
 }
 
