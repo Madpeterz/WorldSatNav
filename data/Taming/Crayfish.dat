@@ -39,6 +39,19 @@
         },
     },
     {
+        name = "Lobster",
+        sextant = {
+            deg_long = "4",
+            deg_lat = "0",
+            sec_long = "18",
+            min_lat = "26",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "49",
+            min_long = "47",
+        },
+    },
+    {
         name = "Black Crayfish",
         sextant = {
             deg_long = "7",
