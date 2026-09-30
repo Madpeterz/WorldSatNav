@@ -12,4 +12,30 @@
             min_long = "39",
         },
     },
+    {
+        name = "Tameable Starfish",
+        sextant = {
+            deg_long = "8",
+            deg_lat = "14",
+            sec_long = "27",
+            min_lat = "32",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "38",
+            min_long = "43",
+        },
+    },
+    {
+        name = "Red Starfish",
+        sextant = {
+            deg_long = "4",
+            deg_lat = "0",
+            sec_long = "3",
+            min_lat = "23",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "2",
+            min_long = "51",
+        },
+    },
 }

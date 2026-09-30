@@ -116,4 +116,17 @@
             min_long = "32",
         },
     },
+    {
+        name = "Tameable Spider",
+        sextant = {
+            deg_long = "6",
+            deg_lat = "14",
+            sec_long = "26",
+            min_lat = "32",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "23",
+            min_long = "23",
+        },
+    },
 }

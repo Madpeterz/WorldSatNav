@@ -25,4 +25,17 @@
             min_long = "46",
         },
     },
+    {
+        name = "Tameable Owl",
+        sextant = {
+            deg_long = "6",
+            deg_lat = "14",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "8",
+            min_lat = "33",
+            sec_lat = "22",
+            min_long = "23",
+        },
+    },
 }
