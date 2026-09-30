@@ -141,6 +141,7 @@ local dawnsdrop = {}
 
 local dawnsdropWindow = nil
 local TYPE_LABEL = ">"
+local ALL_TYPES = "All" -- DEV_MODE-only Taming type combo entry: every monster
 
 local DawnsMapMode = "Select"
 
@@ -250,11 +251,25 @@ local function LoadLocations(task, itemType)
 	return api.File:Read(path) or {}
 end
 
+-- Type combo entries for a task. In DEV_MODE the Taming list starts with
+-- ALL_TYPES, which renders every monster at once (Taming is already read-only).
+local function GetTypeComboItems(task)
+	local items = dawnsdropTypes[task]
+	if items == nil or task ~= TAMING_TASK or constants.DEV_MODE ~= true then
+		return items
+	end
+	local withAll = { ALL_TYPES }
+	for _, itemType in ipairs(items) do
+		table.insert(withAll, itemType)
+	end
+	return withAll
+end
+
 local function PopulateTypeComboBox(task)
 	if dawnsdropWindow == nil or dawnsdropWindow.typeCombo == nil then
 		return
 	end
-	local items = dawnsdropTypes[task]
+	local items = GetTypeComboItems(task)
 	if items == nil then
 		dawnsdropWindow.typeCombo:Show(false)
 		return
@@ -409,33 +424,9 @@ local function isGuidedVisited(key)
 	return true
 end
 
-local function RenderTypeLocations(task, itemType)
+-- Appends the markers for one task/type's stored locations to iconsData.
+local function AppendTypeIcons(iconsData, task, itemType, guided, selectedKey, poiSideFilter)
 	local locations = LoadLocations(task, itemType)
-	local iconsData = {}
-
-	-- Guided types track ships-style: keep a live list of their locations, reset
-	-- the visited set when the selected type changes, and paint the active one
-	-- with the highlight texture.
-	local guided = IsGuidedType(itemType)
-	if guided then
-		local setId = tostring(task) .. "/" .. tostring(itemType)
-		if setId ~= guidedActiveType then
-			guidedActiveType = setId
-			guidedActiveItemType = itemType
-			visitedGuided = {}
-			lastGuidedSextant = nil
-			lastGuidedLabel = itemType
-		end
-		guidedLocations = {}
-	end
-	local selectedKey = lastGuidedSextant ~= nil and helpers.SextantKey(lastGuidedSextant) or nil
-
-	-- Points of Interest can be limited to the player's faction:
-	-- West = Nuia, East = Haranya, Shared = both. nil filter = show all.
-	local poiSideFilter = nil
-	if task == POI_TASK and settingsModule.Get("TeleportHintFiltered") ~= false then
-		poiSideFilter = GetPlayerSideKey()
-	end
 	if task == POI_TASK then
 		helpers.DevLog("RenderTypeLocations POI: setting="
 			.. tostring(settingsModule.Get("TeleportHintFiltered"))
@@ -496,6 +487,42 @@ local function RenderTypeLocations(task, itemType)
 				label = label,
 			})
 		end
+	end
+end
+
+local function RenderTypeLocations(task, itemType)
+	local iconsData = {}
+
+	-- Guided types track ships-style: keep a live list of their locations, reset
+	-- the visited set when the selected type changes, and paint the active one
+	-- with the highlight texture.
+	local guided = IsGuidedType(itemType)
+	if guided then
+		local setId = tostring(task) .. "/" .. tostring(itemType)
+		if setId ~= guidedActiveType then
+			guidedActiveType = setId
+			guidedActiveItemType = itemType
+			visitedGuided = {}
+			lastGuidedSextant = nil
+			lastGuidedLabel = itemType
+		end
+		guidedLocations = {}
+	end
+	local selectedKey = lastGuidedSextant ~= nil and helpers.SextantKey(lastGuidedSextant) or nil
+
+	-- Points of Interest can be limited to the player's faction:
+	-- West = Nuia, East = Haranya, Shared = both. nil filter = show all.
+	local poiSideFilter = nil
+	if task == POI_TASK and settingsModule.Get("TeleportHintFiltered") ~= false then
+		poiSideFilter = GetPlayerSideKey()
+	end
+
+	if itemType == ALL_TYPES then
+		for _, eachType in ipairs(dawnsdropTypes[task] or {}) do
+			AppendTypeIcons(iconsData, task, eachType, false, selectedKey, poiSideFilter)
+		end
+	else
+		AppendTypeIcons(iconsData, task, itemType, guided, selectedKey, poiSideFilter)
 	end
 	eventbus.TriggerEvent(eventtopics.topics.icons.BulkDrawIconsAndRedraw, iconsData)
 end
@@ -911,6 +938,15 @@ end
 local function OnDevModeChanged(devModeEnabled)
 	if dawnsdropWindow == nil or not dawnsdropWindow:IsVisible() then
 		return
+	end
+	-- Add/remove the DEV_MODE-only Taming ALL_TYPES entry, keeping the current
+	-- type selected when it still exists.
+	if IsTamingTaskSelected() then
+		local currentType = helpers.getComboBoxValue(dawnsdropWindow.typeCombo)
+		PopulateTypeComboBox(TAMING_TASK)
+		if currentType ~= nil and currentType ~= ALL_TYPES then
+			helpers.SelectComboBoxByText(dawnsdropWindow.typeCombo, currentType)
+		end
 	end
 	ShowDevModeButtons(devModeEnabled == true)
 end
