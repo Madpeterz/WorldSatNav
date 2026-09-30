@@ -246,4 +246,17 @@
             min_long = "25",
         },
     },
+    {
+        name = "Tameable Turtle",
+        sextant = {
+            deg_long = "8",
+            deg_lat = "14",
+            sec_long = "6",
+            min_lat = "31",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "22",
+            min_long = "43",
+        },
+    },
 }

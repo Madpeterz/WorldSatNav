@@ -51,4 +51,17 @@
             min_long = "19",
         },
     },
+    {
+        name = "Tameable Skyfin",
+        sextant = {
+            deg_long = "8",
+            deg_lat = "14",
+            sec_long = "29",
+            min_lat = "31",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "43",
+            min_long = "43",
+        },
+    },
 }
