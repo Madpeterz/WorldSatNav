@@ -2,6 +2,23 @@
 
 Even now im still lost
 
+## With thanks to
+
+### Players
+Zelight - Known good locations for sea boxs
+Kargor - Known good locations for sea boxs
+TheOnlyKoko — Taming locations
+Alicechan - Taming locations
+Wasbeerotb - Taming locations
+Arch - Taming locations
+
+### Repos
+FungusMungus/Treasure Track - for the example of drawing on the bag
+michaelqtz/aac-addon-dawnsdrop_map - Dawns locations not set by players
+michaelqtz/aac-addon-tier_2_sextant - World events examples
+IvanLeviathan/Navigate - example of the tracking arrow for guide mode
+Madpeterz/mapocr_aa - Sextent to drawable location
+
 ## Using the map / addon
 
 ### Zoom
@@ -30,8 +47,6 @@ you can then click on the X marker to be guided to its location.
 Time to get recover what has been lost, selecting "Ships" from the UI right side menu will give you
 a map of ship locations and you can normally find 1 to 3 lost treasure boxs, float them back up
 to recover them with recovery pouches
-
-- Shows a list of known good locations for sea boxes provided by Zelight and Kargor
 
 ### Events
 
@@ -136,32 +151,6 @@ defaults are:
 
 180 - General
 531 - Abyssal Archaeologist
-
-## Credits
-
-Based on code / assets / ideas from:
-
-**Madpeterz/mapocr_aa**
-- A C# app used in retail that read map text via OCR, allowing multiple tracked maps to be added
-  to a display
-
-**AA-Clissic/Map**
-- World map for the game version this addon targets
-
-**IvanLeviathan/Navigate**
-- First version of the tracking code
-
-**michaelqtz/aac-addon-dawnsdrop_map**
-- Used to get up to speed with the addon library for rendering windows
-- PNG location maps for items under Dawnsdrop that have been converted into locations
-
-**michaelqtz/aac-addon-tier_2_sextant**
-- Showed how to hook up world events so they could be included in this addon
-
-**FungusMungus/Treasure Track**
-- Didn't do what I had hoped, which led to a new version of my old OCR app — liked the map
-  labeling but not having to type it all in yourself
-
 
 ## AI usage
 
