@@ -90,4 +90,30 @@
             min_long = "11",
         },
     },
+    {
+        name = "Tameable Boar",
+        sextant = {
+            deg_long = "15",
+            deg_lat = "19",
+            sec_long = "10",
+            min_lat = "33",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "0",
+            min_long = "7",
+        },
+    },
+    {
+        name = "Tameable Boar",
+        sextant = {
+            deg_long = "15",
+            deg_lat = "19",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "37",
+            min_lat = "37",
+            sec_lat = "15",
+            min_long = "30",
+        },
+    },
 }

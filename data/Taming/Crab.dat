@@ -181,4 +181,43 @@
             min_long = "46",
         },
     },
+    {
+        name = "Giant Crab",
+        sextant = {
+            deg_long = "4",
+            deg_lat = "0",
+            sec_long = "40",
+            min_lat = "40",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "21",
+            min_long = "41",
+        },
+    },
+    {
+        name = "Giant Crab",
+        sextant = {
+            deg_long = "4",
+            deg_lat = "0",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "47",
+            min_lat = "24",
+            sec_lat = "5",
+            min_long = "57",
+        },
+    },
+    {
+        name = "Tameable Crab",
+        sextant = {
+            deg_long = "13",
+            deg_lat = "15",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "0",
+            min_lat = "48",
+            sec_lat = "11",
+            min_long = "51",
+        },
+    },
 }

@@ -38,4 +38,30 @@
             min_long = "23",
         },
     },
+    {
+        name = "Cypress Owl",
+        sextant = {
+            deg_long = "14",
+            deg_lat = "14",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "2",
+            min_lat = "56",
+            sec_lat = "45",
+            min_long = "12",
+        },
+    },
+    {
+        name = "Heedmar Owl",
+        sextant = {
+            deg_long = "1",
+            deg_lat = "4",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "5",
+            min_lat = "2",
+            sec_lat = "0",
+            min_long = "32",
+        },
+    },
 }
