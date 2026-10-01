@@ -181,4 +181,30 @@
             min_long = "28",
         },
     },
+    {
+        name = "Golden Star",
+        sextant = {
+            deg_long = "3",
+            deg_lat = "1",
+            sec_long = "10",
+            min_lat = "15",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "33",
+            min_long = "50",
+        },
+    },
+    {
+        name = "Golden Star",
+        sextant = {
+            deg_long = "3",
+            deg_lat = "1",
+            sec_long = "34",
+            min_lat = "6",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "43",
+            min_long = "46",
+        },
+    },
 }

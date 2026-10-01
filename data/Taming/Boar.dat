@@ -116,4 +116,30 @@
             min_long = "30",
         },
     },
+    {
+        name = "Calmlands Boar",
+        sextant = {
+            deg_long = "0",
+            deg_lat = "3",
+            sec_long = "39",
+            min_lat = "25",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "47",
+            min_long = "23",
+        },
+    },
+    {
+        name = "Calmlands Boar",
+        sextant = {
+            deg_long = "0",
+            deg_lat = "3",
+            sec_long = "47",
+            min_lat = "28",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "21",
+            min_long = "13",
+        },
+    },
 }

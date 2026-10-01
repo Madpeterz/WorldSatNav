@@ -194,4 +194,17 @@
             min_long = "49",
         },
     },
+    {
+        name = "Blue Crayfish",
+        sextant = {
+            deg_long = "7",
+            deg_lat = "1",
+            sec_long = "18",
+            min_lat = "49",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "9",
+            min_long = "13",
+        },
+    },
 }
