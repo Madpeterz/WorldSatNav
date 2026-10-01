@@ -6,7 +6,7 @@ Even now im still lost
 
 ### Players
 Zelight - Known good locations for sea boxs
-Calexandra - Known good locations for sea boxs
+Calexandra - Known good locations for sea boxs / Taming locations
 TheOnlyKoko — Taming locations
 Alicechan - Taming locations
 Wasbeerotb - Taming locations
