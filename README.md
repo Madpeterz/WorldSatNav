@@ -6,11 +6,12 @@ Even now im still lost
 
 ### Players
 Zelight - Known good locations for sea boxs
-Kargor - Known good locations for sea boxs
+Calexandra - Known good locations for sea boxs
 TheOnlyKoko — Taming locations
 Alicechan - Taming locations
 Wasbeerotb - Taming locations
 Arch - Taming locations
+
 
 ### Repos
 FungusMungus/Treasure Track - for the example of drawing on the bag
