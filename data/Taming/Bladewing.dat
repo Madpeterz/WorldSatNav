@@ -1,0 +1,15 @@
+{
+    {
+        name = "Defective Bladewing",
+        sextant = {
+            deg_long = "0",
+            deg_lat = "19",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "45",
+            min_lat = "50",
+            sec_lat = "31",
+            min_long = "17",
+        },
+    },
+}

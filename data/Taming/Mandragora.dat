@@ -77,4 +77,17 @@
             min_long = "8",
         },
     },
+    {
+        name = "Tameable Mandragora",
+        sextant = {
+            deg_long = "15",
+            deg_lat = "19",
+            sec_long = "3",
+            min_lat = "31",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "40",
+            min_long = "6",
+        },
+    },
 }

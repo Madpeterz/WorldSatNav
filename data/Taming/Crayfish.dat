@@ -207,4 +207,17 @@
             min_long = "13",
         },
     },
+    {
+        name = "Lobster",
+        sextant = {
+            deg_long = "4",
+            deg_lat = "0",
+            sec_long = "45",
+            min_lat = "35",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "22",
+            min_long = "40",
+        },
+    },
 }
