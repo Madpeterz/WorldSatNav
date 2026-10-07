@@ -675,7 +675,8 @@ function widgets.CreateListTable(parent, offsetX, offsetY, Headers)
             listTable._ButtonCounter = listTable._ButtonCounter + 1
             button = widgets.createButton("listTableButton"..tostring(listTable._ButtonCounter), listTable.parent, "", 0, 0)
         end
-
+        -- Pooled buttons may have been disabled as page nav buttons; reset before reuse.
+        button:Enable(true)
         return button
     end
     listTable.Show = function(status)
@@ -716,7 +717,7 @@ function widgets.CreateListTable(parent, offsetX, offsetY, Headers)
         end
 
         for rowindex, entry in pairs(data) do
-            if rowindex >= skipToIndex then
+            if rowindex > skipToIndex then
                 currentX = listTable._OffsetX
                 for columnIndex, cell in pairs(entry) do
                     local localcolConfig = listTable.colConfigs[columnIndex]

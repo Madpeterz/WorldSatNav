@@ -290,7 +290,8 @@ local FACTION_SIDE = {
 	["queen's crown"]      = "west", -- Nuians
 	["andelph"]            = "west", -- Dwarves
 	-- Haranya (East)
-	["west ishvaran"]      = "east", -- Harani
+	["west ishvara"]       = "east", -- Harani (in-game spelling)
+	["west ishvaran"]      = "east", -- Harani (alt spelling)
 	["wandering winds"]    = "east", -- Firran
 	["repentant shadows"]  = "east", -- Warborn
 }
@@ -298,7 +299,7 @@ local FACTION_SIDE = {
 -- Substring fallbacks, in case GetFactionName returns a variant spelling.
 local FACTION_SIDE_HINTS = {
 	{ "exile", "west" }, { "queen", "west" }, { "andelph", "west" }, { "nuia", "west" },
-	{ "ishvaran", "east" }, { "wandering wind", "east" }, { "repentant", "east" }, { "haranya", "east" },
+	{ "ishvara", "east" }, { "wandering wind", "east" }, { "repentant", "east" }, { "haranya", "east" },
 }
 
 -- Maps the player's faction to a POI side key: "west" (Nuia) or "east" (Haranya).
