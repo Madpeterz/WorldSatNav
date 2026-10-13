@@ -33,7 +33,7 @@ buildings.BuildingNames = {
     "Miner's Farmhouse",
     "Recovering Cherry Treehouse",
     "Desserted House",
-    "Beanstalk House",
+    "Beanstalk House", -- 48x48
     "Rose Quartz Solarium",
     "Rancher's Farmhouse",
     "Harvester's Farmhouse",
@@ -46,6 +46,7 @@ buildings.BuildingNames = {
     "Gazebo Farm",
     -- Append-only below: new entries MUST go at the end to keep sharecode ids stable.
     "Tudor Slate Cottage", -- 16x16
+    "Freezing Cold Icehouse", -- 24x24
 }
 
 -- name -> numeric id, derived from BuildingNames order (id 0 = "Unknown")
