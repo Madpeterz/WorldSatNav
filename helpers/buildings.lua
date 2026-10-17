@@ -2,49 +2,45 @@ local buildings = {}
 
 buildings.BuildingNames = {
     "Unknown",
-    -- 8x8
-    "Solar Scarecrow Garden",
-    "Lunar Scarecrow Garden",
-    "Stellar Scarecrow Garden",
-    "Scarecrow Garden",
-    "Haranyan Private Smelter",
-    "Haranyan Private Sawmill",
-    "Haranyan Private Masonry Table",
-    "Private Smelter",
-    "Private Sawmill",
-    "Private Masonry Table",
-    "Private Leatherwork Table",
-    -- 16x16
-    "Gazebo Farm",
-    "Solar Scarecrow Farm",
-    "Lunar Scarecrow Farm",
-    "Stellar Scarecrow Farm",
-    "Scarecrow Farm",
-    "Rustic Slate Cottage",
-    "Raised Swept-Roof Cottage",
-    "Improved Scarecrow Farm",
-    -- 24x24 and larger
-    "Improved Stellar Pavilion Farm",
-    "Improved Solar Pavilion Farm",
-    "Improved Lunar Pavilion Farm",
-    "Improved Solar Pavilion Farm Kit",
-    "Improved Lunar Pavilion Farm Kit",
-    "Improved Stellar Pavilion Farm Kit",
-    "Miner's Farmhouse",
-    "Recovering Cherry Treehouse",
-    "Desserted House",
+    "Solar Scarecrow Garden", -- 8x8
+    "Lunar Scarecrow Garden", -- 8x8
+    "Stellar Scarecrow Garden", -- 8x8
+    "Scarecrow Garden", -- 8x8
+    "Haranyan Private Smelter", -- 8x8
+    "Haranyan Private Sawmill", -- 8x8
+    "Haranyan Private Masonry Table", -- 8x8
+    "Private Smelter", -- 8x8
+    "Private Sawmill", -- 8x8
+    "Private Masonry Table", -- 8x8
+    "Private Leatherwork Table", -- 8x8
+    "Gazebo Farm", -- 16x16
+    "Solar Scarecrow Farm", -- 16x16
+    "Lunar Scarecrow Farm", -- 16x16
+    "Stellar Scarecrow Farm", -- 16x16
+    "Scarecrow Farm", -- 16x16
+    "Rustic Slate Cottage", -- 16x16
+    "Raised Swept-Roof Cottage", -- 16x16
+    "Improved Scarecrow Farm", -- 16x16
+    "Improved Stellar Pavilion Farm", -- 24x24
+    "Improved Solar Pavilion Farm", -- 24x24
+    "Improved Lunar Pavilion Farm", -- 24x24
+    "Improved Solar Pavilion Farm Kit", -- 24x24
+    "Improved Lunar Pavilion Farm Kit", -- 24x24
+    "Improved Stellar Pavilion Farm Kit", -- 24x24
+    "Miner's Farmhouse", -- 24x24
+    "Recovering Cherry Treehouse", -- 28x28
+    "Desserted House", -- 24x24
     "Beanstalk House", -- 48x48
-    "Rose Quartz Solarium",
-    "Rancher's Farmhouse",
-    "Harvester's Farmhouse",
-    "Advanced Fellowship Plaza",
-    "Spired Chateau",
-    "Apothecary's Chalet (Terrace)",
-    "Tradesman's Manor",
-    "Armorer's Townhouse",
-    "Thatched Farmhouse",
-    "Gazebo Farm",
-    -- Append-only below: new entries MUST go at the end to keep sharecode ids stable.
+    "Rose Quartz Solarium", -- 24x24
+    "Rancher's Farmhouse", -- 24x24
+    "Harvester's Farmhouse", -- 24x24
+    "Advanced Fellowship Plaza", -- 24x24
+    "Spired Chateau", -- 24x24
+    "Apothecary's Chalet (Terrace)", -- 24x24
+    "Tradesman's Manor", -- 24x24
+    "Armorer's Townhouse", -- 24x24
+    "Thatched Farmhouse", -- 24x24
+    "Gazebo Farm", -- 16x16
     "Tudor Slate Cottage", -- 16x16
     "Freezing Cold Icehouse", -- 24x24
     "Storage Silo", -- 8x8
@@ -57,7 +53,6 @@ buildings.BuildingNames = {
     "Little Witch Pinnacled House", -- 24x24
     "Raised Mushroom House", -- 24x24
     "Tradesman's Townhouse", -- 24x24
-    -- from the ArcheAge wiki's Houses page
     "Swept-Roof Villa", -- 16x16
     "Swept-Roof Chalet", -- 24x24
     "Swept-Roof Manor", -- 28x28
@@ -105,6 +100,8 @@ buildings.BuildingNames = {
     "Raised Spring Cottage", -- 16x16
     "Armorer's Manor", -- 24x24
     "Swept-Roof Cottage", -- 16x16
+    "Armorer's Chalet (Terrace)", -- 24x24
+    "Apothecary's Townhouse", -- 24x24
 }
 
 -- name -> numeric id, derived from BuildingNames order (id 0 = "Unknown")
