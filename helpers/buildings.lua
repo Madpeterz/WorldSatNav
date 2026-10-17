@@ -104,6 +104,7 @@ buildings.BuildingNames = {
     "Mansion", -- 44x44
     "Raised Spring Cottage", -- 16x16
     "Armorer's Manor", -- 24x24
+    "Swept-Roof Cottage", -- 16x16
 }
 
 -- name -> numeric id, derived from BuildingNames order (id 0 = "Unknown")
