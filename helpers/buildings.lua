@@ -48,8 +48,8 @@ buildings.BuildingNames = {
     "Tudor Slate Cottage", -- 16x16
     "Freezing Cold Icehouse", -- 24x24
     "Storage Silo", -- 8x8
-    "Recovering Aspen Treehouse", -- 24x24
-    "Recovering Oak Treehouse", -- 24x24
+    "Recovering Aspen Treehouse", -- 28x28
+    "Recovering Oak Treehouse", -- 28x28
     "Private Loom", -- 8x8
     "Haranyan Private Leatherwork Table", -- 8x8
     "Raised Rose Cottage", -- 16x16
@@ -103,6 +103,7 @@ buildings.BuildingNames = {
     "Fellowship Plaza", -- 28x28
     "Mansion", -- 44x44
     "Raised Spring Cottage", -- 16x16
+    "Armorer's Manor", -- 24x24
 }
 
 -- name -> numeric id, derived from BuildingNames order (id 0 = "Unknown")
