@@ -55,6 +55,53 @@ buildings.BuildingNames = {
     "Raised Rose Cottage", -- 16x16
     "Raised Slate Cottage", -- 16x16
     "Little Witch Pinnacled House", -- 24x24
+    "Raised Mushroom House", -- 24x24
+    "Tradesman's Townhouse", -- 24x24
+    -- from the ArcheAge wiki's Houses page
+    "Swept-Roof Villa", -- 16x16
+    "Swept-Roof Chalet", -- 24x24
+    "Swept-Roof Manor", -- 28x28
+    "Rustic Spring Cottage", -- 16x16
+    "Stone Spring Cottage", -- 16x16
+    "Tudor Spring Cottage", -- 16x16
+    "Stone Slate Cottage", -- 16x16
+    "Rustic Rose Cottage", -- 16x16
+    "Stone Rose Cottage", -- 16x16
+    "Tudor Rose Cottage", -- 16x16
+    "Rustic Spring Manor", -- 24x24
+    "Stone Spring Manor", -- 24x24
+    "Tudor Spring Manor", -- 24x24
+    "Rustic Slate Manor", -- 24x24
+    "Stone Slate Manor", -- 24x24
+    "Tudor Slate Manor", -- 24x24
+    "Rustic Rose Manor", -- 24x24
+    "Stone Rose Manor", -- 24x24
+    "Tudor Rose Manor", -- 24x24
+    "Rustic Spring Townhouse", -- 24x24
+    "Stone Spring Townhouse", -- 24x24
+    "Tudor Spring Townhouse", -- 24x24
+    "Rustic Slate Townhouse", -- 24x24
+    "Stone Slate Townhouse", -- 24x24
+    "Tudor Slate Townhouse", -- 24x24
+    "Rustic Rose Townhouse", -- 24x24
+    "Stone Rose Townhouse", -- 24x24
+    "Tudor Rose Townhouse", -- 24x24
+    "Rustic Spring Chalet", -- 24x24
+    "Stone Spring Chalet", -- 24x24
+    "Tudor Spring Chalet", -- 24x24
+    "Rustic Slate Chalet", -- 24x24
+    "Stone Slate Chalet", -- 24x24
+    "Tudor Slate Chalet", -- 24x24
+    "Rustic Rose Chalet", -- 24x24
+    "Stone Rose Chalet", -- 24x24
+    "Tudor Rose Chalet", -- 24x24
+    "Breezy Bungalow", -- 24x24
+    "Tidal Bungalow", -- 28x28
+    "Oak Treehouse", -- 28x28
+    "Cherry Treehouse", -- 28x28
+    "Aspen Treehouse", -- 28x28
+    "Fellowship Plaza", -- 28x28
+    "Mansion", -- 44x44
 }
 
 -- name -> numeric id, derived from BuildingNames order (id 0 = "Unknown")
