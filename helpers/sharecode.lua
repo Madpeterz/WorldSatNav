@@ -143,7 +143,10 @@ function sharecode.Decode(code)
     local buildingId, sextant = unpackGroupA(hi, lo)
     local deltaHi = bytesToInt(string.sub(blob, 7, 8))
     local deltaLo = bytesToInt(string.sub(blob, 9, 10))
-    local unixtime = deltaHi * 65536 + deltaLo + EPOCH
+    -- EPOCH and 65536 are both multiples of 128, so EPOCH + deltaHi*65536 is exact; adding
+    -- deltaLo last means the value is rounded once. A unix time still cannot be held
+    -- finer than 128s here, so an imported time may differ from the sender's by up to 64s.
+    local unixtime = (EPOCH + deltaHi * 65536) + deltaLo
     return buildingId, sextant, owner, unixtime
 end
 

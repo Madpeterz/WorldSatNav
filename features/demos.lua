@@ -19,12 +19,9 @@ local demoImportButton = nil
 local demoListAddButton = nil -- list page only; ignores showDemoCreatePlus
 local TableListControlForDemos = nil
 
+-- Demo times are unix seconds everywhere: in memory, in demos.dat, and in share codes.
 local function normalizeTimestamp(value)
-    local numericValue = tonumber(value)
-    if numericValue == nil then
-        return nil
-    end
-    return math.floor(numericValue)
+    return helpers.NormalizeUnixTime(value)
 end
 
 local function serializeTimestamp(value)
@@ -226,16 +223,10 @@ local function CreateDemoAddUI(onClickCallback)
 end
 
 local function DEMO_EXPIRE()
-	local currentTime = tonumber(helpers.GetCurrentTimestamp())
-	if currentTime == nil then
-		helpers.DevLog("Skipping demo expiry: current time is not numeric")
-		return
-	end
-	currentTime = currentTime + (60 * 30)
 	local expiredDemos = {}
 	for sextantKey, demo in pairs(demosData) do
-		local expireTime = tonumber(demo.expiretime)
-		if expireTime ~= nil and expireTime < currentTime then
+		local untilExpire = demo.expiretime and helpers.SecondsUntil(demo.expiretime)
+		if untilExpire ~= nil and untilExpire < 0 then
 			table.insert(expiredDemos, sextantKey)
 		end
 	end
@@ -243,24 +234,24 @@ local function DEMO_EXPIRE()
 		return
 	end
 	helpers.DevLog("Expiring " .. #expiredDemos .. " demos")
+	-- Memory only: a bad clock reading must not wipe demos from demos.dat. Stale rows
+	-- are dropped from the file by the next create/remove save.
 	for _, sextantKey in pairs(expiredDemos) do
 		demosData[sextantKey] = nil
 	end
-	SaveDemosFile()
 end
 
 local function DEMO_TRIGGER_ALERT()
-	local currentTime = tonumber(helpers.GetCurrentTimestamp())
-	if currentTime == nil then
-		helpers.DevLog("Skipping demo alert trigger: current time is not numeric")
-		return
-	end
 	local selectedKey = nil
-	local fiveMinsTime = currentTime + 300
+	local selectedSecondsLeft = nil
 	for sextantKey, demo in pairs(demosData) do
-		if demo.alertTriggered == false and demo.startat ~= nil and demo.startat <= fiveMinsTime then
-			selectedKey = sextantKey
-			break
+		if demo.alertTriggered == false and demo.startat ~= nil then
+			local secondsLeft = helpers.SecondsUntil(demo.startat)
+			if secondsLeft ~= nil and secondsLeft <= 300 then
+				selectedKey = sextantKey
+				selectedSecondsLeft = secondsLeft
+				break
+			end
 		end
 	end
 	if selectedKey == nil then
@@ -277,7 +268,7 @@ local function DEMO_TRIGGER_ALERT()
 			{ label = "Building:", value = demosData[selectedKey].buildingname or "Unknown" },
 		},
 		countdownLabel = "Time to start:",
-		countdownSeconds = demosData[selectedKey].startat - currentTime,
+		countdownSeconds = selectedSecondsLeft,
 		countdownEndText = "Starting soon!",
 		trackText = "Track",
 		source = "demo",
@@ -301,7 +292,7 @@ local function loadDemosData()
 	for _, demo in pairs(demosDataFromFile) do
 		local normalizedLocation = coordinates.NormalizeSextant(demo.location)
 		local sextentKey = helpers.SextantKey(normalizedLocation)
-		local startAt = tonumber(demo.startat)
+		local startAt = normalizeTimestamp(demo.startat)
 		local isNew = demosData[sextentKey] == nil
 		demosData[sextentKey] = {
 			sextent = normalizedLocation,
@@ -327,12 +318,12 @@ function demos.RequestDemosForRender()
 	for _, entry in pairs(demosData) do
 		local skipThis = false
 		if settingsModule.Get("DrawDemosInNextHour") == true then
-			local currentTime = tonumber(helpers.GetCurrentTimestamp())
-			if type(currentTime) ~= "number" then
-				helpers.DevLog("Current time is not numeric, skipping demo alert time check for this entry and rendering it")
-			elseif entry.startat == nil then
+			local secondsLeft = entry.startat and helpers.SecondsUntil(entry.startat)
+			if entry.startat == nil then
 				helpers.DevLog("Demo entry start time is nil, skipping demo alert time check for this entry and rendering it")
-			elseif entry.startat > (currentTime + 3600) then
+			elseif secondsLeft == nil then
+				helpers.DevLog("Current time is not numeric, skipping demo alert time check for this entry and rendering it")
+			elseif secondsLeft > 3600 then
 				skipThis = true
 			end
 		end
@@ -511,16 +502,17 @@ local function ImportDemoFromShareCode(rawText)
 		return
 	end
 	local buildingId, sextant, owner, unixtime = helpers.Decode(text)
+	unixtime = normalizeTimestamp(unixtime)
 	if buildingId == nil or type(sextant) ~= "table" then
 		api.Log:Info("WorldSatNav: Import aborted - sharecode could not be decoded")
 		return
 	end
-	local currentTime = tonumber(helpers.GetCurrentTimestamp())
-	if type(currentTime) ~= "number" then
+	local secondsLeft = unixtime and helpers.SecondsUntil(unixtime)
+	if unixtime ~= nil and secondsLeft == nil then
 		api.Log:Info("WorldSatNav: Import aborted - current time unavailable")
 		return
 	end
-	if type(unixtime) ~= "number" or unixtime <= currentTime then
+	if secondsLeft == nil or secondsLeft <= 0 then
 		api.Log:Info("WorldSatNav: Import aborted - sharecode start time is not in the future")
 		return
 	end
@@ -582,7 +574,7 @@ function demos.CreateDemoClicked()
 		api.Log:Info("WorldSatNav: " .. tostring(parseError))
 		return
 	end
-	local timeleft = timestamp - helpers.GetCurrentTimestamp()
+	local timeleft = helpers.SecondsUntil(timestamp) or 0
 	local hours, mins, secs = helpers.SecondsToTime(timeleft)
 	api.Log:Info(string.format("WorldSatNav: Creating demo - Owner: %s, Building: %s, Date: %s, Time: %s, Time left: %02d:%02d:%02d", ownername, buildingname, date, time, hours, mins, secs))
 	if not demos.CreateDemo(ownername, buildingname, date, time, timestamp) then
@@ -711,11 +703,19 @@ function demos.RedrawDemosList()
 		local sextantKey = sortedDemo.key
 		local demosDataEntry = sortedDemo.entry
 		local _, rowRegionname = regionmap.GetRegionForSextant(demosDataEntry.sextent)
+		local statusText = "Unknown"
+		if demosDataEntry.startat then
+			statusText = helpers.TimeRemaining(demosDataEntry.startat)
+			local realTime = helpers.FormatUserClockShort(demosDataEntry.startat)
+			if realTime ~= nil then
+				statusText = statusText .. "\n" .. realTime
+			end
+		end
 		local thisRow = {
 			"»",
 			"|>",
 			string.format("%s\n in %s", demosDataEntry.buildingname or "Unknown", rowRegionname or "Unknown"),
-			demosDataEntry.startat and helpers.TimeRemaining(demosDataEntry.startat, true) or "Unknown",
+			statusText,
 			"×",
 		}
 		table.insert(rowData, thisRow)

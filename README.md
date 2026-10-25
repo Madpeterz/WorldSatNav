@@ -125,7 +125,8 @@ clicking the cog icon will give you the setting menu
 
 
 - Time
-  - DST +1 hour forces the clock used to add 60 mins
+  - DST +1 hour: manual fallback for when your clock is 1 hour ahead of the game clock. Leave it off if demo times already come out right; it is ignored when the DST gap can be detected automatically
+  - Saved/shared demo times are unix seconds, so changing this only affects times you type afterwards
 
 ### I want to help fix the dawnsdrop data 
 
