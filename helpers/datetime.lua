@@ -445,9 +445,15 @@ function datetime.TimeRemaining(futureTimestamp)
     end
     remainingSeconds = math.floor(remainingSeconds + 0.5)
     local hours, mins, secs = datetime.SecondsToTime(remainingSeconds)
+    local days = math.floor(hours / 24)
+    if days > 0 then
+        -- minutes are noise at this range
+        hours = hours - (days * 24)
+        return string.format("%d %s & %d %s", days, days == 1 and "day" or "days", hours, hours == 1 and "hour" or "hours")
+    end
     if hours > 0 then
         -- seconds are noise at this range
-        return string.format("%d hours & %d mins", hours, mins)
+        return string.format("%d %s & %d mins", hours, hours == 1 and "hour" or "hours", mins)
     end
     if mins > 0 then
         return string.format("%d mins & %d secs", mins, secs)
