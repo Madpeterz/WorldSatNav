@@ -128,6 +128,15 @@ clicking the cog icon will give you the setting menu
   - DST +1 hour: manual fallback for when your clock is 1 hour ahead of the game clock. Leave it off if demo times already come out right; it is ignored when the DST gap can be detected automatically
   - Saved/shared demo times are unix seconds, so changing this only affects times you type afterwards
 
+### Running the tests
+
+The tests run outside the game on plain LuaJIT/Lua 5.1 (no other dependencies) with a fake `api`:
+
+    luajit tests/run.lua            # everything
+    luajit tests/run.lua datetime   # only tests whose file/name contains "datetime"
+
+They cover the clock and DST handling, share codes, coordinates, settings, the event bus and the building catalog. UI modules are not covered. The real game's numbers behave like 32-bit floats, which the tests cannot reproduce, so a green run does not prove exact-second behaviour in game.
+
 ### I want to help fix the dawnsdrop data 
 
 please create a fork of this repo, empty the addons folder for SatNav and then 

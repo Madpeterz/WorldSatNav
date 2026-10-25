@@ -1,0 +1,76 @@
+-- core/settings.lua: defaults, persistence behaviour.
+return function(t, env)
+    local function load(stored)
+        local api = env.reset({ now = 1700000000, settings = stored })
+        return env.require("core/settings"), api
+    end
+
+    t.test("Get returns defaults when nothing is stored", function()
+        local settings = load(nil)
+        t.eq(settings.Get("uiDrawScale"), 1.25)
+        t.eq(settings.Get("SortDemosByTime"), true)
+    end)
+
+    t.test("DSToffset defaults to off", function()
+        local settings = load(nil)
+        t.eq(settings.Get("DSToffset"), false)
+    end)
+
+    t.test("stored values override defaults, missing ones fall back", function()
+        local settings = load({ uiDrawScale = 2, DSToffset = true })
+        t.eq(settings.Get("uiDrawScale"), 2)
+        t.eq(settings.Get("DSToffset"), true)
+        t.eq(settings.Get("SortDemosByTime"), true)
+    end)
+
+    t.test("a stored false is respected, not replaced by the default", function()
+        local settings = load({ SortDemosByTime = false })
+        t.eq(settings.Get("SortDemosByTime"), false)
+    end)
+
+    t.test("unknown keys read as nil and cannot be updated", function()
+        local settings, api = load(nil)
+        t.isnil(settings.Get("NoSuchSetting"))
+        t.isnil(settings.Get(nil))
+        t.falsy(settings.KeyExists("NoSuchSetting"))
+        t.falsy(settings.KeyExists(nil))
+        t.truthy(settings.KeyExists("DSToffset"))
+        t.falsy(settings.Update("NoSuchSetting", 1))
+        t.eq(#api._saved, 0)
+    end)
+
+    t.test("Update changes the value and saves under the addon name", function()
+        local settings, api = load(nil)
+        t.truthy(settings.Update("DSToffset", true))
+        t.eq(settings.Get("DSToffset"), true)
+        t.eq(#api._saved, 1)
+        t.eq(api._saved[1].name, "WorldSatNav")
+        t.eq(api._saved[1].settings.DSToffset, true)
+    end)
+
+    t.test("Update with an unchanged value does not save", function()
+        local settings, api = load({ DSToffset = true })
+        settings.Update("DSToffset", true)
+        t.eq(#api._saved, 0)
+    end)
+
+    t.test("Is compares the current value", function()
+        local settings = load({ DSToffset = true })
+        t.truthy(settings.Is("DSToffset", true))
+        t.falsy(settings.Is("DSToffset", false))
+    end)
+
+    t.test("loading never writes defaults back to disk", function()
+        local settings, api = load(nil)
+        settings.Get("uiDrawScale")
+        settings.LoadSettings()
+        t.eq(#api._saved, 0)
+    end)
+
+    t.test("LoadSettings fills in missing keys without touching stored ones", function()
+        local settings = load({ MainWindowX = 5 })
+        local loaded = settings.LoadSettings()
+        t.eq(loaded.MainWindowX, 5)
+        t.eq(loaded.MainWindowY, 11)
+    end)
+end
