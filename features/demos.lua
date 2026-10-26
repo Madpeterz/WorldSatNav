@@ -25,11 +25,7 @@ local function normalizeTimestamp(value)
 end
 
 local function serializeTimestamp(value)
-    local normalizedValue = normalizeTimestamp(value)
-    if normalizedValue == nil then
-        return nil
-    end
-    return string.format("%.0f", normalizedValue)
+    return helpers.SerializeUnixTime(value)
 end
 
 function demos.ShowDemoWindow()

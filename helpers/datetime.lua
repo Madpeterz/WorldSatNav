@@ -76,6 +76,34 @@ function datetime.NormalizeUnixTime(value)
     return math.floor(seconds)
 end
 
+-- Whole unix seconds as a digit string, or nil. api.File:Write formats numbers with
+-- %g (e.g. 1.79299e+009), which drops digits, so timestamps are written as strings.
+function datetime.SerializeUnixTime(value)
+    local seconds = datetime.NormalizeUnixTime(value)
+    if seconds == nil then
+        return nil
+    end
+    return string.format("%.0f", seconds)
+end
+
+-- GetLocalTime as exact unix-seconds text, or nil. The engine hands GetLocalTime over
+-- with every digit intact, but turning it into a number rounds it to 128s steps, so the
+-- digits are passed through as-is when they can be. Falls back to the clock otherwise.
+function datetime.GetCurrentTimestampText()
+    local rawLocalTime = api.Time:GetLocalTime()
+    if rawLocalTime ~= nil and type(rawLocalTime) ~= "number" then
+        local digits = tostring(rawLocalTime):match("^%s*(%d+)%.?0*%s*$")
+        if digits ~= nil then
+            -- Same cut-off as MILLISECOND_THRESHOLD (1e11 has 12 digits).
+            if #digits >= 12 then
+                digits = digits:sub(1, -4)
+            end
+            return digits
+        end
+    end
+    return datetime.SerializeUnixTime(datetime.GetCurrentTimestamp())
+end
+
 -- Clock = last GetLocalTime poll (base) + time elapsed since, accumulated from frame
 -- deltas. Keeping the two apart lets SecondsUntil stay exact even though base itself
 -- is too large to add a fraction of a second to.

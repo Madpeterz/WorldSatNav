@@ -10,6 +10,14 @@ function env.setRoot(path)
     root = path
 end
 
+-- Source text of a repo file, for checks on modules too UI-bound to load here.
+function env.readSource(relative)
+    local file = assert(io.open(root .. "/" .. relative, "r"))
+    local text = file:read("*a")
+    file:close()
+    return text
+end
+
 function env.install()
     local loaders = package.loaders or package.searchers
     table.insert(loaders, 2, function(name)
@@ -140,6 +148,25 @@ function env.newApi(opts)
         end,
     }
     return api
+end
+
+-- Runs fn with tonumber rounding like the engine's 32-bit float numbers (24-bit
+-- mantissa), so a unix time only survives conversion in 128s steps.
+function env.withEngineNumbers(fn)
+    local realTonumber = tonumber
+    tonumber = function(...)
+        local n = realTonumber(...)
+        if n == nil or n == 0 or n ~= n or n == math.huge or n == -math.huge then
+            return n
+        end
+        local mantissa, exponent = math.frexp(n)
+        return math.ldexp(math.floor(mantissa * 2 ^ 24 + 0.5) / 2 ^ 24, exponent)
+    end
+    local ok, err = pcall(fn)
+    tonumber = realTonumber
+    if not ok then
+        error(err, 0)
+    end
 end
 
 -- Make os.date("*t", t) answer for a simulated user zone (nil = remove os.date entirely).

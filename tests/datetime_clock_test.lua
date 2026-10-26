@@ -29,12 +29,59 @@ return function(t, env)
         t.isnil(datetime.NormalizeUnixTime(-math.huge))
     end)
 
+    t.test("SerializeUnixTime writes whole seconds as a digit string", function()
+        local datetime = load()
+        t.eq(datetime.SerializeUnixTime(1792990000.75), "1792990000")
+        t.eq(datetime.SerializeUnixTime("1792990000"), "1792990000")
+        t.isnil(datetime.SerializeUnixTime(nil))
+        t.isnil(datetime.SerializeUnixTime("abc"))
+    end)
+
     t.test("SecondsToTime splits hours, minutes, seconds", function()
         local datetime = load()
         local h, m, s = datetime.SecondsToTime(3661)
         t.eq(h, 1)
         t.eq(m, 1)
         t.eq(s, 1)
+    end)
+
+    t.test("GetCurrentTimestampText passes engine digits through untouched", function()
+        env.withEngineNumbers(function()
+            local datetime = load({ now = "1792990123" })
+            t.eq(datetime.GetCurrentTimestampText(), "1792990123")
+        end)
+    end)
+
+    t.test("GetCurrentTimestampText trims whitespace and a zero fraction", function()
+        for _, raw in ipairs({ " 1792990123 ", "1792990123.0", "1792990123." }) do
+            local datetime = load({ now = raw })
+            t.eq(datetime.GetCurrentTimestampText(), "1792990123", "clock " .. raw)
+        end
+    end)
+
+    t.test("GetCurrentTimestampText scales millisecond text to seconds", function()
+        local datetime = load({ now = "1792990123456" })
+        t.eq(datetime.GetCurrentTimestampText(), "1792990123")
+    end)
+
+    t.test("GetCurrentTimestampText reads a non-string value by its tostring", function()
+        local raw = setmetatable({}, { __tostring = function() return "1792990123" end })
+        local datetime = load({ now = raw })
+        t.eq(datetime.GetCurrentTimestampText(), "1792990123")
+    end)
+
+    t.test("GetCurrentTimestampText falls back to the clock for a plain number", function()
+        local datetime = load({ now = NOW })
+        datetime.GetCurrentTimestamp()
+        datetime.AdvanceCurrentTimestamp(750)
+        t.eq(datetime.GetCurrentTimestampText(), "1700000000")
+    end)
+
+    t.test("GetCurrentTimestampText is nil when the clock is unusable", function()
+        for _, bad in ipairs({ "abc", {}, false }) do
+            local datetime = load({ now = bad })
+            t.isnil(datetime.GetCurrentTimestampText(), "clock " .. tostring(bad))
+        end
     end)
 
     t.test("GetCurrentTimestamp returns GetLocalTime", function()

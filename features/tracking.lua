@@ -8,6 +8,7 @@ local regionmap = require("WorldSatNav/ui/regionmap")
 local dawnsdrop = require("WorldSatNav/features/dawnsdrop")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
+local locationoutput = require("WorldSatNav/features/locationoutput")
 
 local tracking = {}
 
@@ -323,30 +324,6 @@ local function updateNavArrow(direction)
 	lastArrowDir = direction
 	local arrowPath = constants.folderPath.."images/arrows/" .. direction .. ".png"
 	TRACK_WINDOW.arrow:SetTexture(arrowPath)
-end
-
-local sharedDataLastUpdate = 0
-local updateTicker = 0
-local function UpdateSharedData(dt)
-	if settings.Get("EnableLocationOutput") ~= true then
-		return
-	end
-	-- Throttled updates (run every 750ms)
-	sharedDataLastUpdate = sharedDataLastUpdate + dt
-	if sharedDataLastUpdate < settings.Get("LocationOutputRateLimit") then
-		return
-	end
-	updateTicker = updateTicker + dt
-	local writeFile = {
-		time = helpers.NormalizeUnixTime(helpers.GetCurrentTimestamp()), -- unix seconds
-		location = api.Map:GetPlayerSextants(),
-		updateTicker = updateTicker
-	}
-	api.File:Write("WorldSatNav/data/"..settings.Get("LocationOutputFile"), writeFile)
-	if updateTicker > 10000 then
-		updateTicker = 0 -- reset ticker every 10 seconds to prevent overflow, just a helper so you can see file updates even if time has not changed
-	end
-	sharedDataLastUpdate = 0
 end
 
 -- Longer than this many chars, a "teleport: Region / Place" hint is split onto a
@@ -791,7 +768,7 @@ end
 local throttledTrackingData = helpers.throttle(constants.timing.trackingPoll, updateTrackingData)
 function tracking.onUpdate(dt)
 	trendSinceStepS = trendSinceStepS + (tonumber(dt) or 0) / 1000
-	UpdateSharedData(dt)
+	locationoutput.Update(dt)
 	throttledTrackingData(dt)
 	UpdateInventoryRecount(dt)
 end
