@@ -54,6 +54,59 @@ return function(t, env)
         t.isnil(datetime.FormatUserClockShort("x"))
     end)
 
+    t.test("FormatUtcClock ignores the game and user zones", function()
+        local datetime = load(utc(2026, 7, 1, 10, 0, 0), {
+            gameZone = GAME_CET, userZone = USER_CET, settings = { TimeZone = "Japan" },
+        })
+        t.eq(datetime.FormatUtcClock(utc(2026, 7, 1, 22, 30, 0)), "22:30 01-07-2026")
+    end)
+
+    t.test("FormatUtcClock reads a timestamp digit string exactly", function()
+        local datetime = load(utc(2026, 1, 1, 0, 0, 0))
+        local text = string.format("%.0f", utc(2026, 10, 27, 23, 59, 59))
+        t.eq(datetime.FormatUtcClock(text), "23:59 27-10-2026")
+        t.isnil(datetime.FormatUtcClock("12ab"))
+        t.isnil(datetime.FormatUtcClock(nil))
+    end)
+
+    t.test("FormatUserClock uses the picked time zone", function()
+        local datetime = load(utc(2026, 7, 1, 10, 0, 0), { gameZone = GAME_CET, settings = { TimeZone = "US_Eastern" } })
+        t.eq(datetime.FormatUserClock(utc(2026, 7, 1, 2, 30, 0)), "22:30 30-06-2026")
+        t.eq(datetime.FormatUserClock(string.format("%.0f", utc(2026, 12, 1, 2, 30, 0))), "21:30 30-11-2026")
+    end)
+
+    t.test("FormatUserClock on auto matches the user clock", function()
+        local datetime = load(utc(2026, 7, 1, 10, 0, 0), { gameZone = GAME_CET, userZone = USER_CET })
+        t.eq(datetime.FormatUserClock(utc(2026, 7, 1, 18, 0, 0)), "20:00 01-07-2026")
+    end)
+
+    t.test("FormatUserDateAt gives DD-MM-YYYY at HH:MM ahead of now", function()
+        local datetime = load(utc(2026, 1, 1, 0, 0, 0), { settings = { TimeZone = "UTC" } })
+        local now = string.format("%.0f", utc(2026, 10, 27, 18, 0, 0))
+        t.eq(datetime.FormatUserDateAt(now, 2 * 3600), "27-10-2026 at 20:00")
+        t.isnil(datetime.FormatUserDateAt(nil, 2 * 3600))
+    end)
+
+    t.test("FormatUserDateAt uses the picked zone and rolls past midnight", function()
+        local datetime, api = load(utc(2026, 1, 1, 0, 0, 0), { settings = { TimeZone = "EU_Central" } })
+        -- 22:30 UTC is 23:30 CET; two hours on is 01:30 the next day
+        local now = utc(2026, 11, 3, 22, 30, 0)
+        t.eq(datetime.FormatUserDateAt(now, 2 * 3600), "04-11-2026 at 01:30")
+        api._settings.TimeZone = "US_Pacific"
+        t.eq(datetime.FormatUserDateAt(now, 2 * 3600), "03-11-2026 at 16:30")
+    end)
+
+    t.test("time zone labels round-trip to ids, unknown ids read as auto", function()
+        local datetime = load(utc(2026, 1, 1, 0, 0, 0))
+        local labels = datetime.GetTimeZoneLabels()
+        t.eq(labels[1], datetime.GetTimeZoneLabel("auto"))
+        for _, label in ipairs(labels) do
+            t.eq(datetime.GetTimeZoneLabel(datetime.GetTimeZoneId(label)), label)
+        end
+        t.eq(datetime.GetTimeZoneLabel("Mars"), labels[1])
+        t.isnil(datetime.GetTimeZoneId("Mars"))
+    end)
+
     t.test("getTodayDateText gives DD-MM-YYYY", function()
         local datetime = load(utc(2026, 10, 5, 12, 0, 0))
         t.eq(datetime.getTodayDateText(), "05-10-2026")

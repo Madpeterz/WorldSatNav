@@ -24,12 +24,14 @@ local Constants = {
 	timing = {
 		updateRate = updateRate, -- Update timing (in milliseconds)
 		demoExpireTime = 1800, -- Time after which demo events expire (in seconds) (currently set to 30 minutes)
+		zoneCheckAhead = 2 * 3600, -- "In two hours it will be" sample under the Config tab time zone (in seconds)
 
 		-- Per-feature onUpdate cadences, in milliseconds. Consumed via helpers.throttle.
 		fastPoll = updateRate / 4,        -- ~81ms: GPS movement tracking, map render tick
 		trackingPoll = updateRate / 1.25, -- 260ms: tracking window data refresh
 		demoAutohidePoll = updateRate * 2, -- 650ms: demo "+" button auto-hide check
 		demoExpirePoll = updateRate * 30,  -- 9750ms: demo expiry + alert sweep
+		demoClockPoll = updateRate * 3,    -- 975ms: UTC / your time labels on the demo add window
 		dawnsGuidedRefresh = 45000,        -- 45s: sweep expired timed guided visits, re-render if any lapsed
 		eventExpirePoll = 30000,           -- world-event expiry sweep
 	},

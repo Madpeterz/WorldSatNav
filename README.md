@@ -125,7 +125,9 @@ clicking the cog icon will give you the setting menu
 
 
 - Time
-  - DST +1 hour: manual fallback for when your clock is 1 hour ahead of the game clock. Leave it off if demo times already come out right; it is ignored when the DST gap can be detected automatically
+  - Time zone (demo times): the zone demo times are typed and shown in. Pick yours from the list (US, Europe, Asia, Sydney and more; daylight saving is applied automatically), or leave it on Auto to use the game clock as before
+  - Under the time zone, "In two hours it will be DD-MM-YYYY at HH:MM" shows the time two hours from now on the picked zone, so you can check it against your own clock
+  - The demo add window shows the current time as "UTC:" and "Your time:" so you can check the zone is right before typing a time
   - Saved/shared demo times are unix seconds, so changing this only affects times you type afterwards
 
 ### Running the tests

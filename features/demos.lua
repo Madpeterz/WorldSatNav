@@ -59,6 +59,8 @@ local function setDemoWindowUIStatue(status)
 	addElement(demoWindow.demo.dateinput and demoWindow.demo.dateinput.label)
 	addElement(demoWindow.demo.timeinput)
 	addElement(demoWindow.demo.timeinput and demoWindow.demo.timeinput.label)
+	addElement(demoWindow.demo.utcClockLabel)
+	addElement(demoWindow.demo.userClockLabel)
 	addElement(demoWindow.demo.CreateButton)
 	addElement(demoWindow.demo.AutoButton)
 
@@ -67,6 +69,17 @@ local function setDemoWindowUIStatue(status)
 			element:Show(status)
 		end
 	end
+end
+
+-- Current time in UTC and on the user's clock (their picked time zone), so they can
+-- check the zone before typing a demo time.
+local function updateDemoClockLabels()
+	if demoWindow == nil or demoWindow.demo == nil or demoWindow.demo.utcClockLabel == nil then
+		return
+	end
+	local nowText = helpers.GetCurrentTimestampText()
+	demoWindow.demo.utcClockLabel:SetText("UTC: " .. (helpers.FormatUtcClock(nowText) or "Unknown"))
+	demoWindow.demo.userClockLabel:SetText("Your time: " .. (helpers.FormatUserClock(nowText) or "Unknown"))
 end
 
 function demos.DemosWindowDisplay(mode)
@@ -90,6 +103,7 @@ function demos.DemosWindowDisplay(mode)
 	end
 	demoWindow.demo.dateinput.text = helpers.getTodayDateText()
 	demoWindow.demo.timeinput.text = "HH:MM"
+	updateDemoClockLabels()
 	helpers.DevLog("Showing demo add window UI elements")
 	-- update main UI from w/e mode its in to demos add mode
 	setDemoWindowUIStatue(true)
@@ -167,6 +181,8 @@ local function createDemoWindowControls(OnAutoButtonClickCallback, OnCreateButto
 	demoWindow.demo.timeinput = helpers.createTextInput("timeinput", demoWindow, 60, 215, 299, 29, "HH:MM", 100, "Time", function(text)
 		demoWindow.demo.timeinput.text = text
 	end,false,selectedfontcolor)
+	demoWindow.demo.utcClockLabel = helpers.createLabel("demoUtcClock", demoWindow, "UTC:", 60, 275, 14, false, selectedfontcolor, 300)
+	demoWindow.demo.userClockLabel = helpers.createLabel("demoUserClock", demoWindow, "Your time:", 60, 300, 14, false, selectedfontcolor, 300)
 
 
 end
@@ -389,9 +405,16 @@ local throttledExpireSweep = helpers.throttle(constants.timing.demoExpirePoll, f
 	DEMO_EXPIRE()
 	DEMO_TRIGGER_ALERT()
 end)
+local throttledClockLabels = helpers.throttle(constants.timing.demoClockPoll, function()
+	if demoWindow ~= nil and demoWindow.demo ~= nil and demoWindow.demo.utcClockLabel ~= nil
+		and demoWindow.demo.utcClockLabel:IsVisible() then
+		updateDemoClockLabels()
+	end
+end)
 function demos.onUpdate(dt)
 	throttledAutohide(dt)
 	throttledExpireSweep(dt)
+	throttledClockLabels(dt)
 end
 
 -- Pull the owner name out of the target unit frame's tooltip text, which reads

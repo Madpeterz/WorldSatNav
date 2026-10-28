@@ -2,6 +2,7 @@ local helpers = require("WorldSatNav/helpers")
 local settingsModule = require("WorldSatNav/core/settings")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
+local constants = require("WorldSatNav/core/constants")
 
 local configui = {}
 
@@ -9,6 +10,7 @@ local configElements = {}   -- elements always shown/hidden with the whole panel
 local tabRegistry = {}      -- tabName -> { checkboxIds = {}, labelWidgets = {} }
 local currentTab = "SatNav"
 local settingsTitleLabel = nil
+local refreshZoneCheck = nil -- set once the Config tab's zone check label exists
 
 local TAB_ORDER = { "SatNav", "Demos", "Events", "Config", "Equip" }
 configui.TAB_NAMES = TAB_ORDER -- tab switching is driven by maprendering's mode buttons, see SelectTab/GetActiveTab
@@ -74,6 +76,9 @@ end
 
 function configui.ShowConfigUI()
     ToggleUIVisibleState(true)
+    if refreshZoneCheck ~= nil then
+        refreshZoneCheck()
+    end
 end
 function configui.HideConfigUI()
     ToggleUIVisibleState(false)
@@ -94,7 +99,6 @@ local function CheckBoxUpdate(checkState, checkboxId)
     elseif checkboxId == "teleportHintFiltered" then SettingName = "TeleportHintFiltered"
     elseif checkboxId == "eventsTrack" then SettingName = "EnableWorldEvents"
     elseif checkboxId == "eventsAlert" then SettingName = "EnableEventAlerts"
-    elseif checkboxId == "DSTOffset" then SettingName = "DSToffset"
     elseif checkboxId == "equipSwapWaterTitle" then SettingName = "SwapToWaterTitle"
     elseif checkboxId == "equipSwapWaterEquipment" then SettingName = "SwapToWaterEquipment"
     elseif checkboxId == "mapsAlwaysShowRegions" then SettingName = "AlwaysShowRegions"
@@ -271,8 +275,40 @@ function configui.CreateConfigUI(MapUIWindow)
 
     CreateTabDivider("Config", "configDiv1", MapUIWindow, 118)
 
-    CreateTabLabel("Config", "timeLabel", MapUIWindow, "Time:", 40, 130, 12)
-    CreateTabCheckbox("Config", "DSTOffset", MapUIWindow, "DST +1 hour", 40, 154, settingsModule.Is("DSToffset", true), CheckBoxUpdate)
+    local timeZoneCombo = helpers.CreateComboBox(MapUIWindow, helpers.GetTimeZoneLabels(), 40, 130, 300, 29, false, FONT_COLOR.BLACK,
+        helpers.GetTimeZoneLabel(settingsModule.Get("TimeZone")), "Time zone (demo times):", "configTimeZone")
+    local function OnTimeZonePicked(combo, source)
+        local zoneId = helpers.GetTimeZoneId(helpers.getComboBoxValue(combo))
+        helpers.DevLog("Time zone picked via " .. source .. ": " .. tostring(zoneId))
+        if zoneId ~= nil then
+            settingsModule.Update("TimeZone", zoneId)
+        end
+        if refreshZoneCheck ~= nil then
+            refreshZoneCheck()
+        end
+    end
+    -- A pick from the dropdown list arrives as SelectedProc; Select only covers calls
+    -- made from code. Both are hooked, and a repeat is harmless (Update skips no-ops).
+    function timeZoneCombo:SelectedProc()
+        OnTimeZonePicked(self, "SelectedProc")
+    end
+    local originalTimeZoneSelect = timeZoneCombo.Select
+    function timeZoneCombo:Select(index)
+        originalTimeZoneSelect(self, index)
+        OnTimeZonePicked(self, "Select")
+    end
+    RegisterLabel("Config", timeZoneCombo)
+    if timeZoneCombo.label ~= nil then
+        RegisterLabel("Config", timeZoneCombo.label)
+    end
+
+    -- Fixed sample so the player can check the picked zone against their own clock.
+    CreateTabLabel("Config", "configZoneCheckTitle", MapUIWindow, "In two hours it will be", 40, 190, 12)
+    local zoneCheckLabel = CreateTabLabel("Config", "configZoneCheck", MapUIWindow, "", 40, 212, 12)
+    refreshZoneCheck = function()
+        zoneCheckLabel:SetText(helpers.FormatUserDateAt(helpers.GetCurrentTimestampText(), constants.timing.zoneCheckAhead)
+            or "Current time is unavailable.")
+    end
 
     -- Equip tab (title IDs live in settings: title_id_swim / title_id_normal)
     CreateTabCheckbox("Equip", "equipSwapWaterTitle", MapUIWindow, "Swap to water title", col1, 65, settingsModule.Is("SwapToWaterTitle", true), CheckBoxUpdate)

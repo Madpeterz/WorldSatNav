@@ -72,7 +72,7 @@ local defaultSettings = {
     equipment_normal = "Delphinad Wave Sabatons",
 
     -- timing
-    DSToffset = false, -- manual fallback: your clock is 1 hour ahead of the game clock (DST). Only used when os.date cannot detect it
+    TimeZone = "auto", -- zone id from helpers/datetime TIME_ZONES; "auto" reads the game clock and corrects DST via os.date
 
     -- Maps
     AlwaysShowRegions = false, -- when true, treasure map bag region labels show even while the map UI is closed

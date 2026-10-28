@@ -24,6 +24,30 @@ local CLOCK_SNAP_SECONDS = 30
 local MAX_DST_LEAD_SECONDS = 3600
 local DST_ROUNDING_SECONDS = 900
 
+-- Zones a player can pick (TimeZone setting) instead of trusting the game clock.
+-- offset is standard time in seconds east of UTC; dst names a rule in DST_RULES.
+-- "auto" has no offset: it reads the game clock and corrects it via os.date.
+local TIME_ZONE_AUTO = "auto"
+local TIME_ZONES = {
+    { id = TIME_ZONE_AUTO, label = "Auto (game clock)" },
+    { id = "US_Pacific", label = "UTC-8 US Pacific (PST/PDT)", offset = -8 * 3600, dst = "us" },
+    { id = "US_Mountain", label = "UTC-7 US Mountain (MST/MDT)", offset = -7 * 3600, dst = "us" },
+    { id = "US_Arizona", label = "UTC-7 Arizona (MST)", offset = -7 * 3600 },
+    { id = "US_Central", label = "UTC-6 US Central (CST/CDT)", offset = -6 * 3600, dst = "us" },
+    { id = "US_Eastern", label = "UTC-5 US Eastern (EST/EDT)", offset = -5 * 3600, dst = "us" },
+    { id = "Brazil", label = "UTC-3 Brazil (BRT)", offset = -3 * 3600 },
+    { id = "UTC", label = "UTC", offset = 0 },
+    { id = "UK", label = "UTC+0 UK / Ireland (GMT/BST)", offset = 0, dst = "eu" },
+    { id = "EU_Central", label = "UTC+1 Central Europe (CET/CEST)", offset = 3600, dst = "eu" },
+    { id = "EU_Eastern", label = "UTC+2 Eastern Europe (EET/EEST)", offset = 2 * 3600, dst = "eu" },
+    { id = "Moscow", label = "UTC+3 Moscow (MSK)", offset = 3 * 3600 },
+    { id = "Gulf", label = "UTC+4 Gulf (GST)", offset = 4 * 3600 },
+    { id = "India", label = "UTC+5:30 India (IST)", offset = 5 * 3600 + 1800 },
+    { id = "China", label = "UTC+8 China / Singapore", offset = 8 * 3600 },
+    { id = "Japan", label = "UTC+9 Japan / Korea", offset = 9 * 3600 },
+    { id = "AU_Eastern", label = "UTC+10 Sydney (AEST/AEDT)", offset = 10 * 3600, dst = "au" },
+}
+
 function datetime.SecondsToTime(seconds)
     local hours = math.floor(seconds / 3600)
     local mins = math.floor((seconds % 3600) / 60)
@@ -296,6 +320,123 @@ local function daysToDate(totalDays)
     return year, month, days + 1
 end
 
+-- Moves whole days out of (or into) `second` so it ends up in [0, 86400).
+local function normalizeDaySecond(days, second)
+    local dayShift = math.floor(second / SECONDS_PER_DAY)
+    return days + dayShift, second - (dayShift * SECONDS_PER_DAY)
+end
+
+-- (days, secondOfDay) in UTC for unix seconds given as a number or a digit string. A
+-- string is long-divided digit by digit, so GetCurrentTimestampText's exact digits
+-- never pass through a unix-sized number.
+local function utcDaySecond(timestamp)
+    if type(timestamp) == "string" then
+        local days, remainder = 0, 0
+        for digit in timestamp:gmatch("%d") do
+            remainder = (remainder * 10) + tonumber(digit)
+            days = (days * 10) + math.floor(remainder / SECONDS_PER_DAY)
+            remainder = remainder % SECONDS_PER_DAY
+        end
+        return days, remainder
+    end
+    local days = math.floor(timestamp / SECONDS_PER_DAY)
+    return days, math.floor(timestamp - (days * SECONDS_PER_DAY))
+end
+
+local function isBefore(days, second, otherDays, otherSecond)
+    return days < otherDays or (days == otherDays and second < otherSecond)
+end
+
+-- Day count of the nth Sunday (n = -1: the last one) of a month.
+local function sundayOfMonth(year, month, n)
+    if n < 0 then
+        local lastDay = dateTimeToDaySecond(year, month, daysInMonth(year, month))
+        return lastDay - ((lastDay + 4) % 7) -- 1970-01-01 was a Thursday
+    end
+    local firstDay = dateTimeToDaySecond(year, month, 1)
+    return firstDay + ((7 - ((firstDay + 4) % 7)) % 7) + ((n - 1) * 7)
+end
+
+-- year, standard offset -> UTC (day, second) daylight saving starts, then ends.
+local DST_RULES = {
+    -- last Sunday of March to last Sunday of October, both at 01:00 UTC
+    eu = function(year)
+        return sundayOfMonth(year, 3, -1), 3600, sundayOfMonth(year, 10, -1), 3600
+    end,
+    -- second Sunday of March 02:00 standard to first Sunday of November 02:00 daylight
+    us = function(year, offset)
+        local startDay, startSecond = normalizeDaySecond(sundayOfMonth(year, 3, 2), 7200 - offset)
+        local endDay, endSecond = normalizeDaySecond(sundayOfMonth(year, 11, 1), 7200 - offset - 3600)
+        return startDay, startSecond, endDay, endSecond
+    end,
+    -- first Sunday of October 02:00 standard to first Sunday of April 03:00 daylight
+    au = function(year, offset)
+        local startDay, startSecond = normalizeDaySecond(sundayOfMonth(year, 10, 1), 7200 - offset)
+        local endDay, endSecond = normalizeDaySecond(sundayOfMonth(year, 4, 1), 10800 - offset - 3600)
+        return startDay, startSecond, endDay, endSecond
+    end,
+}
+
+-- Seconds `zone` is ahead of UTC at the UTC reading (utcDays, utcSecond).
+local function timeZoneOffset(zone, utcDays, utcSecond)
+    local rule = DST_RULES[zone.dst]
+    if rule == nil then
+        return zone.offset
+    end
+    local startDay, startSecond, endDay, endSecond = rule(daysToDate(utcDays), zone.offset)
+    local afterStart = not isBefore(utcDays, utcSecond, startDay, startSecond)
+    local beforeEnd = isBefore(utcDays, utcSecond, endDay, endSecond)
+    local inDst
+    if isBefore(startDay, startSecond, endDay, endSecond) then
+        inDst = afterStart and beforeEnd
+    else
+        -- southern hemisphere: daylight time spans the new year
+        inDst = afterStart or beforeEnd
+    end
+    if inDst then
+        return zone.offset + 3600
+    end
+    return zone.offset
+end
+
+-- The picked zone, or nil for auto (and for an id this version does not know).
+local function selectedTimeZone()
+    local id = settingsModule.Get("TimeZone")
+    for _, zone in ipairs(TIME_ZONES) do
+        if zone.id == id and zone.offset ~= nil then
+            return zone
+        end
+    end
+    return nil
+end
+
+function datetime.GetTimeZoneLabels()
+    local labels = {}
+    for _, zone in ipairs(TIME_ZONES) do
+        table.insert(labels, zone.label)
+    end
+    return labels
+end
+
+-- Label for a zone id; unknown ids read as auto, which is how they behave.
+function datetime.GetTimeZoneLabel(id)
+    for _, zone in ipairs(TIME_ZONES) do
+        if zone.id == id then
+            return zone.label
+        end
+    end
+    return TIME_ZONES[1].label
+end
+
+function datetime.GetTimeZoneId(label)
+    for _, zone in ipairs(TIME_ZONES) do
+        if zone.label == label then
+            return zone.id
+        end
+    end
+    return nil
+end
+
 -- (days, secondOfDay) for a date table such as TimeToDate or os.date("*t") returns.
 local function dateTableToDaySecond(dateTable)
     local year, month, day, hour, min, sec = extractDateParts(dateTable)
@@ -330,7 +471,7 @@ end
 -- The wall clock the game shows for `timestamp`, as (days, secondOfDay). When
 -- TimeToDate cannot answer, GetLocalTime is treated as seconds on the wall clock
 -- itself (the same assumption the pre-TimeToDate code made); userClockLead still
--- corrects it via os.date when that exists, or the manual DSToffset setting.
+-- corrects it via os.date when that exists.
 local function gameDaySecond(timestamp)
     local days, second = dateTableToDaySecond(timeToDateTable(timestamp))
     if days ~= nil then
@@ -340,15 +481,14 @@ local function gameDaySecond(timestamp)
         loggedDateFallback = true
         log.DevLog("TimeToDate unusable for " .. tostring(timestamp) .. ", treating GetLocalTime as wall-clock seconds; os available: " .. tostring(os ~= nil and type(os.date) == "function"))
     end
-    local fallbackDays = math.floor(timestamp / SECONDS_PER_DAY)
-    return fallbackDays, math.floor(timestamp - (fallbackDays * SECONDS_PER_DAY))
+    return utcDaySecond(timestamp)
 end
 
 -- Seconds the user's real wall clock is ahead of the game's at `timestamp`. This is
 -- the DST hour when the game's TimeToDate ignores daylight saving. Resolved per
 -- timestamp (not once for "now") so a time past the next clock change gets the
--- offset that applies on that date. With os.date it is detected; without it the
--- manual DSToffset setting is the only signal.
+-- offset that applies on that date. Needs os.date; without it the player has to pick
+-- a time zone instead of auto.
 local function userClockLead(timestamp, gameDays, gameSecond)
     if os ~= nil and type(os.date) == "function" then
         local ok, osDate = pcall(os.date, "*t", math.floor(timestamp))
@@ -364,21 +504,33 @@ local function userClockLead(timestamp, gameDays, gameSecond)
             end
         end
     end
-    if settingsModule.Get("DSToffset") == true then
-        return 3600
-    end
     return 0
 end
 
--- (days, secondOfDay) on the user's clock for a unix timestamp, or nil.
-local function userClockDaySecond(timestamp)
-    local gameDays, gameSecond = gameDaySecond(timestamp)
-    if gameDays == nil then
-        return nil
+-- Seconds the user's clock is ahead of UTC at `timestamp`: the picked zone's offset,
+-- or for auto the game clock's offset plus the os.date lead. Game and UTC readings
+-- come from the same (possibly rounded) number, so their difference stays exact.
+local function userClockOffset(timestamp)
+    local utcDays, utcSecond = utcDaySecond(timestamp)
+    local zone = selectedTimeZone()
+    if zone ~= nil then
+        return timeZoneOffset(zone, utcDays, utcSecond)
     end
-    local shifted = gameSecond + userClockLead(timestamp, gameDays, gameSecond)
-    local dayShift = math.floor(shifted / SECONDS_PER_DAY)
-    return gameDays + dayShift, shifted - (dayShift * SECONDS_PER_DAY)
+    local gameDays, gameSecond = gameDaySecond(timestamp)
+    local gameOffset = ((gameDays - utcDays) * SECONDS_PER_DAY) + (gameSecond - utcSecond)
+    return gameOffset + userClockLead(timestamp, gameDays, gameSecond)
+end
+
+-- (days, secondOfDay) on the user's clock `delta` seconds after unix seconds `timestamp`
+-- (number or digit string). The delta is added on the small day/second pair.
+local function userClockDaySecondAfter(timestamp, delta)
+    local days, second = utcDaySecond(timestamp)
+    days, second = normalizeDaySecond(days, second + delta)
+    return normalizeDaySecond(days, second + userClockOffset(tonumber(timestamp) + delta))
+end
+
+local function userClockDaySecond(timestamp)
+    return userClockDaySecondAfter(timestamp, 0)
 end
 
 local function userClockParts(timestamp)
@@ -394,8 +546,8 @@ end
 
 -- Unix timestamp whose user-clock reading is (userDays, userSecond). Works in seconds
 -- relative to today so every step is small and exact; only the final add is rounded.
--- Iterates because the game/user offsets depend on the answer when a clock change
--- sits between now and the target.
+-- Iterates because the user's offset depends on the answer when a clock change sits
+-- between now and the target.
 local function userClockToTimestamp(userDays, userSecond)
     local now = tonumber(datetime.GetCurrentTimestamp())
     if now == nil then
@@ -406,27 +558,9 @@ local function userClockToTimestamp(userDays, userSecond)
     local baseSeconds = baseDay * SECONDS_PER_DAY
     local userRelative = ((userDays - baseDay) * SECONDS_PER_DAY) + userSecond
 
-    -- user clock minus unix time, relative to baseSeconds, at `timestamp`
-    local function offsetAt(timestamp)
-        local gameDays, gameSecond = gameDaySecond(timestamp)
-        if gameDays == nil then
-            return nil
-        end
-        local gameRelative = ((gameDays - baseDay) * SECONDS_PER_DAY) + gameSecond
-        return gameRelative - (timestamp - baseSeconds) + userClockLead(timestamp, gameDays, gameSecond)
-    end
-
-    local offset = offsetAt(now)
-    if offset == nil then
-        return nil, "Game clock is unavailable."
-    end
-    local relative = userRelative - offset
+    local relative = userRelative - userClockOffset(now)
     for _ = 1, 4 do
-        local nextOffset = offsetAt(baseSeconds + relative)
-        if nextOffset == nil then
-            break
-        end
-        local refined = userRelative - nextOffset
+        local refined = userRelative - userClockOffset(baseSeconds + relative)
         if refined == relative then
             break
         end
@@ -461,6 +595,49 @@ function datetime.FormatUserClockShort(timestamp)
         return nil
     end
     return string.format("%02d:%02d %02d-%02d", hour, min, day, month)
+end
+
+-- Digit strings (GetCurrentTimestampText) are kept as text so they stay exact.
+local function clockInput(timestamp)
+    if type(timestamp) == "string" and timestamp:match("^%d+$") then
+        return timestamp
+    end
+    return datetime.NormalizeUnixTime(timestamp)
+end
+
+local function formatClock(days, second)
+    local year, month, day = daysToDate(days)
+    return string.format("%02d:%02d %02d-%02d-%04d", math.floor(second / 3600), math.floor((second % 3600) / 60), day, month, year)
+end
+
+-- "HH:MM DD-MM-YYYY" in UTC for unix seconds or a timestamp digit string, or nil.
+function datetime.FormatUtcClock(timestamp)
+    local input = clockInput(timestamp)
+    if input == nil then
+        return nil
+    end
+    return formatClock(utcDaySecond(input))
+end
+
+-- Same as FormatUtcClock, on the user's clock (picked time zone, or auto).
+function datetime.FormatUserClock(timestamp)
+    local input = clockInput(timestamp)
+    if input == nil then
+        return nil
+    end
+    return formatClock(userClockDaySecond(input))
+end
+
+-- "DD-MM-YYYY at HH:MM" on the user's clock `secondsAhead` after `now` (unix seconds
+-- or a timestamp digit string), or nil.
+function datetime.FormatUserDateAt(now, secondsAhead)
+    local input = clockInput(now)
+    if input == nil or tonumber(secondsAhead) == nil then
+        return nil
+    end
+    local days, second = userClockDaySecondAfter(input, secondsAhead)
+    local year, month, day = daysToDate(days)
+    return string.format("%02d-%02d-%04d at %02d:%02d", day, month, year, math.floor(second / 3600), math.floor((second % 3600) / 60))
 end
 
 function datetime.TimeRemaining(futureTimestamp)

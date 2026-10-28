@@ -6,7 +6,7 @@ return function(t, env)
     -- Game frame and user zone are configurable per test.
     --   gameZone: offset function the game's TimeToDate uses (false = TimeToDate unusable)
     --   userZone: offset function behind os.date("*t") (nil = os.date missing)
-    --   settings: addon settings table (DSToffset etc.)
+    --   settings: addon settings table (TimeZone etc.)
     local function load(now, opts)
         opts = opts or {}
         local api = env.reset({ now = now, gameZone = opts.gameZone, settings = opts.settings })
@@ -148,30 +148,71 @@ return function(t, env)
         t.eq(datetime.ParseDateTimeToUnixtime("2023-11-14", "20:00"), utc(2023, 11, 14, 20, 0, 0))
     end)
 
-    t.test("falls back to the manual DSToffset setting when os.date is missing", function()
-        local datetime = load(utc(2026, 7, 1, 10, 0, 0), {
-            gameZone = env.fixedZone(0), userZone = false, settings = { DSToffset = true },
-        })
-        t.eq(datetime.ParseDateTimeToUnixtime("2026-07-01", "20:00"), utc(2026, 7, 1, 19, 0, 0))
-    end)
-
-    t.test("manual DSToffset off means no correction", function()
-        local datetime = load(utc(2026, 7, 1, 10, 0, 0), {
-            gameZone = env.fixedZone(0), userZone = false, settings = { DSToffset = false },
-        })
-        t.eq(datetime.ParseDateTimeToUnixtime("2026-07-01", "20:00"), utc(2026, 7, 1, 20, 0, 0))
-    end)
-
-    t.test("DSToffset defaults to off", function()
+    t.test("auto without os.date uses the game clock as-is", function()
         local datetime = load(utc(2026, 7, 1, 10, 0, 0), { gameZone = env.fixedZone(0), userZone = false })
         t.eq(datetime.ParseDateTimeToUnixtime("2026-07-01", "20:00"), utc(2026, 7, 1, 20, 0, 0))
     end)
 
-    t.test("manual DSToffset crossing midnight lands on the previous day", function()
+    -- A picked zone replaces the game clock and os.date entirely.
+    local function loadZone(now, zoneId)
+        return load(now, { gameZone = env.fixedZone(5 * 3600), userZone = false, settings = { TimeZone = zoneId } })
+    end
+
+    t.test("UTC zone reads typed times as UTC", function()
+        local datetime = loadZone(utc(2026, 7, 1, 10, 0, 0), "UTC")
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-07-01", "20:00"), utc(2026, 7, 1, 20, 0, 0))
+    end)
+
+    t.test("an unknown zone id behaves as auto", function()
         local datetime = load(utc(2026, 7, 1, 10, 0, 0), {
-            gameZone = env.fixedZone(0), userZone = false, settings = { DSToffset = true },
+            gameZone = env.fixedZone(0), userZone = false, settings = { TimeZone = "Mars" },
         })
-        t.eq(datetime.ParseDateTimeToUnixtime("2026-07-02", "00:30"), utc(2026, 7, 1, 23, 30, 0))
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-07-01", "20:00"), utc(2026, 7, 1, 20, 0, 0))
+    end)
+
+    t.test("UK zone: BST in summer, GMT in winter", function()
+        local datetime = loadZone(utc(2026, 7, 1, 10, 0, 0), "UK")
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-07-01", "20:00"), utc(2026, 7, 1, 19, 0, 0))
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-12-01", "20:00"), utc(2026, 12, 1, 20, 0, 0))
+    end)
+
+    t.test("Central Europe zone follows the EU clock changes", function()
+        local datetime = loadZone(utc(2026, 10, 20, 10, 0, 0), "EU_Central")
+        -- 2026: forward on 29 March, back on 25 October
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-10-24", "12:00"), utc(2026, 10, 24, 10, 0, 0))
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-10-26", "12:00"), utc(2026, 10, 26, 11, 0, 0))
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-03-28", "12:00"), utc(2026, 3, 28, 11, 0, 0))
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-03-30", "12:00"), utc(2026, 3, 30, 10, 0, 0))
+    end)
+
+    t.test("US Eastern zone follows the US clock changes", function()
+        local datetime = loadZone(utc(2026, 10, 20, 10, 0, 0), "US_Eastern")
+        -- 2026: forward on 8 March, back on 1 November
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-10-31", "20:00"), utc(2026, 11, 1, 0, 0, 0))
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-11-02", "20:00"), utc(2026, 11, 3, 1, 0, 0))
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-03-07", "12:00"), utc(2026, 3, 7, 17, 0, 0))
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-03-09", "12:00"), utc(2026, 3, 9, 16, 0, 0))
+    end)
+
+    t.test("US Pacific switches at 02:00 local, not 02:00 Eastern", function()
+        local datetime = loadZone(utc(2026, 10, 20, 10, 0, 0), "US_Pacific")
+        -- 1 November 2026: 00:30 is still PDT (07:30 UTC); 03:00 is PST (11:00 UTC)
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-11-01", "00:30"), utc(2026, 11, 1, 7, 30, 0))
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-11-01", "03:00"), utc(2026, 11, 1, 11, 0, 0))
+    end)
+
+    t.test("Sydney zone has daylight time over the southern summer", function()
+        local datetime = loadZone(utc(2026, 7, 1, 10, 0, 0), "AU_Eastern")
+        -- AEDT (UTC+11) from 4 October 2026 to 4 April 2027; AEST (UTC+10) otherwise
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-07-01", "12:00"), utc(2026, 7, 1, 2, 0, 0))
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-12-25", "12:00"), utc(2026, 12, 25, 1, 0, 0))
+        t.eq(datetime.ParseDateTimeToUnixtime("2027-01-10", "12:00"), utc(2027, 1, 10, 1, 0, 0))
+        t.eq(datetime.ParseDateTimeToUnixtime("2027-04-05", "12:00"), utc(2027, 4, 5, 2, 0, 0))
+    end)
+
+    t.test("India zone keeps its half-hour offset", function()
+        local datetime = loadZone(utc(2026, 7, 1, 10, 0, 0), "India")
+        t.eq(datetime.ParseDateTimeToUnixtime("2026-07-02", "00:15"), utc(2026, 7, 1, 18, 45, 0))
     end)
 
     t.test("game zone offset is honoured (typed time is on the game clock)", function()
