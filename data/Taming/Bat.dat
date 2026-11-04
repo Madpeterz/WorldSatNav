@@ -142,4 +142,17 @@
             min_long = "37",
         },
     },
+    {
+        name = "Tameable Bat",
+        sextant = {
+            deg_long = "14",
+            deg_lat = "15",
+            sec_long = "51",
+            min_lat = "0",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "1",
+            min_long = "51",
+        },
+    },
 }

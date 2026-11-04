@@ -220,4 +220,17 @@
             min_long = "40",
         },
     },
+    {
+        name = "Floodplains Crayfish",
+        sextant = {
+            deg_long = "8",
+            deg_lat = "17",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "6",
+            min_lat = "42",
+            sec_lat = "23",
+            min_long = "7",
+        },
+    },
 }

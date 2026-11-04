@@ -155,4 +155,17 @@
             min_long = "28",
         },
     },
+    {
+        name = "Earth Elemental Lord",
+        sextant = {
+            deg_long = "11",
+            deg_lat = "13",
+            sec_long = "59",
+            min_lat = "24",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "4",
+            min_long = "19",
+        },
+    },
 }

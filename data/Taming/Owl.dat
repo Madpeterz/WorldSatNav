@@ -77,4 +77,30 @@
             min_long = "30",
         },
     },
+    {
+        name = "Tameable Owl",
+        sextant = {
+            deg_long = "14",
+            deg_lat = "15",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "50",
+            min_lat = "0",
+            sec_lat = "0",
+            min_long = "51",
+        },
+    },
+    {
+        name = "Andelph Postmaster Owl",
+        sextant = {
+            deg_long = "14",
+            deg_lat = "14",
+            sec_long = "19",
+            min_lat = "37",
+            longitude = "W",
+            latitude = "S",
+            sec_lat = "21",
+            min_long = "49",
+        },
+    },
 }

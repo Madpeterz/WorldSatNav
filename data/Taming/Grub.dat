@@ -181,4 +181,17 @@
             min_long = "2",
         },
     },
+    {
+        name = "Tameable Grub",
+        sextant = {
+            deg_long = "14",
+            deg_lat = "14",
+            longitude = "W",
+            latitude = "S",
+            sec_long = "14",
+            min_lat = "59",
+            sec_lat = "33",
+            min_long = "51",
+        },
+    },
 }
