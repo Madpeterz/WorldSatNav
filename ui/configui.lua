@@ -84,6 +84,32 @@ function configui.HideConfigUI()
     ToggleUIVisibleState(false)
 end
 
+-- Checkboxes worded positively ("Alert for X") over settings stored as opt-outs
+-- ("DisableAlertX"). The saved key keeps its old meaning so existing settings files
+-- still work; the checkbox shows and writes the opposite.
+local INVERTED_CHECKBOXES = {
+    eventsAlertWarehouseRaid = true,
+    eventsAlertCrate = true,
+    eventsAlertGhostship = true,
+    eventsAlertLeviathan = true,
+    eventsAlertPerdita = true,
+    eventsAlertSunfish = true,
+    targetIconShowMaps = true,
+    targetIconShowShips = true,
+    targetIconShowEvents = true,
+    targetIconShowDemos = true,
+    targetIconShowDawns = true,
+}
+
+-- Checked state for a checkbox over a stored setting.
+local function CheckedFor(checkboxId, settingName)
+    local stored = settingsModule.Is(settingName, true)
+    if INVERTED_CHECKBOXES[checkboxId] then
+        return not stored
+    end
+    return stored
+end
+
 local function CheckBoxUpdate(checkState, checkboxId)
     local SettingName = nil
     if checkboxId == "demosShowNextHour" then SettingName = "DrawDemosInNextHour"
@@ -104,19 +130,22 @@ local function CheckBoxUpdate(checkState, checkboxId)
     elseif checkboxId == "mapsAlwaysShowRegions" then SettingName = "AlwaysShowRegions"
     elseif checkboxId == "mapsColorIconByGrade" then SettingName = "ColorMapIconByGrade"
     elseif checkboxId == "mapsCenterOnPlayerOnModeChange" then SettingName = "CenterOnPlayerOnModeChange"
-    elseif checkboxId == "eventsDisableWarehouseRaid" then SettingName = "DisableAlertWarehouseRaid"
-    elseif checkboxId == "eventsDisableCrate" then SettingName = "DisableAlertCrate"
-    elseif checkboxId == "eventsDisableGhostship" then SettingName = "DisableAlertGhostship"
-    elseif checkboxId == "eventsDisableLeviathan" then SettingName = "DisableAlertLeviathan"
-    elseif checkboxId == "eventsDisablePerdita" then SettingName = "DisableAlertPerdita"
-    elseif checkboxId == "eventsDisableSunfish" then SettingName = "DisableAlertSunfish"
-    elseif checkboxId == "targetIconHideMaps" then SettingName = "HideTargetIconMaps"
-    elseif checkboxId == "targetIconHideShips" then SettingName = "HideTargetIconShips"
-    elseif checkboxId == "targetIconHideEvents" then SettingName = "HideTargetIconEvents"
-    elseif checkboxId == "targetIconHideDemos" then SettingName = "HideTargetIconDemos"
-    elseif checkboxId == "targetIconHideDawns" then SettingName = "HideTargetIconDawns"
+    elseif checkboxId == "eventsAlertWarehouseRaid" then SettingName = "DisableAlertWarehouseRaid"
+    elseif checkboxId == "eventsAlertCrate" then SettingName = "DisableAlertCrate"
+    elseif checkboxId == "eventsAlertGhostship" then SettingName = "DisableAlertGhostship"
+    elseif checkboxId == "eventsAlertLeviathan" then SettingName = "DisableAlertLeviathan"
+    elseif checkboxId == "eventsAlertPerdita" then SettingName = "DisableAlertPerdita"
+    elseif checkboxId == "eventsAlertSunfish" then SettingName = "DisableAlertSunfish"
+    elseif checkboxId == "targetIconShowMaps" then SettingName = "HideTargetIconMaps"
+    elseif checkboxId == "targetIconShowShips" then SettingName = "HideTargetIconShips"
+    elseif checkboxId == "targetIconShowEvents" then SettingName = "HideTargetIconEvents"
+    elseif checkboxId == "targetIconShowDemos" then SettingName = "HideTargetIconDemos"
+    elseif checkboxId == "targetIconShowDawns" then SettingName = "HideTargetIconDawns"
     end
     if SettingName ~= nil then
+        if INVERTED_CHECKBOXES[checkboxId] then
+            checkState = not checkState
+        end
         settingsModule.Update(SettingName, checkState)
         if checkboxId == "teleportHintFiltered" then
             eventbus.TriggerEvent(eventtopics.topics.dawnsdrop.refresh)
@@ -189,12 +218,12 @@ function configui.CreateConfigUI(MapUIWindow)
     local col1, col2 = 40, 290
 
     -- Maps tab (maps + tracking settings)
-    CreateTabLabel("SatNav", "nextMapModeLabel", MapUIWindow, "Next button behaviour:", 40, 65, 12)
-    CreateTabCheckbox("SatNav", "nextMapModeRegionOnly", MapUIWindow, "[A] Nearest (in region)", 40, 89, settingsModule.Is("NextMapMode", 1),
+    CreateTabLabel("SatNav", "nextMapModeLabel", MapUIWindow, "Next button picks the nearest map:", 40, 65, 12)
+    CreateTabCheckbox("SatNav", "nextMapModeRegionOnly", MapUIWindow, "In my region", 40, 89, settingsModule.Is("NextMapMode", 1),
         function(checked) if checked == true then settingsModule.Update("NextMapMode", 1) end end, nil, nil, "nextMapMode", nil, true)
-    CreateTabCheckbox("SatNav", "nextMapModeAnywhere", MapUIWindow, "[B] Nearest", 210, 89, settingsModule.Is("NextMapMode", 2),
+    CreateTabCheckbox("SatNav", "nextMapModeAnywhere", MapUIWindow, "Anywhere", 210, 89, settingsModule.Is("NextMapMode", 2),
         function(checked) if checked == true then settingsModule.Update("NextMapMode", 2) end end, nil, nil, "nextMapMode", nil, true)
-    CreateTabCheckbox("SatNav", "nextMapModeRegionThenAnywhere", MapUIWindow, "[C] A then B", 320, 89, settingsModule.Is("NextMapMode", 3),
+    CreateTabCheckbox("SatNav", "nextMapModeRegionThenAnywhere", MapUIWindow, "Region first", 320, 89, settingsModule.Is("NextMapMode", 3),
         function(checked) if checked == true then settingsModule.Update("NextMapMode", 3) end end, nil, nil, "nextMapMode", nil, true)
 
     CreateTabLabel("SatNav", "trackingModeLabel", MapUIWindow, "Display type:", 40, 119, 12)
@@ -232,12 +261,12 @@ function configui.CreateConfigUI(MapUIWindow)
 
     CreateTabDivider("SatNav", "satNavDiv2", MapUIWindow, 289)
 
-    CreateTabLabel("SatNav", "targetIconHideLabel", MapUIWindow, "Hide target icon on:", 40, 301, 9)
-    CreateTabCheckbox("SatNav", "targetIconHideMaps", MapUIWindow, "Maps", col1, 323, settingsModule.Is("HideTargetIconMaps", true), CheckBoxUpdate)
-    CreateTabCheckbox("SatNav", "targetIconHideShips", MapUIWindow, "Ships", col2, 323, settingsModule.Is("HideTargetIconShips", true), CheckBoxUpdate)
-    CreateTabCheckbox("SatNav", "targetIconHideEvents", MapUIWindow, "Events", col1, 349, settingsModule.Is("HideTargetIconEvents", true), CheckBoxUpdate)
-    CreateTabCheckbox("SatNav", "targetIconHideDemos", MapUIWindow, "Demos", col2, 349, settingsModule.Is("HideTargetIconDemos", true), CheckBoxUpdate)
-    CreateTabCheckbox("SatNav", "targetIconHideDawns", MapUIWindow, "Dawns", col1, 375, settingsModule.Is("HideTargetIconDawns", true), CheckBoxUpdate)
+    CreateTabLabel("SatNav", "targetIconHideLabel", MapUIWindow, "Show target ring on:", 40, 301, 9)
+    CreateTabCheckbox("SatNav", "targetIconShowMaps", MapUIWindow, "Maps", col1, 323, CheckedFor("targetIconShowMaps", "HideTargetIconMaps"), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "targetIconShowShips", MapUIWindow, "Ships", col2, 323, CheckedFor("targetIconShowShips", "HideTargetIconShips"), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "targetIconShowEvents", MapUIWindow, "Events", col1, 349, CheckedFor("targetIconShowEvents", "HideTargetIconEvents"), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "targetIconShowDemos", MapUIWindow, "Demos", col2, 349, CheckedFor("targetIconShowDemos", "HideTargetIconDemos"), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "targetIconShowDawns", MapUIWindow, "Dawns", col1, 375, CheckedFor("targetIconShowDawns", "HideTargetIconDawns"), CheckBoxUpdate)
 
     -- Demos tab
     CreateTabCheckbox("Demos", "demosShowNextHour", MapUIWindow, "Show only in the next hour", col1, 65, settingsModule.Is("DrawDemosInNextHour", true), CheckBoxUpdate)
@@ -261,13 +290,13 @@ function configui.CreateConfigUI(MapUIWindow)
 
     CreateTabCheckbox("Events", "eventsTrack", MapUIWindow, "Enable world events", col1, 127, settingsModule.Is("EnableWorldEvents", true), CheckBoxUpdate)
     CreateTabCheckbox("Events", "eventsAlert", MapUIWindow, "Show alerts for events", col2, 127, settingsModule.Is("EnableEventAlerts", true), CheckBoxUpdate)
-    CreateTabLabel("Events", "disableAlertsLabel", MapUIWindow, "Disable alerts for:", 40, 155, 9)
-    CreateTabCheckbox("Events", "eventsDisableWarehouseRaid", MapUIWindow, "Warehouse opening & Raid", col1, 177, settingsModule.Is("DisableAlertWarehouseRaid", true), CheckBoxUpdate)
-    CreateTabCheckbox("Events", "eventsDisableCrate", MapUIWindow, "Crates", col2, 177, settingsModule.Is("DisableAlertCrate", true), CheckBoxUpdate)
-    CreateTabCheckbox("Events", "eventsDisableGhostship", MapUIWindow, "Delphinad Ghostship", col1, 203, settingsModule.Is("DisableAlertGhostship", true), CheckBoxUpdate)
-    CreateTabCheckbox("Events", "eventsDisableLeviathan", MapUIWindow, "Leviathan", col2, 203, settingsModule.Is("DisableAlertLeviathan", true), CheckBoxUpdate)
-    CreateTabCheckbox("Events", "eventsDisablePerdita", MapUIWindow, "Perdita", col1, 229, settingsModule.Is("DisableAlertPerdita", true), CheckBoxUpdate)
-    CreateTabCheckbox("Events", "eventsDisableSunfish", MapUIWindow, "Sunfish", col2, 229, settingsModule.Is("DisableAlertSunfish", true), CheckBoxUpdate)
+    CreateTabLabel("Events", "disableAlertsLabel", MapUIWindow, "Show alerts for:", 40, 155, 9)
+    CreateTabCheckbox("Events", "eventsAlertWarehouseRaid", MapUIWindow, "Warehouse opening & Raid", col1, 177, CheckedFor("eventsAlertWarehouseRaid", "DisableAlertWarehouseRaid"), CheckBoxUpdate)
+    CreateTabCheckbox("Events", "eventsAlertCrate", MapUIWindow, "Crates", col2, 177, CheckedFor("eventsAlertCrate", "DisableAlertCrate"), CheckBoxUpdate)
+    CreateTabCheckbox("Events", "eventsAlertGhostship", MapUIWindow, "Delphinad Ghostship", col1, 203, CheckedFor("eventsAlertGhostship", "DisableAlertGhostship"), CheckBoxUpdate)
+    CreateTabCheckbox("Events", "eventsAlertLeviathan", MapUIWindow, "Leviathan", col2, 203, CheckedFor("eventsAlertLeviathan", "DisableAlertLeviathan"), CheckBoxUpdate)
+    CreateTabCheckbox("Events", "eventsAlertPerdita", MapUIWindow, "Perdita", col1, 229, CheckedFor("eventsAlertPerdita", "DisableAlertPerdita"), CheckBoxUpdate)
+    CreateTabCheckbox("Events", "eventsAlertSunfish", MapUIWindow, "Sunfish", col2, 229, CheckedFor("eventsAlertSunfish", "DisableAlertSunfish"), CheckBoxUpdate)
 
     -- Config tab
     CreateTabCheckbox("Config", "locationOutput", MapUIWindow, "Output location to file", 40, 65, settingsModule.Is("EnableLocationOutput", true), CheckBoxUpdate)

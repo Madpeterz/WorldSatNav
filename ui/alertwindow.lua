@@ -4,6 +4,7 @@ local constants = require("WorldSatNav/core/constants")
 local settingsModule = require("WorldSatNav/core/settings")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
+local sound = require("WorldSatNav/helpers/sound")
 
 local alertwindow = {}
 
@@ -115,6 +116,11 @@ function alertwindow.ShowAlert(data)
     activeAlert = data
     applyAlertData(data)
     alertWindow:Show(true)
+    -- A sound problem must never stop the alert itself from showing.
+    local ok, err = pcall(sound.PlayAlert)
+    if not ok then
+        helpers.DevLog("Alert sound failed: " .. tostring(err))
+    end
 end
 
 function alertwindow.HideAlert()

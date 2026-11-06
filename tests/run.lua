@@ -23,6 +23,7 @@ local files = {
     "eventbus",
     "buildings",
     "locationoutput",
+    "sound",
 }
 
 for _, name in ipairs(files) do

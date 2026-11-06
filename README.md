@@ -109,6 +109,7 @@ clicking the cog icon will give you the setting menu
   - Track events (world events will be captured for X mins and rendered on the map)
   - Enable alerts for events (a red alert window will open when a world event happens so you can track it)
   - Keep events for [X] mins (How long to keep world events before removing them from the map)
+  - Show alerts for (tick the event types that should open an alert: Warehouse, Crates, Ghostship, Leviathan, Perdita, Sunfish)
 
 - Location
   - Output location to file (your sextant coordinates are written to file, letting tools outside the game read your current location — e.g. an external heatmap/wandering tracker.)
@@ -119,16 +120,20 @@ clicking the cog icon will give you the setting menu
   - Auto goto next map (after you pickup a map at that location if there are none left then it will auto click next)
   - Filter teleport locations (will not suggest you use a teleport for the other side)
   - Next map behavior (which map "Next" / auto goto picks)
-    - [A] Nearest (in region) (default - only maps in the region you are standing in, closest first)
-    - [B] Nearest (closest map in your bag, ignoring region)
-    - [C] A then B (prefer maps in your current region, fall back to the closest anywhere once none are left in region)
-
+    - In my region (default - only maps in the region you are standing in, closest first)
+    - Anywhere (closest map in your bag, ignoring region)
+    - Region first (prefer maps in your current region, fall back to the closest anywhere once none are left in region)
+  - Show target ring on (Maps / Ships / Events / Demos / Dawns - the ring around the tracked target on the map; untick to hide it for that mode)
 
 - Time
   - Time zone (demo times): the zone demo times are typed and shown in. Pick yours from the list (US, Europe, Asia, Sydney and more; daylight saving is applied automatically), or leave it on Auto to use the game clock as before
   - Under the time zone, "In two hours it will be DD-MM-YYYY at HH:MM" shows the time two hours from now on the picked zone, so you can check it against your own clock
   - The demo add window shows the current time as "UTC:" and "Your time:" so you can check the zone is right before typing a time
   - Saved/shared demo times are unix seconds, so changing this only affects times you type afterwards
+
+### Alert sound
+
+Demo and world event alerts play two game sounds stacked together: `ranking` and `skill_book`. The addon API cannot play a sound directly, so each sound is attached to a hidden window that opens with the alert. To change them edit `alertSounds` in `core/constants.lua` (keys are listed under `SetSounds` in API_DOCUMENTATION.md).
 
 ### Running the tests
 
@@ -137,7 +142,7 @@ The tests run outside the game on plain LuaJIT/Lua 5.1 (no other dependencies) w
     luajit tests/run.lua            # everything
     luajit tests/run.lua datetime   # only tests whose file/name contains "datetime"
 
-They cover the clock and DST handling, share codes, coordinates, settings, the event bus and the building catalog. UI modules are not covered. The real game's numbers behave like 32-bit floats, which the tests cannot reproduce, so a green run does not prove exact-second behaviour in game.
+They cover the clock and DST handling, share codes, coordinates, settings, the event bus, the building catalog and the alert sound slots. UI modules are not covered. The real game's numbers behave like 32-bit floats, which the tests cannot reproduce, so a green run does not prove exact-second behaviour in game.
 
 ### I want to help fix the dawnsdrop data 
 

@@ -14,6 +14,7 @@ local dawnsdrop = require("WorldSatNav/features/dawnsdrop")
 local equip = require("WorldSatNav/features/equip")
 local helpers = require("WorldSatNav/helpers")
 local configui = require("WorldSatNav/ui/configui")
+local sound = require("WorldSatNav/helpers/sound")
 local eventbus = require("WorldSatNav/core/eventbus")
 local eventtopics = require("WorldSatNav/core/eventtopics")
 local settings = require("WorldSatNav/core/settings")
@@ -21,7 +22,7 @@ local settings = require("WorldSatNav/core/settings")
 local WorldSatNav = {
 	name = "WorldSatNav",
 	author = "Madpeter",
-	version = "1.5.5",
+	version = "1.5.6",
 	desc = "Im still not sure where to go"
 }
 
@@ -117,6 +118,7 @@ local function OnUnload()
 	treasuremaps.OnUnload()
 	ships.OnUnload()
 	events.OnUnload()
+	sound.Release()
 end
 
 -- Open the main map window (if hidden) and switch it to the settings page (if not

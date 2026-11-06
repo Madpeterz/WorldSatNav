@@ -11,6 +11,9 @@ local Constants = {
 	DEV_MODE = false,  -- Set to true to enable dev/debug UI controls and test data
 	DEV_MODE_LOAD_DEMO_EVENTS = false, -- Set to true to load demo events in DEV_MODE
 
+	-- SetSounds keys played together (stacked) whenever an alert window opens
+	alertSounds = { "ranking", "skill_book" },
+
 	-- Window dimensions and positions
 	window = {
 		widthPadding = 10,  -- Extra width for main window (929 + 100)
