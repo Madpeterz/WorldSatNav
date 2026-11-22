@@ -75,6 +75,7 @@ local eventtopics = {
 			config = "render.config",
 			demoadd = "render.demoadd",
 			dawnsdrop = "render.dawnsdrop",
+			timers = "render.timers",
 			clearUiState = "render.clearUiState",
 			zoomChanged = "render.zoomChanged",
 		},

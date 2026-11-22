@@ -24,6 +24,8 @@ local files = {
     "buildings",
     "locationoutput",
     "sound",
+    "countdown",
+    "timers",
 }
 
 for _, name in ipairs(files) do

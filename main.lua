@@ -3,6 +3,7 @@ local api = require("api")
 local maprendering = require("WorldSatNav/ui/maprendering")
 local treasuremaps = require("WorldSatNav/features/treasuremaps")
 local demos = require("WorldSatNav/features/demos")
+local timers = require("WorldSatNav/features/timers")
 local ships = require("WorldSatNav/features/ships")
 local events = require("WorldSatNav/features/worldevents")
 local alertwindow = require("WorldSatNav/ui/alertwindow")
@@ -22,7 +23,7 @@ local settings = require("WorldSatNav/core/settings")
 local WorldSatNav = {
 	name = "WorldSatNav",
 	author = "Madpeter",
-	version = "1.5.6",
+	version = "1.6.0",
 	desc = "Im still not sure where to go"
 }
 
@@ -41,6 +42,7 @@ local function OnLoad()
 	radar.OnLoad()
 	alertwindow.OnLoad()
 	demos.OnLoad()
+	timers.OnLoad()
 	gotolocation.OnLoad()
 	dawnsdrop.OnLoad()
 	treasuremaps.OnLoad()
@@ -60,6 +62,7 @@ local function OnLoad()
 		radar.onUpdate(dt)
 		gps.onUpdate(dt)
 		demos.onUpdate(dt)
+		timers.onUpdate(dt)
 		alertwindow.onUpdate(dt)
 		treasuremaps.onUpdate(dt)
 		events.onUpdate(dt)
@@ -114,6 +117,7 @@ local function OnUnload()
 	gotolocation.OnUnload()
 	dawnsdrop.OnUnload()
 	demos.OnUnload()
+	timers.OnUnload()
 	alertwindow.OnUnload()
 	treasuremaps.OnUnload()
 	ships.OnUnload()

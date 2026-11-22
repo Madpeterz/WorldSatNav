@@ -640,8 +640,29 @@ function datetime.FormatUserDateAt(now, secondsAhead)
     return string.format("%02d-%02d-%04d at %02d:%02d", day, month, year, math.floor(second / 3600), math.floor((second % 3600) / 60))
 end
 
+-- "HH:MM DD-MM" on the user's clock `secondsAhead` after `now` (unix seconds or a
+-- timestamp digit string), or nil. Unlike FormatUserClockShort on a unix-sized number,
+-- this stays exact to the minute because the offset is added on the small day/second pair.
+function datetime.FormatUserClockShortAt(now, secondsAhead)
+    local input = clockInput(now)
+    if input == nil or tonumber(secondsAhead) == nil then
+        return nil
+    end
+    local days, second = userClockDaySecondAfter(input, math.floor(tonumber(secondsAhead) + 0.5))
+    if days == nil then
+        return nil
+    end
+    local _, month, day = daysToDate(days)
+    return string.format("%02d:%02d %02d-%02d", math.floor(second / 3600), math.floor((second % 3600) / 60), day, month)
+end
+
 function datetime.TimeRemaining(futureTimestamp)
-    local remainingSeconds = datetime.SecondsUntil(futureTimestamp)
+    return datetime.FormatSecondsRemaining(datetime.SecondsUntil(futureTimestamp))
+end
+
+-- Same wording as TimeRemaining, for a number of seconds left (nil = "Unknown").
+function datetime.FormatSecondsRemaining(remainingSeconds)
+    remainingSeconds = tonumber(remainingSeconds)
     if remainingSeconds == nil then
         return "Unknown"
     end

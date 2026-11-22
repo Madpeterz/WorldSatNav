@@ -37,6 +37,13 @@ local Constants = {
 		demoClockPoll = updateRate * 3,    -- 975ms: UTC / your time labels on the demo add window
 		dawnsGuidedRefresh = 45000,        -- 45s: sweep expired timed guided visits, re-render if any lapsed
 		eventExpirePoll = 30000,           -- world-event expiry sweep
+		timerPoll = updateRate * 3,        -- 975ms: user timer trigger check
+	},
+
+	-- Map icon sets shared between features
+	icons = {
+		orbCount = 5,              -- colored orbs images/icons/taming_0..(orbCount-1).png (taming spots, timers)
+		orbDone = "icons/taming_done.png", -- grey orb for a single timer that has fired
 	},
 	
 	-- Game-specific constants

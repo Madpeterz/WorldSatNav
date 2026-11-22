@@ -77,6 +77,7 @@ local TARGET_ICON_HIDE_SETTING = {
 	events = "HideTargetIconEvents",
 	demos = "HideTargetIconDemos",
 	dawns = "HideTargetIconDawns",
+	timers = "HideTargetIconTimers",
 }
 -- tracked type (tracking event "name") -> the map mode that owns it
 local TRACKED_TYPE_MODE = {
@@ -85,6 +86,16 @@ local TRACKED_TYPE_MODE = {
 	Event = "events",
 	Demo = "demos",
 	Dawns = "dawns",
+	Timer = "timers",
+}
+-- map mode -> render event that asks the owning feature to draw its icons
+local MODE_RENDER_TOPIC = {
+	maps = TOPICS.render.maps,
+	ships = TOPICS.render.ships,
+	events = TOPICS.render.events,
+	demos = TOPICS.render.demos,
+	dawns = TOPICS.render.dawnsdrop,
+	timers = TOPICS.render.timers,
 }
 local trackedTargetMode = nil -- nil: not tied to a mode (e.g. custom goto), drawn in every mode
 
@@ -294,6 +305,22 @@ local devModeClickResetTime = nil
 local DEV_MODE_CLICK_RESET_SECONDS = 1.5
 local DEV_MODE_CLICKS_REQUIRED = 9
 local currentMapMode = "maps"
+-- Mode button definitions, in display order. Assigned below the mode click
+-- handlers (which need UpdateMapMode), declared here so UpdateMapMode can use it.
+local modeButtonDefs = {}
+
+-- Checks the button for `mode`, unchecks the rest. `override` lets a checked radio
+-- button be clicked again (used when a mode was forced from outside the buttons).
+local function SetModeButtonStates(mode, override)
+	for _, def in ipairs(modeButtonDefs) do
+		helpers.SetCheckBoxOverride(def.id, override)
+		helpers.SetCheckboxState(def.id, def.mode == mode)
+	end
+end
+
+local function IsKnownMode(mode)
+	return MODE_RENDER_TOPIC[mode] ~= nil
+end
 
 
 function maprendering.ChangeSelectedIcon(sextant, withTexturePath)
@@ -830,7 +857,9 @@ local function CreateWorldSatNavWindow()
 	end
 
 	local menuBackground = window:CreateImageDrawable("mapimagemenubackground", "background")
-	menuBackground:SetExtent(55*settingsModule.Get("uiDrawScale"),190*settingsModule.Get("uiDrawScale"))
+	-- Tall enough for every mode button plus the settings/location/goto buttons under them.
+	local menuHeight = 65 + (25 * #modeButtonDefs)
+	menuBackground:SetExtent(55*settingsModule.Get("uiDrawScale"),menuHeight*settingsModule.Get("uiDrawScale"))
 	menuBackground:AddAnchor("TOPLEFT", window, "TOPLEFT", (WorldSatNavState.UIWindowWidth-5)*settingsModule.Get("uiDrawScale"), 125*settingsModule.Get("uiDrawScale"))
 	menuBackground:SetTexture(api.baseDir .. "/WorldSatNav/images/mainuibackground3.png")
 	menuBackground:Show(true)
@@ -998,16 +1027,7 @@ local function UpdateMapMode(mode)
 		eventbus.TriggerEventImmediate(TOPICS.render.modeSelected, mode)
 		return
 	end
-	helpers.SetCheckBoxOverride("mapsModeButton", false)
-	helpers.SetCheckBoxOverride("shipsModeButton", false)
-	helpers.SetCheckBoxOverride("eventsModeButton", false)
-	helpers.SetCheckBoxOverride("demosModeButton", false)
-	helpers.SetCheckBoxOverride("dawnsModeButton", false)
-	helpers.SetCheckboxState("mapsModeButton", mode == "maps")
-	helpers.SetCheckboxState("shipsModeButton", mode == "ships")
-	helpers.SetCheckboxState("eventsModeButton", mode == "events")
-	helpers.SetCheckboxState("demosModeButton", mode == "demos")
-	helpers.SetCheckboxState("dawnsModeButton", mode == "dawns")
+	SetModeButtonStates(mode, false)
 	maprendering.ReloadUIItems()
 	maprendering.ClearUIState()
 	currentMapMode = mode
@@ -1036,17 +1056,10 @@ local function UpdateMapMode(mode)
 		FocusOnMe()
 	end
 	eventbus.TriggerEvent(TOPICS.render.modeChanged, mode)
-	if mode == "maps" then
-		helpers.DevLog("Publishing maps render event due to map mode change")
-		eventbus.TriggerEvent(TOPICS.render.maps)
-	elseif mode == "ships" then
-		eventbus.TriggerEvent(TOPICS.render.ships)
-	elseif mode == "events" then
-		eventbus.TriggerEvent(TOPICS.render.events)
-	elseif mode == "demos" then
-		eventbus.TriggerEvent(TOPICS.render.demos)
-	elseif mode == "dawns" then
-		eventbus.TriggerEvent(TOPICS.render.dawnsdrop)
+	local renderTopic = MODE_RENDER_TOPIC[mode]
+	if renderTopic ~= nil then
+		helpers.DevLog("Publishing " .. renderTopic .. " due to map mode change")
+		eventbus.TriggerEvent(renderTopic)
 	else
 		helpers.DevLog("Unknown map mode: " .. tostring(mode))
 	end
@@ -1120,12 +1133,14 @@ end
 local function OnEventsModeClick() UpdateMapMode("events") end
 local function OnDemosModeClick() UpdateMapMode("demos") end
 local function OnDawnsModeClick() UpdateMapMode("dawns") end
+local function OnTimersModeClick() UpdateMapMode("timers") end
 
--- These 5 buttons normally switch map mode. While the settings page is open,
+-- These buttons normally switch map mode. While the settings page is open,
 -- maprendering.SetModeButtonsForSettings repurposes them into tab buttons
 -- (see below), so their default label/handler/mode are kept here to restore.
-local modeButtonDefs = {
+modeButtonDefs = {
 	{ id = "mapsModeButton", label = "Maps", mode = "maps", handler = OnMapsModeClick },
+	{ id = "timersModeButton", label = "Timers", mode = "timers", handler = OnTimersModeClick },
 	{ id = "shipsModeButton", label = "Ships", mode = "ships", handler = OnShipsModeClick },
 	{ id = "eventsModeButton", label = "Events", mode = "events", handler = OnEventsModeClick },
 	{ id = "demosModeButton", label = "Demos", mode = "demos", handler = OnDemosModeClick },
@@ -1134,7 +1149,7 @@ local modeButtonDefs = {
 
 local inSettingsButtonMode = false
 
--- Swaps the 5 mode buttons between "switch map mode" and "switch settings tab"
+-- Swaps the mode buttons between "switch map mode" and "switch settings tab"
 -- duty. The first #configui.TAB_NAMES buttons become tab selectors. Any spare
 -- button becomes "<- Back" to close the settings page (none while every button
 -- is a tab; the settings button closes the page instead).
@@ -1216,19 +1231,21 @@ local function CreateUiElements()
 	for i, def in ipairs(modeButtonDefs) do
 		helpers.CreateSkinnedCheckbox(def.id, maprendering.MapUI, def.label, 470, 128+(25*(i-1)), def.mode == "maps", def.handler, 62, 25, "DisplayMode", "artwork", true, "button_active.png", "button_ready.png", "mail",false)
 	end
+	-- Settings / my location row sits under the last mode button, goto under that.
+	local sideButtonsY = 128 + (25 * #modeButtonDefs)
 
 	--helpers.createSkinnedButton("gotoLocation", maprendering.MapUI, "Goto ->", "controls/button_ready.png", 400, 450, 55, 25, nil, nil, nil, false)
-	helpers.CreateImageButton("gotoLocation", maprendering.MapUI, "ui/goto.png", 478, 128+155, 25, 25, function()
+	helpers.CreateImageButton("gotoLocation", maprendering.MapUI, "ui/goto.png", 478, sideButtonsY+30, 25, 25, function()
 		eventbus.TriggerEvent(TOPICS.UI.toggleGoto)
 	end, true, nil, "Location input", "item_enchant")
-	helpers.CreateImageButton("settingsButton", maprendering.MapUI, "ui/settings.png", 478, 128+125, 25, 25, function()
+	helpers.CreateImageButton("settingsButton", maprendering.MapUI, "ui/settings.png", 478, sideButtonsY, 25, 25, function()
 		if configWindowVisible then
 			maprendering.HideConfigPage()
 		else
 			maprendering.ShowConfigPage()
 		end
 	end, true, nil, "Settings", "item_enchant")
-	helpers.CreateImageButton("myPosButton", maprendering.MapUI, "ui/mypos.png", 483+25, 128+125, 25, 25, function()
+	helpers.CreateImageButton("myPosButton", maprendering.MapUI, "ui/mypos.png", 483+25, sideButtonsY, 25, 25, function()
 		local now = tonumber(helpers.GetCurrentTimestamp())
 		if devModeClickResetTime == nil or now == nil or (now - devModeClickResetTime) > DEV_MODE_CLICK_RESET_SECONDS then
 			devModeClickCount = 0
@@ -1419,7 +1436,7 @@ local function BulkDrawIcons(iconsData)
 end
 
 function maprendering.ForceSelectUIMode(mode)
-	if mode ~= "maps" and mode ~= "ships" and mode ~= "events" and mode ~= "demos" and mode ~= "dawns" then
+	if not IsKnownMode(mode) then
 		helpers.DevLog("Invalid map mode: " .. tostring(mode))
 		return
 	end
@@ -1435,16 +1452,7 @@ function maprendering.ForceSelectUIMode(mode)
 		LeaveConfigChrome()
 	end
 	WorldSatNavState.LastRenderConfig.iconsversion = false -- Force icons to redraw with the new mode
-	helpers.SetCheckboxState("mapsModeButton", mode == "maps")
-	helpers.SetCheckboxState("shipsModeButton", mode == "ships")
-	helpers.SetCheckboxState("eventsModeButton", mode == "events")
-	helpers.SetCheckboxState("demosModeButton", mode == "demos")
-	helpers.SetCheckboxState("dawnsModeButton", mode == "dawns")
-	helpers.SetCheckBoxOverride("mapsModeButton", true)
-	helpers.SetCheckBoxOverride("shipsModeButton", true)
-	helpers.SetCheckBoxOverride("eventsModeButton", true)
-	helpers.SetCheckBoxOverride("demosModeButton", true)
-	helpers.SetCheckBoxOverride("dawnsModeButton", true)
+	SetModeButtonStates(mode, true)
 	eventbus.TriggerEvent(TOPICS.UI.forcedUIModeReady, mode)
 end
 -- Addon initialization

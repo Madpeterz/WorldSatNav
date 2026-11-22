@@ -68,6 +68,19 @@ alerts before it happens and view a table of upcoming demos.
 you can also use the share code system to import/export with friends and guild members
 
 
+### Timers
+
+Need a reminder for crops, a boss respawn or anything else? select "Timers" from the UI right side menu
+and click "New timer", give it a name and pick:
+
+- Single: goes off once after X days, X hours and X mins
+- Repeating: goes off after the first wait, then every X days, X hours and X mins
+
+each timer is pinned to the map where you were standing when you made it, with its own colored orb.
+when a timer goes off you get an alert with a Track button to guide you back to it.
+repeating timers stay on schedule (they count from when they were due, not when you noticed),
+single timers turn grey once done and stay until you delete them from "List timers".
+
 ### Dawnsdrop 
 
 Had too much PVP today? then switching to dawnsdrop and selecting a type and target 

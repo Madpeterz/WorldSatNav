@@ -37,6 +37,7 @@ local defaultSettings = {
     HideTargetIconEvents = false,
     HideTargetIconDemos = false,
     HideTargetIconDawns = false,
+    HideTargetIconTimers = false,
 
     EnableLocationOutput = false,
     LocationOutputRateLimit = 1000, -- in milliseconds, how often to output player location
@@ -77,6 +78,9 @@ local defaultSettings = {
     -- Maps
     AlwaysShowRegions = false, -- when true, treasure map bag region labels show even while the map UI is closed
     ColorMapIconByGrade = false, -- map icons use the grade texture and grow with the map count instead of the marker1-3 textures
+
+    -- Timers
+    ShowDoneTimers = true, -- grey orbs for single timers that have already fired
 
     -- Dawnsdrop
     DawnsLastTask = "",

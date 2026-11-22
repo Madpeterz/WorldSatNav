@@ -655,6 +655,17 @@ function widgets.CreateListTable(parent, offsetX, offsetY, Headers)
         }
         listTable.colConfigs[col] = colConfig
     end
+    -- Labels default to 255px wide, which would spill over the next columns and sit
+    -- on top of their buttons (swallowing clicks). Keep each one inside its column.
+    listTable.FitLabelToColumn = function(label, col)
+        label:SetExtent(math.max(10, (listTable.colSizes[col] or 150) - 5), 30)
+    end
+    -- Pooled labels keep the last color they were given; set it on every use.
+    -- color: {r, g, b[, a]} or nil for the normal title color.
+    listTable.SetLabelColor = function(label, color)
+        color = color or FONT_COLOR.TITLE
+        label.style:SetColor(color[1], color[2], color[3], color[4] or 1)
+    end
     listTable.GetLabelFromPool = function()
         local label = nil
         if #listTable.LabelsPool > 0 then
@@ -702,6 +713,8 @@ function widgets.CreateListTable(parent, offsetX, offsetY, Headers)
                 return
             end
             label:SetText(header)
+            listTable.FitLabelToColumn(label, index)
+            listTable.SetLabelColor(label, nil)
             label:RemoveAllAnchors()
             label:AddAnchor("TOPLEFT", listTable.parent, currentX, currentY)
             table.insert(listTable.LabelsInUse, label)
@@ -721,6 +734,12 @@ function widgets.CreateListTable(parent, offsetX, offsetY, Headers)
                 currentX = listTable._OffsetX
                 for columnIndex, cell in pairs(entry) do
                     local localcolConfig = listTable.colConfigs[columnIndex]
+                    -- A cell is plain text, or { text = ..., color = {r, g, b[, a]} }.
+                    local cellColor = nil
+                    if type(cell) == "table" then
+                        cellColor = cell.color
+                        cell = cell.text
+                    end
                     if localcolConfig ~= nil and localcolConfig.isButton == true then
                         local button = listTable.GetButtonFromPool()
                         if button == nil then
@@ -749,6 +768,8 @@ function widgets.CreateListTable(parent, offsetX, offsetY, Headers)
                                     return
                                 end
                                 label:SetText(tostring(line))
+                                listTable.FitLabelToColumn(label, columnIndex)
+                                listTable.SetLabelColor(label, cellColor)
                                 label:RemoveAllAnchors()
                                 label:AddAnchor("TOPLEFT", listTable.parent, currentX, currentY + lineOffsetY)
                                 table.insert(listTable.LabelsInUse, label)
@@ -761,6 +782,8 @@ function widgets.CreateListTable(parent, offsetX, offsetY, Headers)
                                 return
                             end
                             label:SetText(cellText)
+                            listTable.FitLabelToColumn(label, columnIndex)
+                            listTable.SetLabelColor(label, cellColor)
                             label:RemoveAllAnchors()
                             label:AddAnchor("TOPLEFT", listTable.parent, currentX, currentY)
                             table.insert(listTable.LabelsInUse, label)
@@ -801,6 +824,8 @@ function widgets.CreateListTable(parent, offsetX, offsetY, Headers)
                 return
             end
             PageIndicator:SetText("Page "..tostring(listTable._PageNumber + 1).." of "..tostring(totalPages))
+            PageIndicator:SetExtent(150, 30)
+            listTable.SetLabelColor(PageIndicator, nil)
             PageIndicator:RemoveAllAnchors()
             PageIndicator:AddAnchor("TOPLEFT", listTable.parent, listTable._OffsetX + 160 + centering, currentY + 10)
             table.insert(listTable.LabelsInUse, PageIndicator)
@@ -822,6 +847,13 @@ function widgets.CreateListTable(parent, offsetX, offsetY, Headers)
             NextButton:SetHandler("OnClick", NextButton.OnClick)
             NextButton:Enable(listTable._PageNumber < totalPages - 1)
             table.insert(listTable.ButtonsInUse, NextButton)
+        end
+        -- Pooled labels and buttons keep their original stacking order, so a label
+        -- reused after a button could still cover it; put every button back on top.
+        for _, btn in pairs(listTable.ButtonsInUse) do
+            if btn.Raise ~= nil then
+                btn:Raise()
+            end
         end
         listTable.Show(true)
     end

@@ -99,6 +99,7 @@ local INVERTED_CHECKBOXES = {
     targetIconShowEvents = true,
     targetIconShowDemos = true,
     targetIconShowDawns = true,
+    targetIconShowTimers = true,
 }
 
 -- Checked state for a checkbox over a stored setting.
@@ -141,6 +142,8 @@ local function CheckBoxUpdate(checkState, checkboxId)
     elseif checkboxId == "targetIconShowEvents" then SettingName = "HideTargetIconEvents"
     elseif checkboxId == "targetIconShowDemos" then SettingName = "HideTargetIconDemos"
     elseif checkboxId == "targetIconShowDawns" then SettingName = "HideTargetIconDawns"
+    elseif checkboxId == "targetIconShowTimers" then SettingName = "HideTargetIconTimers"
+    elseif checkboxId == "timersShowDone" then SettingName = "ShowDoneTimers"
     end
     if SettingName ~= nil then
         if INVERTED_CHECKBOXES[checkboxId] then
@@ -267,6 +270,11 @@ function configui.CreateConfigUI(MapUIWindow)
     CreateTabCheckbox("SatNav", "targetIconShowEvents", MapUIWindow, "Events", col1, 349, CheckedFor("targetIconShowEvents", "HideTargetIconEvents"), CheckBoxUpdate)
     CreateTabCheckbox("SatNav", "targetIconShowDemos", MapUIWindow, "Demos", col2, 349, CheckedFor("targetIconShowDemos", "HideTargetIconDemos"), CheckBoxUpdate)
     CreateTabCheckbox("SatNav", "targetIconShowDawns", MapUIWindow, "Dawns", col1, 375, CheckedFor("targetIconShowDawns", "HideTargetIconDawns"), CheckBoxUpdate)
+    CreateTabCheckbox("SatNav", "targetIconShowTimers", MapUIWindow, "Timers", col2, 375, CheckedFor("targetIconShowTimers", "HideTargetIconTimers"), CheckBoxUpdate)
+
+    CreateTabDivider("SatNav", "satNavDiv3", MapUIWindow, 403)
+
+    CreateTabCheckbox("SatNav", "timersShowDone", MapUIWindow, "Show finished timers on map", col1, 415, settingsModule.Is("ShowDoneTimers", true), CheckBoxUpdate)
 
     -- Demos tab
     CreateTabCheckbox("Demos", "demosShowNextHour", MapUIWindow, "Show only in the next hour", col1, 65, settingsModule.Is("DrawDemosInNextHour", true), CheckBoxUpdate)

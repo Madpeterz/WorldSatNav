@@ -188,7 +188,7 @@ local ShowDevModeButtons -- forward declaration; assigned below
 -- location/group shape the other types use) and render with one of
 -- TAMING_ICON_COUNT colored orbs (images/icons/taming_<n>.png) picked from the name.
 local TAMING_TASK = "Taming"
-local TAMING_ICON_COUNT = 5
+local TAMING_ICON_COUNT = constants.icons.orbCount
 
 -- Orb texture for a monster name: sum of each letter's alphabet position
 -- (A=1 ... Z=26, case-insensitive, non-letters skipped) mod TAMING_ICON_COUNT,
