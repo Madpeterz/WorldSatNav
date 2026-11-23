@@ -568,6 +568,11 @@ function demos.CreateDemoClicked()
 		return
 	end
 	helpers.DevLog("Creating demo with input data")
+	-- Drop typing focus now, from the click, so the form hide next frame never hides a
+	-- focused edit box (that hangs the client).
+	helpers.ClearInputFocus(demoWindow.demo.ownernameInput)
+	helpers.ClearInputFocus(demoWindow.demo.dateinput)
+	helpers.ClearInputFocus(demoWindow.demo.timeinput)
 	local ownername = demoWindow.demo.ownernameInput:GetText() or "Unknown"
 	local buildingname = helpers.getComboBoxValue(demoWindow.demo.buildingnameInput, "Unknown")
 	local date = demoWindow.demo.dateinput:GetText() or "Unknown"

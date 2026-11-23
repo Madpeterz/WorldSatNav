@@ -585,8 +585,26 @@ function widgets.createTextInput(id, parent, offsetX, offsetY, width, height, pl
         editBox:SetHandler("OnTextChanged", editBox.OnTextChanged)
     end
 
+    -- Hiding an edit box that still has keyboard focus can hang the client (seen when
+    -- the demo form hid the time box the player had just typed in), so always drop
+    -- focus first.
+    local originalShow = editBox.Show
+    function editBox:Show(visible)
+        if not visible then
+            widgets.ClearInputFocus(self)
+        end
+        return originalShow(self, visible)
+    end
+
     editBox.label = labelWidget
     return editBox
+end
+
+-- Drops keyboard focus from an edit box (nil is ignored).
+function widgets.ClearInputFocus(box)
+    if box ~= nil and box.ClearFocus ~= nil then
+        box:ClearFocus()
+    end
 end
 
 function widgets.createLabel(id, parent, text, offsetX, offsetY, fontSize, transparent, fontcolor, width, height)
