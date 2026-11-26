@@ -114,6 +114,105 @@ return function(t, env)
         t.isnil(y)
     end)
 
+    -- Calibration anchors. Level 3 is BASE_RENDER; level 0 uses its own constants.
+    local level0 = { zeroPointX = 311, zeroPointY = 122, XCordScale = 14.60, YCordScale = 14.40 }
+    local anchorSextant = { longitude = "E", deg_long = 2, min_long = 0, sec_long = 0,
+                            latitude = "S", deg_lat = 1, min_lat = 0, sec_lat = 0 }
+
+    local function loadWithAnchor(offX, offY)
+        local coordinates = load()
+        local base = coordinates.BASE_RENDER
+        local x, y = coordinates.SextantToMapCoordinates(anchorSextant, base)
+        coordinates.SetAnchors({ { px = x + offX, py = y + offY, sextant = anchorSextant } })
+        return coordinates, base, x, y
+    end
+
+    t.test("anchors: corrected position is exact at the anchor", function()
+        local coordinates, base, x, y = loadWithAnchor(12, -8)
+        local cx, cy = coordinates.SextantToMapCoordinates(anchorSextant, base)
+        t.near(cx, x + 12, 1e-6)
+        t.near(cy, y - 8, 1e-6)
+    end)
+
+    t.test("anchors: correction scales to other zoom levels", function()
+        local coordinates, base = loadWithAnchor(12, -8)
+        local before = load()
+        local plainX, plainY = before.SextantToMapCoordinates(anchorSextant, level0)
+        local cx, cy = coordinates.SextantToMapCoordinates(anchorSextant, level0)
+        t.near(cx - plainX, 12 * level0.XCordScale / base.XCordScale, 1e-6)
+        t.near(cy - plainY, -8 * level0.YCordScale / base.YCordScale, 1e-6)
+    end)
+
+    t.test("anchors: correction fades with distance and is zero past the radius", function()
+        local coordinates = loadWithAnchor(10, 0)
+        local near = coordinates.AnchorCorrection(2 + 0.5, 1)
+        local mid = coordinates.AnchorCorrection(2 + (coordinates.ANCHOR_RADIUS / 2), 1)
+        local edge = coordinates.AnchorCorrection(2 + coordinates.ANCHOR_RADIUS * 0.99, 1)
+        local far = coordinates.AnchorCorrection(2 + coordinates.ANCHOR_RADIUS + 0.1, 1)
+        t.truthy(near > mid and mid > edge and edge > 0, "correction should shrink with distance")
+        t.near(mid, 5, 1e-6) -- a lone anchor gives half its residual at half the radius
+        t.eq(far, 0)
+    end)
+
+    t.test("anchors: two anchors blend between them", function()
+        local coordinates = load()
+        local base = coordinates.BASE_RENDER
+        local west = { longitude = "E", deg_long = 1, min_long = 0, sec_long = 0, latitude = "S", deg_lat = 1, min_lat = 0, sec_lat = 0 }
+        local east = { longitude = "E", deg_long = 3, min_long = 0, sec_long = 0, latitude = "S", deg_lat = 1, min_lat = 0, sec_lat = 0 }
+        local wx, wy = coordinates.SextantToMapCoordinates(west, base)
+        local ex, ey = coordinates.SextantToMapCoordinates(east, base)
+        t.eq(coordinates.SetAnchors({
+            { px = wx + 10, py = wy, sextant = west },
+            { px = ex + 20, py = ey, sextant = east },
+        }), 2)
+        local dx = coordinates.AnchorCorrection(2, 1)
+        t.truthy(dx > 10 and dx < 20, "midpoint correction should sit between the residuals, got " .. tostring(dx))
+    end)
+
+    t.test("anchors: map-to-values undoes the correction", function()
+        local coordinates, base = loadWithAnchor(15, 9)
+        local nearby = { longitude = "E", deg_long = 2, min_long = 40, sec_long = 0,
+                         latitude = "S", deg_lat = 0, min_lat = 30, sec_lat = 0 }
+        for _, settings in ipairs({ base, level0 }) do
+            local x, y = coordinates.SextantToMapCoordinates(nearby, settings)
+            local longValue, latValue = coordinates.MapCoordinatesToValues(x, y, settings)
+            t.near(longValue, 2 + 40 / 60, 1e-4)
+            t.near(latValue, 0.5, 1e-4)
+        end
+    end)
+
+    t.test("anchors: none set leaves the linear formula alone", function()
+        local coordinates = load()
+        t.eq(coordinates.GetAnchorCount(), 0)
+        local x, y = coordinates.SextantToMapCoordinates(anchorSextant, render)
+        t.near(x, 120)
+        t.near(y, 220)
+        local longValue, latValue = coordinates.MapCoordinatesToValues(120, 220, render)
+        t.near(longValue, 2)
+        t.near(latValue, 1)
+    end)
+
+    t.test("anchors: invalid entries are skipped", function()
+        local coordinates = load()
+        t.eq(coordinates.SetAnchors({
+            { px = 1, py = 2 },
+            { px = "x", py = 2, sextant = anchorSextant },
+            { px = 1, py = 2, sextant = { longitude = "E" } },
+            { px = "10.5", py = 20, sextant = anchorSextant },
+        }), 1)
+        t.eq(coordinates.SetAnchors(nil), 0)
+    end)
+
+    t.test("ToBasePixels round-trips through a level's linear constants", function()
+        local coordinates = load()
+        local base = coordinates.BASE_RENDER
+        local x0, y0 = coordinates.SextantToMapCoordinates(anchorSextant, level0)
+        local bx, by = coordinates.ToBasePixels(x0, y0, level0)
+        local x3, y3 = coordinates.SextantToMapCoordinates(anchorSextant, base)
+        t.near(bx, x3, 1e-6)
+        t.near(by, y3, 1e-6)
+    end)
+
     t.test("CalculateDistance is zero for the same point", function()
         local coordinates = load()
         local point = { longitude = "E", deg_long = 3, min_long = 2, sec_long = 1,

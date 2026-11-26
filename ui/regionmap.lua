@@ -1,5 +1,6 @@
 local api = require("api")
 local helpers = require("WorldSatNav/helpers")
+local coordinates = require("WorldSatNav/core/coordinates")
 local regionmap = {}
 
 local shapesData = {
@@ -1035,52 +1036,10 @@ local function getShapeAt(x, y)
 end
 
 
-local function convertSextantToMapCoordinates(sextant)
-	-- sextant coordinate structure with longitude, latitude, deg_long, min_long, sec_long, deg_lat, min_lat, sec_lat
-	if not sextant then
-		helpers.DevLog("Cannot convert sextant to map coordinates, sextant is nil")
-		return nil, nil
-	end
-  local renderSettings = { zeroPointX=2513,zeroPointY=991,XCordScale=116.44,YCordScale=115.17}
-
-	local long = sextant.longitude
-	local lat = sextant.latitude
-
-	local longValue = 0
-	local latValue = 0
-	if long == nil or lat == nil then
-		helpers.DevLog("Invalid sextant data, missing longitude or latitude direction")
-		return nil, nil
-	end
-
-	local degLong = sextant.deg_long
-	local minLong = sextant.min_long
-	local secLong = sextant.sec_long
-	local degLat = sextant.deg_lat
-	local minLat = sextant.min_lat
-	local secLat = sextant.sec_lat
-	if degLong == nil or minLong == nil or secLong == nil or degLat == nil or minLat == nil or secLat == nil then
-		helpers.DevLog("Invalid sextant data, cannot convert to map coordinates")
-		return nil, nil
-	end
-	longValue = degLong + (minLong / 60) + (secLong / 3600)
-	latValue = degLat + (minLat / 60) + (secLat / 3600)
-
-	if sextant.longitude == "W" then
-		longValue = -longValue
-	end
-	if sextant.latitude == "N" then
-		latValue = -latValue
-	end
-
-	local x = renderSettings.zeroPointX + (longValue * renderSettings.XCordScale)
-	local y = renderSettings.zeroPointY + (latValue * renderSettings.YCordScale)
-	return x, y
-end
-
 function regionmap.GetRegionForSextant(sextant)
   if sextant == nil then return "?", "?" end
-  local x, y = convertSextantToMapCoordinates(sextant)
+  -- Region shapes are traced on zoom-3.png, so use its (anchor-corrected) pixels.
+  local x, y = coordinates.SextantToMapCoordinates(sextant, coordinates.BASE_RENDER)
   if x == nil or y == nil then return "?", "?" end
   local regionnameRaw = getShapeAt(x, y)
   local regionCode, regionName = string.match(regionnameRaw, "^([^/]+)/(.+)$")

@@ -13,6 +13,7 @@ local gps = require("WorldSatNav/features/gps")
 local gotolocation = require("WorldSatNav/features/gotolocation")
 local dawnsdrop = require("WorldSatNav/features/dawnsdrop")
 local equip = require("WorldSatNav/features/equip")
+local calibration = require("WorldSatNav/features/calibration")
 local helpers = require("WorldSatNav/helpers")
 local configui = require("WorldSatNav/ui/configui")
 local sound = require("WorldSatNav/helpers/sound")
@@ -23,7 +24,7 @@ local settings = require("WorldSatNav/core/settings")
 local WorldSatNav = {
 	name = "WorldSatNav",
 	author = "Madpeter",
-	version = "1.6.1",
+	version = "1.6.2",
 	desc = "Im still not sure where to go"
 }
 
@@ -37,6 +38,8 @@ end
 -- Addon initialization
 local function OnLoad()
 	api.Log:Info("[" .. WorldSatNav.name .. "] Starting version " .. WorldSatNav.version)
+	-- Calibration anchors first: every later map conversion uses them.
+	calibration.OnLoad()
 	configui.OnLoad()
 	tracking.OnLoad()
 	radar.OnLoad()
@@ -122,6 +125,7 @@ local function OnUnload()
 	treasuremaps.OnUnload()
 	ships.OnUnload()
 	events.OnUnload()
+	calibration.OnUnload()
 	sound.Release()
 end
 

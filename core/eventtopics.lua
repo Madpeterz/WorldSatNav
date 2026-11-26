@@ -11,6 +11,11 @@ local eventtopics = {
 		dev = {
 			modeChanged = "dev.modeChanged",
 		},
+		calibration = {
+			modeChanged = "calibration.modeChanged",
+			mapClick = "calibration.mapClick",
+			removeAnchor = "calibration.removeAnchor",
+		},
 		tracking = {
 			start = "tracking.start",
 			stop = "tracking.stop",

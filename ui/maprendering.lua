@@ -18,6 +18,10 @@ local FocusOnMe
 -- know whether the Add tool should consume the click instead of opening the tracker.
 local dawnsMapMode = "Select"
 
+-- Mirrors calibration.modeChanged: while true, map clicks record calibration
+-- anchors and icon clicks are routed to the calibration tool.
+local calibrating = false
+
 local mapLevels = {
 	{ level = 0, texture = "zoom-0.png", width = 473, height = 507, zoomfactor = 0, zeroPointX=311,zeroPointY=122,XCordScale=14.60,YCordScale=14.40},
 	{ level = 1, texture = "zoom-1.png", width = 948, height = 1017, zoomfactor = 2, zeroPointX=622,zeroPointY=246,XCordScale=29.15,YCordScale=28.84},
@@ -271,6 +275,16 @@ local function findOrCreateIcon(withTexturePath, customIconSize)
     end
     button:Raise()
 	function button:OnClick()
+		if calibrating then
+			-- Anchor markers delete their anchor; any other icon (the player icon
+			-- included) is just in the way of a map click.
+			if icon.sourceType == "Calibration" and icon.sextant ~= nil then
+				eventbus.TriggerEvent(TOPICS.calibration.removeAnchor, icon.sextant)
+			elseif maprendering.MapUI ~= nil and maprendering.MapUI.OnClick ~= nil then
+				maprendering.MapUI:OnClick()
+			end
+			return
+		end
 		if icon.indexId == 0 then
 			helpers.DevLog("Player icon clicked, ignoring")
 			return
@@ -651,8 +665,7 @@ function maprendering.convertMapCoordinatesToSextant(x, y, renderSettings)
 		return nil
 	end
 
-	local longValue = (x - renderSettings.zeroPointX) / renderSettings.XCordScale
-	local latValue = (y - renderSettings.zeroPointY) / renderSettings.YCordScale
+	local longValue, latValue = coordinates.MapCoordinatesToValues(x, y, renderSettings)
 
 	local longDir = "E"
 	if longValue < 0 then
@@ -894,6 +907,16 @@ local function CreateWorldSatNavWindow()
 	-- A stationary click (no drag past the threshold) fires OnClick instead of
 	-- OnDragStart/OnDragStop, so map-placement clicks need their own handler.
 	function window:OnClick()
+		if calibrating then
+			local normX, normY = GetMouseFocusForZoom(mapImage, WorldSatNavState.zoomLevel)
+			if normX == nil or normY == nil then
+				return
+			end
+			local clickedMapInfo = maprendering.GetMapInfoForZoom(WorldSatNavState.zoomLevel)
+			local baseX, baseY = coordinates.ToBasePixels(normX * clickedMapInfo.width, normY * clickedMapInfo.height, clickedMapInfo)
+			eventbus.TriggerEvent(TOPICS.calibration.mapClick, baseX, baseY)
+			return
+		end
 		if currentMapMode ~= "dawns" then
 			return
 		end
@@ -1412,7 +1435,8 @@ local function BulkDrawIcons(iconsData)
 	end
 	maprendering.ClearUIState()
 	maprendering.ReloadUIItems()
-	if maprendering.playerIcon ~= nil and maprendering.MapUI ~= nil and maprendering.MapUI.mapImage ~= nil then
+	-- Calibration hides the player icon: it sits at the spot being corrected.
+	if not calibrating and maprendering.playerIcon ~= nil and maprendering.MapUI ~= nil and maprendering.MapUI.mapImage ~= nil then
 		maprendering.playerIcon.inuse = true
 		maprendering.playerIcon.sourceType = "player"
 		maprendering.playerIcon.textureNode = "icons/player.png"
@@ -1474,6 +1498,17 @@ function maprendering.OnLoad()
 	eventbus.WatchEvent(TOPICS.tracking.stop, maprendering.ClearTrackedTarget, "maprendering")
 	eventbus.WatchEvent(TOPICS.dawnsdrop.mapModeChanged, function(mode)
 		dawnsMapMode = mode
+	end, "maprendering")
+	eventbus.WatchEvent(TOPICS.calibration.modeChanged, function(enabled)
+		calibrating = enabled == true
+		-- Hidden until calibration ends; the redraw that follows (Done, mode
+		-- change, or reopening the map) re-attaches it via UpdateMapMode.
+		local playerIcon = maprendering.playerIcon
+		if calibrating and playerIcon ~= nil then
+			playerIcon.inuse = false
+			markIconInactive(playerIcon)
+			playerIcon:Show(false)
+		end
 	end, "maprendering")
 	eventbus.WatchEvent(TOPICS.icons.BulkDrawIconsAndRedraw, BulkDrawIcons, "maprendering")
 	eventbus.WatchEvent(TOPICS.UI.clearItems, maprendering.ClearUIState, "maprendering")
