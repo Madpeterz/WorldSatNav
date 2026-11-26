@@ -22,10 +22,27 @@ local dawnsMapMode = "Select"
 -- anchors and icon clicks are routed to the calibration tool.
 local calibrating = false
 
+-- zoom-0/1/2.png are exact 1/8, 1/4 and 1/2 downscales of zoom-3.png with its
+-- leftmost 25px dropped (measured by registering the images against each
+-- other). Deriving their constants from zoom-3 keeps every level in agreement,
+-- so calibration anchors (stored in zoom-3 pixels) land on the same spot at
+-- every zoom instead of drifting by up to ~8 zoom-3 pixels.
+local BASE = coordinates.BASE_RENDER
+local ZOOM3_EXTRA_LEFT = 25
+local function DownscaledLevel(level, texture, width, height, zoomfactor, divisor)
+	return {
+		level = level, texture = texture, width = width, height = height, zoomfactor = zoomfactor,
+		zeroPointX = (BASE.zeroPointX - ZOOM3_EXTRA_LEFT) / divisor,
+		zeroPointY = BASE.zeroPointY / divisor,
+		XCordScale = BASE.XCordScale / divisor,
+		YCordScale = BASE.YCordScale / divisor,
+	}
+end
+
 local mapLevels = {
-	{ level = 0, texture = "zoom-0.png", width = 473, height = 507, zoomfactor = 0, zeroPointX=311,zeroPointY=122,XCordScale=14.60,YCordScale=14.40},
-	{ level = 1, texture = "zoom-1.png", width = 948, height = 1017, zoomfactor = 2, zeroPointX=622,zeroPointY=246,XCordScale=29.15,YCordScale=28.84},
-	{ level = 2, texture = "zoom-2.png", width = 1897, height = 2023, zoomfactor = 4, zeroPointX=1245,zeroPointY=495,XCordScale=58.32,YCordScale=57.63},
+	DownscaledLevel(0, "zoom-0.png", 473, 507, 0, 8),
+	DownscaledLevel(1, "zoom-1.png", 948, 1017, 2, 4),
+	DownscaledLevel(2, "zoom-2.png", 1897, 2023, 4, 2),
 	{ level = 3, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 8, zeroPointX=2513,zeroPointY=991,XCordScale=116.44,YCordScale=115.17},
 	-- Virtual level: no dedicated texture. Reuses zoom-3.png but halves the view
 	-- crop (zoomfactor 17 -> viewWidth 3819/18 = 212, exactly half of level 3's
