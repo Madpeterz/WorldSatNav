@@ -32,7 +32,10 @@ end
 
 -- Linear map constants for zoom-3.png (the full-size texture). Calibration
 -- anchors and the region shapes are both stored in this texture's pixel space.
-Coordinates.BASE_RENDER = { zeroPointX = 2513, zeroPointY = 991, XCordScale = 116.44, YCordScale = 115.17, width = 3819, height = 4047 }
+-- Zero point nudged by the median anchor residual (+1.2, +2.2 px over 42
+-- anchors): leave-one-out error away from anchors drops from 5.0 to 3.3 px.
+-- Scales left as-is; refitting them to the anchors scored worse.
+Coordinates.BASE_RENDER = { zeroPointX = 2514.2, zeroPointY = 993.2, XCordScale = 116.44, YCordScale = 115.17, width = 3819, height = 4047 }
 
 -- ---------------------------------------------------------------------------
 -- Calibration anchors

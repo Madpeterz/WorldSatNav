@@ -32,7 +32,8 @@ local ZOOM3_EXTRA_LEFT = 25
 local function DownscaledLevel(level, texture, width, height, zoomfactor, divisor)
 	return {
 		level = level, texture = texture, width = width, height = height, zoomfactor = zoomfactor,
-		zeroPointX = (BASE.zeroPointX - ZOOM3_EXTRA_LEFT) / divisor,
+		-- divisor 1 is zoom-3.png itself, which keeps its extra left strip.
+		zeroPointX = (BASE.zeroPointX - (divisor > 1 and ZOOM3_EXTRA_LEFT or 0)) / divisor,
 		zeroPointY = BASE.zeroPointY / divisor,
 		XCordScale = BASE.XCordScale / divisor,
 		YCordScale = BASE.YCordScale / divisor,
@@ -43,12 +44,12 @@ local mapLevels = {
 	DownscaledLevel(0, "zoom-0.png", 473, 507, 0, 8),
 	DownscaledLevel(1, "zoom-1.png", 948, 1017, 2, 4),
 	DownscaledLevel(2, "zoom-2.png", 1897, 2023, 4, 2),
-	{ level = 3, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 8, zeroPointX=2513,zeroPointY=991,XCordScale=116.44,YCordScale=115.17},
+	DownscaledLevel(3, "zoom-3.png", 3819, 4047, 8, 1),
 	-- Virtual level: no dedicated texture. Reuses zoom-3.png but halves the view
 	-- crop (zoomfactor 17 -> viewWidth 3819/18 = 212, exactly half of level 3's
 	-- 424), so it renders as a 2x upscale of level 3. zeroPoint/CordScale must
 	-- match level 3 since the underlying texture pixels are the same.
-	{ level = 4, texture = "zoom-3.png", width = 3819, height = 4047, zoomfactor = 17, zeroPointX=2513,zeroPointY=991,XCordScale=116.44,YCordScale=115.17}
+	DownscaledLevel(4, "zoom-3.png", 3819, 4047, 17, 1),
 }
 
 -- Module state
