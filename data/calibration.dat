@@ -587,4 +587,18 @@
             min_long = 16,
         },
     },
+    {
+        px = 637.7,
+        py = 2688.7,
+        sextant = {
+            deg_long = 15,
+            deg_lat = 14,
+            sec_long = 7,
+            min_lat = 48,
+            longitude = "W",
+            latitude = "S",
+            sec_lat = 6,
+            min_long = 9,
+        },
+    },
 }
